@@ -2,27 +2,29 @@ import { ArrowUpRight, ArrowDownRight, Calendar, Zap, TrendingUp, Clock } from "
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 const chartData = [
-  { name: "Ene", ingresos: 4200, adelantos: 800 },
-  { name: "Feb", ingresos: 4200, adelantos: 1200 },
-  { name: "Mar", ingresos: 4500, adelantos: 600 },
-  { name: "Abr", ingresos: 4500, adelantos: 900 },
-  { name: "May", ingresos: 4800, adelantos: 400 },
-  { name: "Jun", ingresos: 4800, adelantos: 700 },
+  { name: "Ene", ingresos: 4200000, adelantos: 800000 },
+  { name: "Feb", ingresos: 4200000, adelantos: 1200000 },
+  { name: "Mar", ingresos: 4500000, adelantos: 600000 },
+  { name: "Abr", ingresos: 4500000, adelantos: 900000 },
+  { name: "May", ingresos: 4800000, adelantos: 400000 },
+  { name: "Jun", ingresos: 4800000, adelantos: 700000 },
 ];
 
 const recentActivity = [
-  { type: "adelanto", amount: -500, date: "Hoy, 14:30", desc: "Adelanto rápido" },
-  { type: "ingreso", amount: 4800, date: "1 Abr", desc: "Nómina mensual" },
-  { type: "adelanto", amount: -300, date: "28 Mar", desc: "Adelanto parcial" },
-  { type: "ingreso", amount: 4500, date: "1 Mar", desc: "Nómina mensual" },
+  { type: "adelanto", amount: -500000, date: "Hoy, 14:30", desc: "Adelanto rápido" },
+  { type: "ingreso", amount: 4800000, date: "1 Abr", desc: "Nómina mensual" },
+  { type: "adelanto", amount: -300000, date: "28 Mar", desc: "Adelanto parcial" },
+  { type: "ingreso", amount: 4500000, date: "1 Mar", desc: "Nómina mensual" },
 ];
+
+const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
 
 export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">
-          Hola, Juan 👋
+          Hola, Erick 👋
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           Tu resumen financiero de hoy
@@ -33,21 +35,21 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Disponible para adelanto"
-          value="$2,400"
-          sub="de $4,800"
+          value="$2.400.000"
+          sub="de $4.800.000"
           icon={<Zap className="h-4 w-4" />}
           accent
         />
         <StatCard
           label="Ingresos acumulados"
-          value="$3,200"
-          sub="+$160 hoy"
+          value="$3.200.000"
+          sub="+$160.000 hoy"
           icon={<TrendingUp className="h-4 w-4" />}
           trend="up"
         />
         <StatCard
           label="Total adelantado"
-          value="$500"
+          value="$500.000"
           sub="este mes"
           icon={<ArrowDownRight className="h-4 w-4" />}
           trend="neutral"
@@ -78,7 +80,7 @@ export default function Dashboard() {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="name" stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
+                <YAxis stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000000).toFixed(1)}M`} />
                 <Tooltip
                   contentStyle={{
                     background: "hsl(220, 18%, 12%)",
@@ -87,7 +89,7 @@ export default function Dashboard() {
                     color: "hsl(210, 20%, 95%)",
                     fontSize: "12px",
                   }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, undefined]}
+                  formatter={(value: number) => [formatCOP(value), undefined]}
                 />
                 <Area type="monotone" dataKey="ingresos" stroke="hsl(155, 72%, 48%)" fill="url(#colorIngresos)" strokeWidth={2} />
                 <Area type="monotone" dataKey="adelantos" stroke="hsl(38, 92%, 55%)" fill="url(#colorAdelantos)" strokeWidth={2} />
@@ -111,7 +113,7 @@ export default function Dashboard() {
                   <p className="text-xs text-muted-foreground">{item.date}</p>
                 </div>
                 <span className={`text-sm font-semibold ${item.amount > 0 ? "text-primary" : "text-foreground"}`}>
-                  {item.amount > 0 ? "+" : ""}${Math.abs(item.amount).toLocaleString()}
+                  {item.amount > 0 ? "+" : ""}{formatCOP(Math.abs(item.amount))}
                 </span>
               </div>
             ))}

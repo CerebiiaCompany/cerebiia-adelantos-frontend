@@ -1,16 +1,18 @@
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { AlertTriangle, TrendingDown, ShieldCheck } from "lucide-react";
 
+const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
+
 const monthlyData = [
-  { name: "Ene", adelantos: 800, limite: 2400 },
-  { name: "Feb", adelantos: 1200, limite: 2400 },
-  { name: "Mar", adelantos: 600, limite: 2250 },
-  { name: "Abr", adelantos: 500, limite: 2400 },
+  { name: "Ene", adelantos: 800000, limite: 2400000 },
+  { name: "Feb", adelantos: 1200000, limite: 2400000 },
+  { name: "Mar", adelantos: 600000, limite: 2250000 },
+  { name: "Abr", adelantos: 500000, limite: 2400000 },
 ];
 
 export default function Control() {
   const usedPercent = 21;
-  const limitDynamic = 2400;
+  const limitDynamic = 2400000;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
@@ -33,23 +35,23 @@ export default function Control() {
             </div>
           </div>
           <p className="text-sm font-medium text-foreground">Utilizado este mes</p>
-          <p className="text-xs text-muted-foreground">$500 de $2,400</p>
+          <p className="text-xs text-muted-foreground">$500.000 de $2.400.000</p>
         </div>
 
         <div className="glass-card p-5 text-center">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
             <ShieldCheck className="h-5 w-5 text-primary" />
           </div>
-          <p className="text-2xl font-display font-bold text-foreground">${limitDynamic.toLocaleString()}</p>
+          <p className="text-2xl font-display font-bold text-foreground">{formatCOP(limitDynamic)}</p>
           <p className="text-sm text-muted-foreground">Límite dinámico</p>
-          <p className="text-xs text-primary mt-1">+$150 vs mes anterior</p>
+          <p className="text-xs text-primary mt-1">+$150.000 vs mes anterior</p>
         </div>
 
         <div className="glass-card p-5 text-center">
           <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center mx-auto mb-3">
             <TrendingDown className="h-5 w-5 text-warning" />
           </div>
-          <p className="text-2xl font-display font-bold text-foreground">$4,300</p>
+          <p className="text-2xl font-display font-bold text-foreground">$4.300.000</p>
           <p className="text-sm text-muted-foreground">Próximo pago neto</p>
           <p className="text-xs text-muted-foreground mt-1">Descontando adelantos</p>
         </div>
@@ -62,7 +64,7 @@ export default function Control() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} barSize={32}>
               <XAxis dataKey="name" stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
+              <YAxis stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000000).toFixed(1)}M`} />
               <Tooltip
                 contentStyle={{
                   background: "hsl(220, 18%, 12%)",
@@ -71,6 +73,7 @@ export default function Control() {
                   color: "hsl(210, 20%, 95%)",
                   fontSize: "12px",
                 }}
+                formatter={(value: number) => [formatCOP(value), undefined]}
               />
               <Bar dataKey="adelantos" radius={[6, 6, 0, 0]}>
                 {monthlyData.map((_, i) => (

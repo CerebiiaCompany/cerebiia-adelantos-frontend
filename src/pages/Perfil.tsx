@@ -8,10 +8,10 @@ export default function Perfil() {
       {/* User Card */}
       <div className="glass-card p-6 flex items-center gap-4">
         <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center shrink-0">
-          <span className="text-primary-foreground font-display font-bold text-xl">JD</span>
+          <span className="text-primary-foreground font-display font-bold text-xl">EH</span>
         </div>
         <div>
-          <p className="text-lg font-display font-bold text-foreground">Juan Domínguez</p>
+          <p className="text-lg font-display font-bold text-foreground">Erick Herrera</p>
           <p className="text-sm text-muted-foreground">Empleado · Desde Ene 2025</p>
           <div className="flex items-center gap-1 mt-1">
             <Shield className="h-3 w-3 text-primary" />
@@ -22,9 +22,9 @@ export default function Perfil() {
 
       {/* Info Sections */}
       <div className="glass-card divide-y divide-border">
-        <ProfileRow icon={Mail} label="Correo" value="juan@empresa.com" />
-        <ProfileRow icon={Phone} label="Teléfono" value="+52 55 1234 5678" />
-        <ProfileRow icon={Building2} label="Empresa" value="Tech Solutions S.A." />
+        <ProfileRow icon={Mail} label="Correo" value="erick@cerebiia.com" />
+        <ProfileRow icon={Phone} label="Teléfono" value="+57 300 123 4567" />
+        <ProfileRow icon={Building2} label="Empresa" value="Cerebiia SAS" />
         <ProfileRow icon={User} label="Número de empleado" value="EMP-2025-0342" />
       </div>
 

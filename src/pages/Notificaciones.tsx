@@ -1,9 +1,9 @@
 import { Bell, Zap, Calendar, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 const notifications = [
-  { icon: Zap, title: "Adelanto procesado", desc: "Tu adelanto de $500 fue transferido exitosamente.", time: "Hace 2 horas", read: false },
-  { icon: Calendar, title: "Próximo pago", desc: "Tu nómina de $4,800 se depositará el 15 de abril.", time: "Hace 1 día", read: false },
-  { icon: AlertTriangle, title: "Límite actualizado", desc: "Tu límite dinámico aumentó a $2,400 basado en tu historial.", time: "Hace 3 días", read: true },
+  { icon: Zap, title: "Adelanto procesado", desc: "Tu adelanto de $500.000 fue transferido exitosamente.", time: "Hace 2 horas", read: false },
+  { icon: Calendar, title: "Próximo pago", desc: "Tu nómina de $4.800.000 se depositará el 15 de abril.", time: "Hace 1 día", read: false },
+  { icon: AlertTriangle, title: "Límite actualizado", desc: "Tu límite dinámico aumentó a $2.400.000 basado en tu historial.", time: "Hace 3 días", read: true },
   { icon: CheckCircle2, title: "Logro desbloqueado", desc: "¡Felicidades! Obtuviste 'Control total' (+500 pts).", time: "Hace 5 días", read: true },
   { icon: Bell, title: "Recordatorio", desc: "Recuerda revisar tu presupuesto mensual en el asistente.", time: "Hace 1 semana", read: true },
 ];

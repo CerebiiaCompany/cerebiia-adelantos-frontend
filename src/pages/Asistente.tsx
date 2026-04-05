@@ -16,7 +16,7 @@ const tips = [
   {
     icon: Lightbulb,
     title: "Cuánto solicitar",
-    desc: "Basado en tus gastos recurrentes, te recomendamos no adelantar más de $1,200 este mes para mantener un balance saludable.",
+    desc: "Basado en tus gastos recurrentes, te recomendamos no adelantar más de $1.200.000 este mes para mantener un balance saludable.",
     type: "info" as const,
   },
   {
