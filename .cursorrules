@@ -1,0 +1,353 @@
+# Cursor Rules — AdeCerebiia Frontend
+# Plataforma de adelantos de nómina (Cerebiia)
+# Template base: vite_react_shadcn_ts | Sincronizado con Lovable (gpt-engineer-app[bot])
+
+---
+
+## PROPÓSITO DEL PROYECTO
+
+SPA de adelantos de nómina para tres actores:
+- Empleado: /, /adelanto, /wallet, /control, /asistente, /logros, /notificaciones, /perfil
+- Empleador: /empleador/panel
+- Admin/superadmin: /admin/panel
+
+---
+
+## STACK EXACTO
+
+- Vite 5.4.19 + @vitejs/plugin-react-swc 3.11.0
+- React 18.3.1
+- TypeScript 5.8.3 — NO strict (strictNullChecks:false, noImplicitAny:false)
+- React Router DOM 6.30.1
+- TanStack Query 5.83.0
+- React Hook Form 7.61.1 + @hookform/resolvers 3.10.0
+- Zod 3.25.76
+- Tailwind CSS 3.4.17 + tailwindcss-animate 1.0.7
+- shadcn/ui (Radix UI primitivos, estilo "default", baseColor "slate")
+- lucide-react 0.462.0
+- recharts 2.15.4
+- date-fns 3.6.0
+- sonner 1.7.4 (toasts)
+- clsx 2.1.1 + tailwind-merge 2.6.0
+- lovable-tagger 1.1.13 (dev)
+- Vitest 3.2.4 + @testing-library/react 16.0.0
+- Playwright vía lovable-agent-playwright-config
+
+NO hay: Next.js, Redux, Zustand, axios, CSS Modules, styled-components.
+
+---
+
+## ARQUITECTURA — CLEAN ARCHITECTURE ADAPTADA A FSD
+
+### Capas (flujo unidireccional: UI → aplicación → infraestructura → dominio)
+
+```
+PRESENTACIÓN  │ src/app/ src/pages/ src/widgets/ src/features/*/ui/ src/components/
+APLICACIÓN    │ src/features/*/model/  (hooks TanStack Query, sin JSX)
+INFRAESTRUCTURA│ src/shared/api/client.ts  src/shared/api/endpoints/
+DOMINIO       │ src/entities/  src/shared/validations/  src/shared/lib/
+```
+
+### Regla FSD (importar solo hacia abajo)
+```
+app → pages → widgets → features → entities → shared
+```
+
+Una feature NO importa otra feature. Si hay que compartir algo, sube a entities/ o shared/.
+
+### Capas agnósticas (CRÍTICO — futuro @cerebiia/core para app móvil Expo)
+src/shared/api/, src/shared/validations/, src/shared/lib/ son framework-agnósticas.
+PROHIBIDO en esas carpetas: react-router-dom, react-dom, componentes de UI, next/*.
+Permitido: TypeScript puro, Zod, fetch nativo.
+ESLint ya lo valida con no-restricted-imports — violar esto rompe el build.
+
+---
+
+## ESTRUCTURA DE CARPETAS
+
+```
+src/
+├── app/
+│   ├── providers/index.tsx     ← QueryClientProvider, TooltipProvider, Toasters
+│   ├── router/routes.tsx       ← BrowserRouter + Routes (ÚNICO lugar donde viven las rutas)
+│   ├── router/guards/RoleGuard.tsx
+│   └── App.tsx                 ← entry real (main.tsx importa desde aquí)
+├── pages/
+│   ├── public/LoginPage.tsx    ← /login
+│   ├── employee/               ← páginas nuevas del empleado
+│   ├── employer/               ← páginas del empleador
+│   ├── admin/                  ← páginas del admin
+│   └── [Legacy: Dashboard.tsx, Adelanto.tsx, etc. — migrar gradualmente]
+├── features/
+│   ├── auth/ui/LoginForm.tsx   ← React Hook Form + Zod
+│   ├── auth/model/useLogin.ts  ← useMutation de TanStack Query
+│   ├── auth/index.ts           ← API pública de la feature
+│   ├── payroll-advance/
+│   ├── employer-panel/
+│   └── admin-panel/
+├── entities/
+│   ├── advance/model/types.ts  ← AdvanceStatus, Advance
+│   └── user/model/types.ts     ← UserRole, User
+├── shared/
+│   ├── api/client.ts           ← http.get/post/put/del (fetch wrapper)
+│   ├── api/endpoints/          ← auth.ts, advances.ts
+│   ├── api/types/              ← DTOs: LoginRequest, AuthResponse, AdvanceDTO
+│   ├── validations/            ← auth.schema.ts, advance.schema.ts (Zod)
+│   ├── lib/currency.ts         ← formatCOP(), parseCOP()
+│   ├── lib/dates.ts            ← formatDate(), formatRelative()
+│   ├── config/routes.ts        ← constante ROUTES (strings de rutas)
+│   ├── config/env.ts           ← wrapper de import.meta.env
+│   └── ui/index.ts             ← barrel de shadcn/ui (re-exporta components/ui)
+├── widgets/sidebar/ advance-table/
+├── components/                 ← NO mover (Lovable escribe aquí)
+│   ├── AppLayout.tsx           ← SidebarProvider + Outlet
+│   ├── AppSidebar.tsx          ← Sidebar colapsable con NavLink
+│   ├── NavLink.tsx             ← Wrapper con activeClassName
+│   └── ui/                     ← shadcn/ui generado por CLI — NO editar a mano
+├── hooks/use-mobile.tsx use-toast.ts
+├── lib/utils.ts                ← cn() = clsx + tailwind-merge — NO mover
+├── test/setup.ts               ← jest-dom + mock matchMedia
+├── index.css                   ← Variables CSS + custom utilities + animaciones
+└── main.tsx                    ← ReactDOM.createRoot → src/app/App.tsx
+```
+
+---
+
+## DÓNDE CREAR CADA COSA
+
+| Necesitas | Destino |
+|---|---|
+| Nueva ruta | src/app/router/routes.tsx |
+| Página nueva | src/pages/<actor>/<Nombre>Page.tsx |
+| Componente de feature | src/features/<feature>/ui/<Nombre>.tsx |
+| Hook (TanStack Query) | src/features/<feature>/model/use<Nombre>.ts |
+| Llamada HTTP | src/shared/api/endpoints/<dominio>.ts |
+| Tipo DTO | src/shared/api/types/index.ts |
+| Esquema Zod | src/shared/validations/<dominio>.schema.ts |
+| Tipo de dominio | src/entities/<entidad>/model/types.ts |
+| Utilidad pura (formato, cálculo) | src/shared/lib/<dominio>.ts |
+| Nuevo componente shadcn | npx shadcn-ui@latest add <comp> → re-export en src/shared/ui/index.ts |
+| String de ruta | src/shared/config/routes.ts (objeto ROUTES) |
+| Variable de entorno | src/shared/config/env.ts |
+
+---
+
+## CONVENCIONES DE CÓDIGO
+
+### TypeScript
+- Modo no strict. No añadir "strict": true.
+- Interfaces para objetos con forma fija, type para uniones/aliases.
+- Anotar params y returns en hooks (límites de módulo). Inferencia en interior.
+
+### Componentes React
+- Siempre funcionales. Nunca class components.
+- Default export para páginas: `export default function DashboardPage()`
+- Named export para componentes reutilizables: `export function LoginForm()`
+- forwardRef cuando el componente envuelve un elemento nativo y expone ref.
+- Componentes inline (helper components) en el mismo archivo de página son OK si solo se usan ahí.
+
+### Imports
+- SIEMPRE usar alias @/ — nunca rutas relativas profundas.
+- Importar desde el barrel index.ts de cada feature. Nunca desde archivos internos de otra feature.
+```ts
+import { LoginForm } from "@/features/auth";      // correcto
+import { LoginForm } from "@/features/auth/ui/LoginForm";  // solo desde dentro de auth/
+import { formatCOP } from "@/shared/lib";
+import { ROUTES } from "@/shared/config/routes";
+import { cn } from "@/lib/utils";
+```
+
+### Tailwind y estilos
+- Tailwind SIEMPRE para estilos. Cero CSS modules. Cero style={{}} salvo imposibles.
+- cn() de @/lib/utils para clases condicionales.
+- Custom utilities definidas en src/index.css — úsalas:
+  - .glass-card     → tarjeta con backdrop-blur y shadow-card
+  - .glow-border    → borde luminoso con primary/30
+  - .text-gradient  → texto con gradiente azul→morado
+  - .bg-gradient-primary → fondo con gradiente azul→morado
+  - .animate-fade-in, .animate-slide-up, .animate-pulse-glow, .animate-float
+- Tokens de color CSS: text-primary, text-muted-foreground, bg-background, bg-secondary,
+  text-foreground, border-border, text-destructive, text-warning, text-success, text-info.
+- Fuentes: font-sans (Inter) para texto, font-display (Space Grotesk) para headings y números.
+- Border radius estándar: rounded-xl (0.75rem), rounded-lg, rounded-md, rounded-sm.
+- Dark mode configurado pero NO implementado. No añadir clases dark: sin confirmación.
+
+### shadcn/ui
+- Agregar con CLI: npx shadcn-ui@latest add <componente>
+- Los archivos se generan en src/components/ui/ — NO editar a mano (Lovable los sobrescribe).
+- Añadir re-export en src/shared/ui/index.ts tras agregar un componente.
+
+### Formularios
+```tsx
+const form = useForm<TipoSchema>({
+  resolver: zodResolver(miSchema),   // schema de src/shared/validations/
+  defaultValues: { ... },
+});
+```
+
+### Routing — Reglas
+- Usar <Link> de react-router-dom (nunca <a href> para rutas internas).
+- Usar @/components/NavLink (no NavLink de react-router directamente) para navegación activa.
+- Todas las rutas en src/app/router/routes.tsx. Las features no conocen rutas.
+- Strings de rutas en ROUTES de @/shared/config/routes — no hardcodear "/adelanto" etc.
+
+### Hooks de data fetching
+```ts
+// Lectura → useQuery
+export function useAdvanceList() {
+  return useQuery({ queryKey: ["advances"], queryFn: advancesEndpoints.list });
+}
+// Escritura → useMutation
+export function useRequestAdvance() {
+  return useMutation({ mutationFn: (amount: number) => advancesEndpoints.request(amount) });
+}
+```
+
+### Patrones de migración de legacy
+Al refactorizar una página legacy (Dashboard.tsx, Adelanto.tsx, etc.):
+1. Extraer tipos → src/entities/<entidad>/model/types.ts
+2. Extraer cálculos/reglas de negocio → src/entities/<entidad>/model/calculations.ts
+3. Extraer data fetching → src/features/<feature>/model/use<Nombre>.ts
+4. Extraer UI reutilizable → src/features/<feature>/ui/<Nombre>.tsx
+5. La página resultante en src/pages/<actor>/ solo compone, no tiene lógica.
+6. formatCOP ya existe en @/shared/lib — eliminar las copias inline.
+
+---
+
+## GIT Y COLABORACIÓN CON LOVABLE
+
+El bot de Lovable firma commits como gpt-engineer-app[bot]. La rama main recibe commits
+tanto del bot como de desarrolladores humanos de forma concurrente.
+
+### Reglas OBLIGATORIAS
+```bash
+# Antes de pushear siempre:
+git pull --rebase origin main
+
+# NUNCA:
+git push --force origin main
+git push --force origin develop
+
+# Si necesitas force en tu rama feature personal:
+git push --force-with-lease origin feature/mi-rama  # más seguro que --force
+```
+
+### Mantener compatibilidad con Lovable
+- NO cambiar el nombre del template ni la config base de Vite/React/TS.
+- NO mover src/components/ui/ — el CLI de shadcn y Lovable escriben ahí.
+- NO mover src/lib/utils.ts — referenciado en components.json.
+- NO mover src/index.css — referenciado en components.json y main.tsx.
+- NO commitear .env, .env.local, *.pem, secrets.*
+
+---
+
+## TESTING
+
+### Unit / Component (Vitest + Testing Library)
+```ts
+// Archivos: src/**/*.test.ts(x)
+// Setup: src/test/setup.ts (jest-dom + matchMedia mock)
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+```
+
+### E2E (Playwright)
+```ts
+// playwright.config.ts usa createLovableConfig de lovable-agent-playwright-config
+// SIEMPRE importar desde playwright-fixture.ts, no del paquete playwright directamente
+import { test, expect } from "./playwright-fixture";
+```
+
+El servidor dev debe estar activo antes de correr Playwright.
+
+---
+
+## COMANDOS CLAVE
+
+```bash
+npm run dev          # Vite dev server en localhost:8080
+npm run build        # Build de producción
+npm run build:dev    # Build en modo development
+npm run lint         # ESLint (falla si se viola capa agnóstica)
+npm run test         # Vitest run
+npm run test:watch   # Vitest watch
+npx playwright test  # E2E (requiere npm run dev activo)
+npx shadcn-ui@latest add <comp>  # Agregar componente UI
+```
+
+---
+
+## ANTI-PATRONES — NUNCA HACER
+
+Los tres primeros son casos REALES encontrados en este repositorio. No repetirlos.
+
+### [1] Lógica de negocio en componente UI — src/pages/Adelanto.tsx:10-12
+```ts
+// ❌ ENCONTRADO EN Adelanto.tsx líneas 10-12:
+const fee = Math.round(amount * 0.025);  // regla de negocio
+const total = amount - fee;              // cálculo de dominio
+```
+La comisión (2.5%) y el neto son reglas de negocio, no lógica de UI.
+Deben vivir en src/entities/advance/model/calculations.ts:
+```ts
+// ✅ Correcto
+export const FEE_RATE = 0.025;
+export const calculateFee = (amount: number) => Math.round(amount * FEE_RATE);
+export const calculateNet = (amount: number) => amount - calculateFee(amount);
+// El componente solo llama: calculateFee(amount), calculateNet(amount)
+```
+
+### [2] Utilidad duplicada en múltiples páginas — Dashboard.tsx:20 y Adelanto.tsx:5
+```ts
+// ❌ ENCONTRADO EN Dashboard.tsx línea 20 Y Adelanto.tsx línea 5 (idénticas):
+const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
+```
+Ya existe en src/shared/lib/currency.ts. Eliminar las copias locales al tocar cada página:
+```ts
+// ✅ Correcto
+import { formatCOP } from "@/shared/lib";
+```
+
+### [3] Navegación con <a> HTML — src/pages/Dashboard.tsx:136
+```tsx
+// ❌ ENCONTRADO EN Dashboard.tsx línea 136:
+<a href="/adelanto" className="...">Solicitar adelanto →</a>
+// Provoca recarga completa de la SPA
+```
+```tsx
+// ✅ Correcto
+import { Link } from "react-router-dom";
+import { ROUTES } from "@/shared/config/routes";
+<Link to={ROUTES.employee.adelanto} className="...">Solicitar adelanto →</Link>
+```
+
+### Otros anti-patrones de arquitectura
+```tsx
+// ❌ fetch directo en componente → va en shared/api/endpoints/ + features/*/model/
+useEffect(() => { fetch("/api/advances").then(...) }, []);
+
+// ❌ Feature importando feature → subir a entities/ o shared/
+// En features/payroll-advance/: import { useLogin } from "@/features/auth"; // PROHIBIDO
+
+// ❌ react-router en shared/ → ESLint lo falla en el build
+// En shared/api/client.ts: import { useNavigate } from "react-router-dom"; // PROHIBIDO
+```
+
+### Anti-patrones de estilos
+```tsx
+// ❌ Estilo inline cuando Tailwind puede → className="text-sm"
+<div style={{ fontSize: "14px" }}>
+
+// ❌ CSS inventada fuera del sistema → usar .glass-card .glow-border .bg-gradient-primary
+<div className="my-custom-card">
+```
+
+### Anti-patrones de Git
+```bash
+# ❌ Force push en ramas compartidas — destruye commits del bot gpt-engineer-app[bot]
+git push --force origin main
+git push --force origin develop
+
+# ❌ El .gitignore actual NO cubre .env sin sufijo — verificar antes de git add
+git add .env   # NUNCA
+```
