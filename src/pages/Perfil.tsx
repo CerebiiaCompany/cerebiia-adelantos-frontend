@@ -1,6 +1,8 @@
-import { User, Building2, Mail, Phone, Shield, ChevronRight } from "lucide-react";
+import { User, Building2, Mail, Phone, Shield, ChevronRight, Loader2 } from "lucide-react";
+import { useLogout } from "@/features/auth";
 
 export default function Perfil() {
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <h1 className="text-2xl font-display font-bold text-foreground">Perfil</h1>
@@ -31,11 +33,23 @@ export default function Perfil() {
       {/* Settings */}
       <div className="glass-card divide-y divide-border">
         {["Cambiar contraseña", "Notificaciones", "Privacidad", "Términos y condiciones", "Cerrar sesión"].map((item, i) => (
-          <button key={i} className={`w-full flex items-center justify-between p-4 text-sm hover:bg-secondary/50 transition-colors ${
-            item === "Cerrar sesión" ? "text-destructive" : "text-foreground"
-          }`}>
-            <span>{item}</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <button
+            key={i}
+            type="button"
+            disabled={item === "Cerrar sesión" && isLoggingOut}
+            onClick={() => {
+              if (item === "Cerrar sesión") logout();
+            }}
+            className={`w-full flex items-center justify-between p-4 text-sm hover:bg-secondary/50 transition-colors disabled:opacity-60 ${
+              item === "Cerrar sesión" ? "text-destructive" : "text-foreground"
+            }`}
+          >
+            <span>{item === "Cerrar sesión" && isLoggingOut ? "Cerrando sesión..." : item}</span>
+            {item === "Cerrar sesión" && isLoggingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
           </button>
         ))}
       </div>
