@@ -6,6 +6,7 @@ Plataforma de adelantos de nómina para tres actores: **empleado**, **empleador*
 
 ## Stack
 
+
 | Herramienta | Rol |
 |---|---|
 | Vite 5 + React 18 | Build tool / framework |
