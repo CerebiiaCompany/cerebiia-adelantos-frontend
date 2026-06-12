@@ -10,22 +10,30 @@ import Notificaciones from "@/pages/Notificaciones";
 import Perfil from "@/pages/Perfil";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
+import { AuthGuard } from "@/app/router/guards/AuthGuard";
+import { GuestGuard } from "@/app/router/guards/GuestGuard";
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/adelanto" element={<Adelanto />} />
-          <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/control" element={<Control />} />
-          <Route path="/asistente" element={<Asistente />} />
-          <Route path="/logros" element={<Logros />} />
-          <Route path="/notificaciones" element={<Notificaciones />} />
-          <Route path="/perfil" element={<Perfil />} />
+        <Route element={<GuestGuard />}>
+          <Route path="/login" element={<LoginPage />} />
         </Route>
+
+        <Route element={<AuthGuard />}>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/adelanto" element={<Adelanto />} />
+            <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/control" element={<Control />} />
+            <Route path="/asistente" element={<Asistente />} />
+            <Route path="/logros" element={<Logros />} />
+            <Route path="/notificaciones" element={<Notificaciones />} />
+            <Route path="/perfil" element={<Perfil />} />
+          </Route>
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
