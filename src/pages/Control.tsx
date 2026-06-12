@@ -26,8 +26,8 @@ export default function Control() {
         <div className="glass-card p-5 flex flex-col items-center text-center">
           <div className="relative w-28 h-28 mb-3">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(220, 14%, 18%)" strokeWidth="8" />
-              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(155, 72%, 48%)" strokeWidth="8"
+              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(220, 14%, 90%)" strokeWidth="8" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(220, 90%, 55%)" strokeWidth="8"
                 strokeDasharray={`${usedPercent * 2.64} 264`} strokeLinecap="round" />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
@@ -63,21 +63,22 @@ export default function Control() {
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} barSize={32}>
-              <XAxis dataKey="name" stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000000).toFixed(1)}M`} />
+              <XAxis dataKey="name" stroke="hsl(220, 10%, 70%)" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="hsl(220, 10%, 70%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000000).toFixed(1)}M`} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(220, 18%, 12%)",
-                  border: "1px solid hsl(220, 14%, 18%)",
+                  background: "hsl(0, 0%, 100%)",
+                  border: "1px solid hsl(220, 14%, 90%)",
                   borderRadius: "8px",
-                  color: "hsl(210, 20%, 95%)",
+                  color: "hsl(220, 20%, 12%)",
                   fontSize: "12px",
+                  boxShadow: "0 4px 24px hsl(220 40% 50% / 0.08)",
                 }}
                 formatter={(value: number) => [formatCOP(value), undefined]}
               />
               <Bar dataKey="adelantos" radius={[6, 6, 0, 0]}>
                 {monthlyData.map((_, i) => (
-                  <Cell key={i} fill={i === monthlyData.length - 1 ? "hsl(155, 72%, 48%)" : "hsl(220, 14%, 22%)"} />
+                  <Cell key={i} fill={i === monthlyData.length - 1 ? "hsl(220, 90%, 55%)" : "hsl(220, 14%, 88%)"} />
                 ))}
               </Bar>
             </BarChart>
