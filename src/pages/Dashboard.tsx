@@ -68,31 +68,32 @@ export default function Dashboard() {
           <h3 className="font-display font-semibold text-foreground mb-4">Ingresos vs Adelantos</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+            <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(155, 72%, 48%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(155, 72%, 48%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(220, 90%, 55%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(220, 90%, 55%)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorAdelantos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(38, 92%, 55%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(38, 92%, 55%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(260, 70%, 55%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(260, 70%, 55%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="name" stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(215, 12%, 40%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000000).toFixed(1)}M`} />
+                <XAxis dataKey="name" stroke="hsl(220, 10%, 70%)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(220, 10%, 70%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000000).toFixed(1)}M`} />
                 <Tooltip
                   contentStyle={{
-                    background: "hsl(220, 18%, 12%)",
-                    border: "1px solid hsl(220, 14%, 18%)",
+                    background: "hsl(0, 0%, 100%)",
+                    border: "1px solid hsl(220, 14%, 90%)",
                     borderRadius: "8px",
-                    color: "hsl(210, 20%, 95%)",
+                    color: "hsl(220, 20%, 12%)",
                     fontSize: "12px",
+                    boxShadow: "0 4px 24px hsl(220 40% 50% / 0.08)",
                   }}
                   formatter={(value: number) => [formatCOP(value), undefined]}
                 />
-                <Area type="monotone" dataKey="ingresos" stroke="hsl(155, 72%, 48%)" fill="url(#colorIngresos)" strokeWidth={2} />
-                <Area type="monotone" dataKey="adelantos" stroke="hsl(38, 92%, 55%)" fill="url(#colorAdelantos)" strokeWidth={2} />
+                <Area type="monotone" dataKey="ingresos" stroke="hsl(220, 90%, 55%)" fill="url(#colorIngresos)" strokeWidth={2} />
+                <Area type="monotone" dataKey="adelantos" stroke="hsl(260, 70%, 55%)" fill="url(#colorAdelantos)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

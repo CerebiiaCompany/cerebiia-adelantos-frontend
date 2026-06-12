@@ -17,7 +17,7 @@ export function AppLayout() {
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
               </button>
               <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center">
-                <span className="text-primary-foreground text-xs font-semibold">JD</span>
+                <span className="text-primary-foreground text-xs font-semibold">EH</span>
               </div>
             </div>
           </header>
