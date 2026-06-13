@@ -165,6 +165,14 @@
     box-shadow: var(--shadow-glow);
   }
 
+  .register-step-content label {
+    @apply block text-center lg:text-left;
+  }
+
+  .register-step-content .text-destructive {
+    @apply text-center lg:text-left;
+  }
+
   .login-card {
     @apply transition-all duration-500 ease-out;
   }

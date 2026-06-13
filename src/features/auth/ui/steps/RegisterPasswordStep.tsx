@@ -4,8 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ArrowLeft,
   ArrowRight,
+  CheckCircle2,
+  Circle,
   Eye,
   EyeOff,
+  Info,
   Loader2,
   Lock,
 } from "lucide-react";
@@ -21,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
+  getPasswordRequirementChecks,
   passwordSchema,
   type PasswordFormValues,
 } from "@/shared/validations/register.schema";
@@ -31,6 +35,25 @@ interface RegisterPasswordStepProps {
   onBack?: () => void;
   onSubmit: (values: PasswordFormValues) => void;
 }
+
+const PASSWORD_REQUIREMENTS = [
+  {
+    id: "hasUppercase",
+    label: "1 Mayúscula",
+  },
+  {
+    id: "hasLowercase",
+    label: "1 Minúscula",
+  },
+  {
+    id: "hasNumber",
+    label: "1 Número",
+  },
+  {
+    id: "hasMinLength",
+    label: "Mínimo 8 caracteres",
+  },
+] as const;
 
 export function RegisterPasswordStep({
   isExistingUser,
@@ -44,7 +67,11 @@ export function RegisterPasswordStep({
   const form = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: { password: "", confirmPassword: "" },
+    mode: "onChange",
   });
+
+  const passwordValue = form.watch("password");
+  const requirementChecks = getPasswordRequirementChecks(passwordValue ?? "");
 
   return (
     <Form {...form}>
@@ -66,7 +93,7 @@ export function RegisterPasswordStep({
                   <Lock className="field-icon pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder="Crea tu contraseña"
                     autoComplete="new-password"
                     disabled={isSubmitting}
                     className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 pr-11 transition-all duration-300 focus-visible:ring-primary/30 disabled:opacity-60"
@@ -96,11 +123,39 @@ export function RegisterPasswordStep({
           )}
         />
 
+        <div className="animate-stagger-up stagger-2 rounded-xl border border-border/80 bg-muted/10 px-4 py-3">
+          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:text-left">
+            Requisitos de contraseña
+          </p>
+          <ul className="space-y-2">
+            {PASSWORD_REQUIREMENTS.map((requirement) => {
+              const passed = requirementChecks[requirement.id];
+
+              return (
+                <li
+                  key={requirement.id}
+                  className={cn(
+                    "flex items-center justify-center gap-2 text-sm transition-colors lg:justify-start",
+                    passed ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  {passed ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Circle className="h-4 w-4 shrink-0 opacity-50" />
+                  )}
+                  <span>{requirement.label}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
         <FormField
           control={form.control}
           name="confirmPassword"
           render={({ field }) => (
-            <FormItem className="animate-stagger-up stagger-2">
+            <FormItem className="animate-stagger-up stagger-3">
               <FormLabel className="text-foreground/80">
                 Confirmar contraseña
               </FormLabel>
@@ -139,7 +194,18 @@ export function RegisterPasswordStep({
           )}
         />
 
-        <div className="animate-stagger-up stagger-3 flex gap-3 pt-2">
+        <div className="animate-stagger-up stagger-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-center lg:text-left">
+          <p className="flex items-start justify-center gap-2 text-sm leading-relaxed text-foreground lg:justify-start">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>
+              <span className="font-semibold">Importante:</span> Conserva tu
+              contraseña en un lugar seguro. La necesitarás para acceder a la
+              plataforma en tus próximos ingresos.
+            </span>
+          </p>
+        </div>
+
+        <div className="animate-stagger-up stagger-5 flex gap-3 pt-2">
           {onBack && (
             <Button
               type="button"

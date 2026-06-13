@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/shared/config/routes";
 import type {
@@ -122,7 +121,7 @@ const STEP_HEADERS: Record<
 
 function RegisterSkeleton() {
   return (
-    <div className="w-full max-w-[420px] animate-pulse space-y-6 p-8 sm:p-10">
+    <div className="mx-auto w-full max-w-[420px] animate-pulse space-y-6 p-8 sm:p-10">
       <div className="space-y-3">
         <div className="h-7 w-48 rounded-lg bg-secondary" />
         <div className="h-4 w-full max-w-xs rounded-md bg-secondary/70" />
@@ -162,7 +161,6 @@ function toProfileFromBasicInfo(
 export function RegisterForm() {
   const [isReady, setIsReady] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);
-  const [draftRestored, setDraftRestored] = useState(false);
   const [step, setStep] = useState<RegisterStepId>("document");
   const [flowType, setFlowType] = useState<RegisterFlowType>("new");
   const [verificationStatus, setVerificationStatus] =
@@ -244,7 +242,6 @@ export function RegisterForm() {
         setIdentityUpload(restored.identityUpload);
         setSelfieFile(restored.selfieFile);
         setLaborCertFile(restored.laborCertFile);
-        setDraftRestored(true);
       })
       .finally(() => {
         if (cancelled) return;
@@ -424,7 +421,7 @@ export function RegisterForm() {
 
   if (!isReady || isHydrating) {
     return (
-      <div className="glass-card glow-border w-full max-w-[420px] overflow-hidden rounded-xl">
+      <div className="glass-card glow-border mx-auto w-full max-w-[420px] overflow-hidden rounded-xl">
         <div className="loading-bar">
           <div className="animate-shimmer h-full w-full" />
         </div>
@@ -434,7 +431,7 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="animate-scale-in w-full max-w-[480px]">
+    <div className="animate-scale-in mx-auto w-full max-w-[480px]">
       <RegisterCard
         isLoading={isLoading}
         loadingMessage={
@@ -447,25 +444,16 @@ export function RegisterForm() {
           <RegisterStepIndicator flowType={flowType} currentStep={step} />
         )}
 
-        {draftRestored && (
-          <div className="animate-stagger-up mb-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
-            <p className="flex items-start gap-2 text-sm text-foreground">
-              <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <span>
-                Recuperamos tu registro en progreso. Puedes continuar donde lo
-                dejaste.
-              </span>
-            </p>
-          </div>
-        )}
-
-        <div className="animate-stagger-up mb-8 space-y-2 text-center sm:text-left">
+        <div className="animate-stagger-up mb-8 space-y-2 text-center lg:text-left">
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
             {header.title}
           </h2>
-          <p className="text-sm text-muted-foreground">{header.subtitle}</p>
+          <p className="mx-auto max-w-sm text-sm text-muted-foreground lg:mx-0 lg:max-w-none">
+            {header.subtitle}
+          </p>
         </div>
 
+        <div className="register-step-content">
         {step === "document" && (
           <RegisterDocumentStep
             defaultValues={documentData}
@@ -556,6 +544,7 @@ export function RegisterForm() {
             onSubmit={handlePasswordSubmit}
           />
         )}
+        </div>
 
         {step === "document" && (
           <div className="animate-stagger-up stagger-5 mt-8 flex flex-col items-center gap-3 text-center">

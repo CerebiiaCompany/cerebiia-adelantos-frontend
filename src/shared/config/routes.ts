@@ -2,6 +2,7 @@
 export const ROUTES = {
   login: "/login",
   register: "/registro",
+  registerValidation: "/registro/validacion",
   employee: {
     dashboard: "/",
     adelanto: "/adelanto",

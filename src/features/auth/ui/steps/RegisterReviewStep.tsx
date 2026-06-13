@@ -75,7 +75,7 @@ function ReviewSection({
         className,
       )}
     >
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
           {icon}
         </div>
@@ -83,7 +83,7 @@ function ReviewSection({
           {title}
         </h3>
         {locked && (
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground lg:ml-auto">
             <Lock className="h-3 w-3" />
             No editable
           </span>
@@ -386,8 +386,8 @@ export function RegisterReviewStep({
           />
         </ReviewSection>
 
-        <div className="animate-stagger-up stagger-5 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
-          <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
+        <div className="animate-stagger-up stagger-5 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 text-center lg:text-left">
+          <p className="flex items-start justify-center gap-2 text-xs leading-relaxed text-muted-foreground lg:justify-start">
             <CalendarDays className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
             <span>
               Verifica que tus datos sean correctos. El tipo y número de

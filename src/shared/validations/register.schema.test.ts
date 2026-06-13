@@ -118,10 +118,55 @@ describe("basicInfoSchema", () => {
 });
 
 describe("passwordSchema", () => {
+  it("acepta contraseñas que cumplen todos los requisitos", () => {
+    const result = passwordSchema.safeParse({
+      password: "Abc12345",
+      confirmPassword: "Abc12345",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rechaza contraseñas sin mayúscula", () => {
+    const result = passwordSchema.safeParse({
+      password: "abc12345",
+      confirmPassword: "abc12345",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rechaza contraseñas sin minúscula", () => {
+    const result = passwordSchema.safeParse({
+      password: "ABC12345",
+      confirmPassword: "ABC12345",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rechaza contraseñas sin número", () => {
+    const result = passwordSchema.safeParse({
+      password: "Abcdefgh",
+      confirmPassword: "Abcdefgh",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("acepta contraseñas largas sin límite máximo", () => {
+    const result = passwordSchema.safeParse({
+      password: "Abc12345678901234",
+      confirmPassword: "Abc12345678901234",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rechaza contraseñas que no coinciden", () => {
     const result = passwordSchema.safeParse({
-      password: "12345678",
-      confirmPassword: "87654321",
+      password: "Abc12345",
+      confirmPassword: "Abc12346",
     });
 
     expect(result.success).toBe(false);

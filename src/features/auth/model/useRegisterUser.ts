@@ -17,7 +17,7 @@ export function useRegisterUser() {
       return demoRegisterUser();
     },
     onSuccess: () => {
-      navigate(ROUTES.login, { replace: true });
+      navigate(ROUTES.registerValidation, { replace: true });
     },
   });
 }

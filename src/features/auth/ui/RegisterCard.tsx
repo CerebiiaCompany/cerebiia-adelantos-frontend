@@ -15,7 +15,7 @@ export function RegisterCard({
   return (
     <div
       className={cn(
-        "login-card glass-card glow-border relative overflow-hidden p-8 sm:p-10",
+        "login-card glass-card glow-border relative mx-auto w-full overflow-hidden p-5 sm:p-8 lg:p-10",
         isLoading && "pointer-events-none opacity-90",
       )}
     >

@@ -277,7 +277,7 @@ export function RegisterSelfieValidationStep({
   return (
     <div className="space-y-4">
       <div className="animate-stagger-up stagger-1 rounded-xl border border-border/80 bg-muted/20 px-4 py-4">
-        <div className="flex items-start gap-3">
+        <div className="flex flex-col items-center gap-3 text-center lg:flex-row lg:items-start lg:text-left">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <ShieldCheck className="h-4 w-4" />
           </div>

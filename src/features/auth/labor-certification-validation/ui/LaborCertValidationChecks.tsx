@@ -115,54 +115,6 @@ export function LaborCertValidationChecks({
           })}
         </ul>
       )}
-
-      {state.phase === "complete" &&
-        state.canContinue &&
-        Object.keys(state.extractedData).length > 0 && (
-          <div className="rounded-lg border border-border/60 bg-background/70 px-3 py-2 text-xs">
-            <p className="font-medium text-foreground">Datos identificados</p>
-            <dl className="mt-2 space-y-1 text-muted-foreground">
-              {state.extractedData.employeeName && (
-                <div>
-                  <dt className="inline font-medium text-foreground">
-                    Empleado:{" "}
-                  </dt>
-                  <dd className="inline">{state.extractedData.employeeName}</dd>
-                </div>
-              )}
-              {state.extractedData.companyName && (
-                <div>
-                  <dt className="inline font-medium text-foreground">
-                    Empresa:{" "}
-                  </dt>
-                  <dd className="inline">{state.extractedData.companyName}</dd>
-                </div>
-              )}
-              {state.extractedData.jobTitle && (
-                <div>
-                  <dt className="inline font-medium text-foreground">Cargo: </dt>
-                  <dd className="inline">{state.extractedData.jobTitle}</dd>
-                </div>
-              )}
-              {state.extractedData.startDate && (
-                <div>
-                  <dt className="inline font-medium text-foreground">
-                    Ingreso:{" "}
-                  </dt>
-                  <dd className="inline">{state.extractedData.startDate}</dd>
-                </div>
-              )}
-              {state.extractedData.issueDate && (
-                <div>
-                  <dt className="inline font-medium text-foreground">
-                    Expedición:{" "}
-                  </dt>
-                  <dd className="inline">{state.extractedData.issueDate}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
-        )}
     </div>
   );
 }

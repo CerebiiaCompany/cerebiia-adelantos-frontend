@@ -308,10 +308,10 @@ export function RegisterIdentityUploadStep({
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <div className="animate-stagger-up stagger-1 rounded-xl border border-border/80 bg-muted/20 px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:text-left">
           Verificación de identidad
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-foreground">
+        <p className="mt-2 text-center text-sm leading-relaxed text-foreground lg:text-left">
           Adjunte una imagen o PDF de su documento de identidad. Esta
           información será utilizada para validar sus datos y garantizar la
           seguridad del proceso de registro.
@@ -338,7 +338,7 @@ export function RegisterIdentityUploadStep({
       )}
 
       <div className="animate-stagger-up stagger-3 rounded-xl border border-border/80 bg-background/60 px-4 py-4">
-        <p className="mb-3 text-sm font-semibold text-foreground">
+        <p className="mb-3 text-center text-sm font-semibold text-foreground lg:text-left">
           Requisitos del documento
         </p>
         <ul className="space-y-2.5">

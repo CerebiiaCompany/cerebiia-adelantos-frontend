@@ -205,12 +205,67 @@ export const reviewStepSchema = z.object({
   phone: contactPhoneSchema.shape.phone,
 });
 
+export const PASSWORD_MIN_LENGTH = 8;
+
+export interface PasswordRequirementChecks {
+  hasUppercase: boolean;
+  hasLowercase: boolean;
+  hasNumber: boolean;
+  hasMinLength: boolean;
+}
+
+export function getPasswordRequirementChecks(
+  password: string,
+): PasswordRequirementChecks {
+  return {
+    hasUppercase: /[A-Z]/.test(password),
+    hasLowercase: /[a-z]/.test(password),
+    hasNumber: /\d/.test(password),
+    hasMinLength: password.length >= PASSWORD_MIN_LENGTH,
+  };
+}
+
+export function isPasswordValid(password: string): boolean {
+  const checks = getPasswordRequirementChecks(password);
+  return Object.values(checks).every(Boolean);
+}
+
 export const passwordSchema = z
   .object({
     password: z
       .string()
       .min(1, "Ingresa tu contraseña")
-      .min(8, "La contraseña debe tener al menos 8 caracteres"),
+      .superRefine((password, ctx) => {
+        const checks = getPasswordRequirementChecks(password);
+
+        if (!checks.hasUppercase) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "La contraseña debe incluir al menos una mayúscula",
+          });
+        }
+
+        if (!checks.hasLowercase) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "La contraseña debe incluir al menos una minúscula",
+          });
+        }
+
+        if (!checks.hasNumber) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "La contraseña debe incluir al menos un número",
+          });
+        }
+
+        if (!checks.hasMinLength) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`,
+          });
+        }
+      }),
     confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   })
   .superRefine((data, ctx) => {
