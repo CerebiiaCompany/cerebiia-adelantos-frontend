@@ -183,6 +183,9 @@ export default function Adelanto() {
         <div className="glass-card glow-border p-6 text-center animate-slide-up">
           <p className="text-sm text-muted-foreground mb-3">¿Confirmas tu adelanto de</p>
           <p className="text-3xl font-display font-bold text-gradient mb-4">{formatCOP(amount)}?</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {installments} {installments === 1 ? "cuota" : "cuotas"} de {formatCOP(installmentValue)}
+          </p>
           <div className="flex gap-3">
             <button onClick={() => setStep("select")} className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80 transition-colors">
               Cancelar
