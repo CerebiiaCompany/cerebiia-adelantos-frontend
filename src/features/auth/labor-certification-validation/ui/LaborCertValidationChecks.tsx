@@ -16,7 +16,7 @@ function isAdvisoryCheck(
   state: LaborCertValidationState,
   checkId: LaborCertValidationState["checks"][number]["id"],
 ): boolean {
-  return checkId === "brightness" || checkId === "authenticity";
+  return checkId === "brightness" || checkId === "resolution" || checkId === "authenticity";
 }
 
 export function LaborCertValidationChecks({

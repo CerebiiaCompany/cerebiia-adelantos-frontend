@@ -117,13 +117,21 @@ export function RegisterLaborCertificationStep({
               <span className="font-medium text-foreground">
                 {profile.companyName || "tu empresa"}
               </span>
-              . Debe incluir tu nombre, cargo y fecha de expedición.
+              . Asegúrate de que contenga tu fecha de vinculación laboral.
             </p>
           </div>
         </div>
       </div>
 
-      <div className="animate-stagger-up stagger-2 rounded-xl border border-border/80 bg-background/60 px-4 py-4">
+      <div className="animate-stagger-up stagger-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
+        <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+          <span className="font-semibold">Recuerda:</span> Solo puedes subir el
+          documento original. No se aceptan documentos con contraseña o
+          bloqueados.
+        </p>
+      </div>
+
+      <div className="animate-stagger-up stagger-3 rounded-xl border border-border/80 bg-background/60 px-4 py-4">
         <p className="mb-3 text-sm font-semibold text-foreground">
           Requisitos del documento
         </p>
@@ -133,7 +141,7 @@ export function RegisterLaborCertificationStep({
             `Tamaño máximo: ${IDENTITY_UPLOAD_MAX_MB} MB.`,
             "Documento legible, completo y sin cortes.",
             "Debe corresponder a una certificación laboral vigente.",
-            "Incluye nombre del empleado, empresa, cargo y fecha de expedición.",
+            "Incluye nombre, empresa, cargo y fecha de vinculación o expedición.",
           ].map((requirement) => (
             <li
               key={requirement}
@@ -149,7 +157,7 @@ export function RegisterLaborCertificationStep({
         </ul>
       </div>
 
-      <div className="animate-stagger-up stagger-3 space-y-2">
+      <div className="animate-stagger-up stagger-4 space-y-2">
         <div
           className={cn(
             "relative rounded-xl border-2 border-dashed transition-colors",
@@ -248,7 +256,7 @@ export function RegisterLaborCertificationStep({
         <LaborCertValidationChecks state={state} />
       </div>
 
-      <div className="animate-stagger-up stagger-4 flex gap-3 pt-2">
+      <div className="animate-stagger-up stagger-5 flex gap-3 pt-2">
         <Button
           type="button"
           variant="outline"

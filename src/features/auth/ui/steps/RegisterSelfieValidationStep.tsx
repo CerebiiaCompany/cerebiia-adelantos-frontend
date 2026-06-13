@@ -71,6 +71,35 @@ export function RegisterSelfieValidationStep({
   const { state, validateSelfie, resetValidation, isValidating } =
     useSelfieValidation();
 
+  const isRestoredValidatedSelfie = useMemo(() => {
+    if (!defaultSelfieFile || !validatedFile) return false;
+
+    return (
+      validatedFile.name === defaultSelfieFile.name &&
+      validatedFile.size === defaultSelfieFile.size &&
+      validatedFile.lastModified === defaultSelfieFile.lastModified
+    );
+  }, [defaultSelfieFile, validatedFile]);
+
+  useEffect(() => {
+    if (!defaultSelfieFile) return;
+
+    setValidatedFile(defaultSelfieFile);
+
+    void (async () => {
+      try {
+        const canvas = await imageFileToCanvas(defaultSelfieFile);
+        await validateSelfie({
+          selfieCanvas: canvas,
+          previousFrame: null,
+          captureMode: useLiveCamera ? "live" : "upload",
+        });
+      } catch {
+        // La selfie ya fue validada al guardar el borrador.
+      }
+    })();
+  }, [defaultSelfieFile, useLiveCamera, validateSelfie]);
+
   const stopCamera = useCallback(() => {
     if (previewIntervalRef.current) {
       window.clearInterval(previewIntervalRef.current);
@@ -236,7 +265,10 @@ export function RegisterSelfieValidationStep({
     }
   }
 
-  const canContinue = Boolean(validatedFile) && state.isValid && !isValidating;
+  const canContinue =
+    Boolean(validatedFile) &&
+    (state.isValid || isRestoredValidatedSelfie) &&
+    (!isValidating || isRestoredValidatedSelfie);
   const showRetry =
     state.phase === "complete" && !state.isValid && !isValidating;
   const showValidatedPreview = Boolean(previewUrl);

@@ -5,7 +5,6 @@ import type {
 import { CHECK_LABELS } from "../types";
 import { LABOR_CERT_VALIDATION_TIMEOUT_MS } from "../constants";
 import { validateFileFormat, validateFileSize } from "@/features/auth/document-validation/validators/fileFormat.validator";
-import { validateImageQuality } from "@/features/auth/document-validation/validators/imageQuality.validator";
 import { fileToImageSource } from "@/features/auth/document-validation/utils/fileToImageSource";
 import { runOCR } from "@/features/auth/document-validation/utils/ocrEngine";
 import { prepareAnalysisCanvas } from "@/features/auth/document-validation/utils/prepareAnalysisCanvas";
@@ -21,6 +20,7 @@ import { validateLaborCertDocumentType } from "./laborCertContent.validator";
 import { validateLaborCertFields } from "./laborCertFields.validator";
 import { validateLaborCertValidity } from "./laborCertValidity.validator";
 import { validateLaborCertAuthenticity } from "./laborCertAuthenticity.validator";
+import { validateLaborCertImageQuality } from "./laborCertImageQuality.validator";
 
 const FILE_PREP_TIMEOUT_MS = 45_000;
 
@@ -75,7 +75,11 @@ function resolveFinalResult(
 
   if (blockingFailed || !params.typeValid || !params.fieldsValid || !params.validityValid) {
     const firstError = checks.find(
-      (check) => !check.passed && check.id !== "brightness",
+      (check) =>
+        !check.passed &&
+        check.tone !== "warning" &&
+        check.id !== "brightness" &&
+        check.id !== "resolution",
     );
 
     return {
@@ -166,30 +170,37 @@ export async function runLaborCertValidation({
   await yieldToMainThread();
   onProgress?.(0.4, "Analizando calidad de imagen...");
 
-  const quality = validateImageQuality(
+  const qualityResult = validateLaborCertImageQuality(
     analysisCanvas,
     originalWidth,
     originalHeight,
   );
+  const { quality } = qualityResult;
 
   checks.push(
-    buildCheck("resolution", quality.resolution.passed, quality.resolution.message),
+    buildCheck(
+      "resolution",
+      qualityResult.criticalResolutionPassed,
+      qualityResult.criticalResolutionPassed
+        ? quality.resolution.passed
+          ? undefined
+          : "Resolución mejorable. Verificamos que el contenido sea legible..."
+        : "La imagen es demasiado pequeña para leer el documento",
+      qualityResult.criticalResolutionPassed && !quality.resolution.passed
+        ? "warning"
+        : "default",
+    ),
     buildCheck("sharpness", quality.sharpness.passed, quality.sharpness.message),
     buildCheck(
       "brightness",
-      quality.brightness.passed,
-      quality.brightness.message,
+      true,
+      quality.brightness.passed ? undefined : quality.brightness.message,
       quality.brightness.passed ? "default" : "warning",
     ),
     buildCheck("coverage", quality.coverage.passed, quality.coverage.message),
   );
 
-  const qualityPassed =
-    quality.resolution.passed &&
-    quality.sharpness.passed &&
-    quality.coverage.passed;
-
-  if (!qualityPassed) {
+  if (!qualityResult.blockingPassed) {
     return resolveFinalResult(checks, {
       typeValid: false,
       fieldsValid: false,

@@ -1,5 +1,9 @@
 export const LABOR_CERT_VALIDITY_DAYS = 90;
 
+/** Por debajo de esto sí se bloquea por ilegibilidad extrema */
+export const LABOR_CERT_CRITICAL_MIN_WIDTH = 400;
+export const LABOR_CERT_CRITICAL_MIN_HEIGHT = 280;
+
 export const MIN_LABOR_CERT_KEYWORD_MATCHES = 2;
 
 export const MIN_AUTHENTICITY_SIGNALS = 2;
