@@ -34,10 +34,20 @@ export default function Adelanto() {
               <span className="text-muted-foreground">Comisión</span>
               <span className="text-foreground font-medium">-{formatCOP(fee)}</span>
             </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Cuotas</span>
+              <span className="text-foreground font-medium">{installments}</span>
+            </div>
             <div className="border-t border-border pt-2 flex justify-between text-sm font-bold">
               <span className="text-foreground">Total a recibir</span>
               <span className="text-primary">{formatCOP(total)}</span>
             </div>
+            {installments > 1 && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Valor por cuota</span>
+                <span>{formatCOP(installmentValue)}</span>
+              </div>
+            )}
           </div>
           <button onClick={() => setStep("select")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Volver al inicio
