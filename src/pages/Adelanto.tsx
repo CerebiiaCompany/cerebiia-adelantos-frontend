@@ -6,10 +6,12 @@ const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
 
 export default function Adelanto() {
   const [amount, setAmount] = useState(1000000);
+  const [installments, setInstallments] = useState(1);
   const [step, setStep] = useState<"select" | "confirm" | "done">("select");
   const maxAmount = 2400000;
   const fee = Math.round(amount * 0.025);
   const total = amount - fee;
+  const installmentValue = Math.round(total / installments);
 
   if (step === "done") {
     return (
