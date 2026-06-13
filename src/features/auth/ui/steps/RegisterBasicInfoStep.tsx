@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CitySearchSelect } from "@/features/auth/ui/components/CitySearchSelect";
 import {
   Form,
   FormControl,
@@ -39,7 +38,7 @@ import {
   type ColombianCity,
   type ColombianDepartment,
 } from "@/shared/constants/colombia";
-import { loadColombianCities } from "@/shared/constants/colombian-cities.loader";
+import { loadColombianMajorCities } from "@/shared/constants/colombian-cities.loader";
 import {
   basicInfoSchema,
   type BasicInfoFormValues,
@@ -75,35 +74,38 @@ export function RegisterBasicInfoStep({
   const [isLoadingCities, setIsLoadingCities] = useState(true);
 
   useEffect(() => {
-    loadColombianCities()
+    loadColombianMajorCities()
       .then(setCities)
       .finally(() => setIsLoadingCities(false));
   }, []);
 
-  const selectedDepartment = form.watch("department");
   const selectedCityId = form.watch("cityId");
 
-  const cityOptions = useMemo(() => {
-    if (selectedDepartment) {
-      return cities.filter((city) => city.department === selectedDepartment);
-    }
-    return cities;
-  }, [cities, selectedDepartment]);
+  const cityOptions = useMemo(
+    () => cities,
+    [cities],
+  );
 
   function handleCityChange(cityId: string) {
     const city = cities.find((item) => item.id === cityId);
-    form.setValue("cityId", cityId, { shouldValidate: true });
-    if (city) {
-      form.setValue("department", city.department, { shouldValidate: true });
-    }
+    if (!city) return;
+
+    form.setValue("cityId", city.id, { shouldValidate: true, shouldDirty: true });
+    form.setValue("department", city.department, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   }
 
   function handleDepartmentChange(department: ColombianDepartment) {
-    form.setValue("department", department, { shouldValidate: true });
+    form.setValue("department", department, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
 
     const currentCity = cities.find((item) => item.id === selectedCityId);
-    if (currentCity && currentCity.department !== department) {
-      form.setValue("cityId", "", { shouldValidate: true });
+    if (!currentCity || currentCity.department !== department) {
+      form.setValue("cityId", "", { shouldValidate: true, shouldDirty: true });
     }
   }
 
@@ -183,7 +185,7 @@ export function RegisterBasicInfoStep({
                     <SelectItem
                       key={option.value}
                       value={option.value}
-                      className="cursor-pointer rounded-lg"
+                      className="auth-select-item cursor-pointer rounded-lg"
                     >
                       {option.label}
                     </SelectItem>
@@ -201,21 +203,37 @@ export function RegisterBasicInfoStep({
           render={({ field }) => (
             <FormItem className="animate-stagger-up stagger-4">
               <FormLabel className="text-foreground/80">Ciudad</FormLabel>
-              <FormControl>
-                <CitySearchSelect
-                  cities={cityOptions}
-                  value={field.value}
-                  onValueChange={handleCityChange}
-                  showDepartment={!selectedDepartment}
-                  placeholder={
-                    isLoadingCities
-                      ? "Cargando ciudades..."
-                      : "Selecciona tu ciudad"
-                  }
-                  searchPlaceholder="Escribe para buscar tu ciudad..."
-                  disabled={isSubmitting || isLoadingCities}
-                />
-              </FormControl>
+              <Select
+                onValueChange={(cityId) => {
+                  handleCityChange(cityId);
+                  field.onChange(cityId);
+                }}
+                value={field.value}
+                disabled={isSubmitting || isLoadingCities || cityOptions.length === 0}
+              >
+                <FormControl>
+                  <SelectTrigger className="login-field auth-field-trigger h-11 rounded-xl border-border/80 bg-background/80 text-left transition-all duration-300 focus:ring-primary/30 disabled:opacity-60">
+                    <SelectValue
+                      placeholder={
+                        isLoadingCities
+                          ? "Cargando ciudades..."
+                          : "Selecciona tu ciudad"
+                      }
+                    />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className="max-h-60 rounded-xl border-border/80">
+                  {cityOptions.map((city) => (
+                    <SelectItem
+                      key={city.id}
+                      value={city.id}
+                      className="auth-select-item cursor-pointer rounded-lg"
+                    >
+                      {city.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -228,13 +246,16 @@ export function RegisterBasicInfoStep({
             <FormItem className="animate-stagger-up stagger-5">
               <FormLabel className="text-foreground/80">Departamento</FormLabel>
               <Select
-                onValueChange={handleDepartmentChange}
+                onValueChange={(department) => {
+                  handleDepartmentChange(department as ColombianDepartment);
+                  field.onChange(department);
+                }}
                 value={field.value}
                 disabled={isSubmitting}
               >
                 <FormControl>
-                  <SelectTrigger className="login-field h-11 rounded-xl border-border/80 bg-background/80 text-left transition-all duration-300 focus:ring-primary/30 disabled:opacity-60">
-                    <SelectValue placeholder="Selecciona tu departamento" />
+                  <SelectTrigger className="login-field auth-field-trigger h-11 rounded-xl border-border/80 bg-background/80 text-left transition-all duration-300 focus:ring-primary/30 disabled:opacity-60">
+                    <SelectValue placeholder="Se completa al elegir la ciudad" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="max-h-60 rounded-xl border-border/80">
@@ -242,7 +263,7 @@ export function RegisterBasicInfoStep({
                     <SelectItem
                       key={department}
                       value={department}
-                      className="cursor-pointer rounded-lg"
+                      className="auth-select-item cursor-pointer rounded-lg"
                     >
                       {department}
                     </SelectItem>
@@ -306,7 +327,7 @@ export function RegisterBasicInfoStep({
                     <SelectItem
                       key={company.id}
                       value={company.id}
-                      className="cursor-pointer rounded-lg"
+                      className="auth-select-item cursor-pointer rounded-lg"
                     >
                       {company.name}
                     </SelectItem>
@@ -361,7 +382,7 @@ export function RegisterBasicInfoStep({
             variant="outline"
             onClick={onBack}
             disabled={isSubmitting}
-            className="h-11 flex-1 rounded-xl"
+            className="auth-secondary-btn h-11 flex-1 rounded-xl"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver

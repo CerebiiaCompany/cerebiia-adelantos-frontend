@@ -225,7 +225,7 @@ export function RegisterReviewStep({
                         <SelectItem
                           key={option.value}
                           value={option.value}
-                          className="cursor-pointer rounded-lg"
+                          className="auth-select-item cursor-pointer rounded-lg"
                         >
                           {option.label}
                         </SelectItem>
@@ -373,7 +373,7 @@ export function RegisterReviewStep({
                       <SelectItem
                         key={company.id}
                         value={company.id}
-                        className="cursor-pointer rounded-lg"
+                        className="auth-select-item cursor-pointer rounded-lg"
                       >
                         {company.name}
                       </SelectItem>
@@ -402,7 +402,7 @@ export function RegisterReviewStep({
             variant="outline"
             onClick={onBack}
             disabled={isSubmitting}
-            className="h-11 flex-1 rounded-xl"
+            className="auth-secondary-btn h-11 flex-1 rounded-xl"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver

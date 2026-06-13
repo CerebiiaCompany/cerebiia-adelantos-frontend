@@ -509,7 +509,7 @@ export function RegisterSelfieValidationStep({
             variant="outline"
             onClick={handleRetry}
             disabled={isSubmitting}
-            className="h-11 flex-1 rounded-xl"
+            className="auth-secondary-btn h-11 flex-1 rounded-xl"
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Reintentar selfie
@@ -523,7 +523,7 @@ export function RegisterSelfieValidationStep({
           variant="outline"
           onClick={onBack}
           disabled={isSubmitting || isValidating}
-          className="h-11 flex-1 rounded-xl"
+          className="auth-secondary-btn h-11 flex-1 rounded-xl"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver

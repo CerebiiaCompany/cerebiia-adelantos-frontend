@@ -6,7 +6,7 @@ import type {
   UserProfileData,
 } from "@/shared/api/types";
 import { PAYMENT_DAY_DEFAULT } from "@/shared/constants/colombia";
-import { loadColombianCities } from "@/shared/constants/colombian-cities.loader";
+import { loadColombianMajorCities } from "@/shared/constants/colombian-cities.loader";
 import {
   normalizeEmail,
   sanitizeColombianPhone,
@@ -359,7 +359,7 @@ export function RegisterForm() {
   }
 
   async function handleBasicInfoSubmit(values: BasicInfoFormValues) {
-    const cities = await loadColombianCities();
+    const cities = await loadColombianMajorCities();
     const city = cities.find((item) => item.id === values.cityId);
 
     setBasicInfo(values);
@@ -647,7 +647,7 @@ export function RegisterForm() {
               variant="outline"
               asChild
               disabled={isLoading}
-              className="h-9 rounded-xl px-6 font-medium transition-all duration-300 hover:border-primary/40 hover:bg-primary/5"
+              className="auth-outline-btn h-9 rounded-xl px-6 font-medium transition-all duration-300"
             >
               <Link to={ROUTES.login}>Ingresar</Link>
             </Button>

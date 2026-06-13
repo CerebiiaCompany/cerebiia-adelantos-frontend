@@ -224,7 +224,7 @@ export function LoginForm() {
             variant="outline"
             asChild
             disabled={isPending}
-            className="h-9 rounded-xl px-6 font-medium transition-all duration-300 hover:border-primary/40 hover:bg-primary/5"
+            className="auth-outline-btn h-9 rounded-xl px-6 font-medium transition-all duration-300"
           >
             <Link to={ROUTES.register}>Regístrate</Link>
           </Button>

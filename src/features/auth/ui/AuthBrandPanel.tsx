@@ -30,10 +30,10 @@ export interface AuthBrandPanelProps {
 export function AuthBrandPanel({ title, description }: AuthBrandPanelProps) {
   return (
     <section
-      className="relative hidden w-[52%] shrink-0 flex-col bg-gradient-primary text-primary-foreground lg:flex"
+      className="relative hidden h-[100dvh] max-h-[100dvh] w-[52%] shrink-0 flex-col overflow-hidden bg-gradient-primary text-primary-foreground lg:flex"
       aria-label="Presentación de AdeCerebiia"
     >
-      <div className="relative flex min-h-screen flex-col overflow-hidden">
+      <div className="relative flex h-full flex-col overflow-hidden">
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
           <div className="animate-blob absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
           <div className="animate-blob-delayed absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-white/5 blur-3xl" />

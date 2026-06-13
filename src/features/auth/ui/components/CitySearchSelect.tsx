@@ -33,6 +33,7 @@ function getCityLabel(city: ColombianCity, showDepartment: boolean): string {
 
 interface CitySearchSelectProps {
   cities: ColombianCity[];
+  allCities?: ColombianCity[];
   value: string;
   onValueChange: (cityId: string) => void;
   showDepartment?: boolean;
@@ -44,6 +45,7 @@ interface CitySearchSelectProps {
 
 export function CitySearchSelect({
   cities,
+  allCities,
   value,
   onValueChange,
   showDepartment = true,
@@ -54,36 +56,36 @@ export function CitySearchSelect({
 }: CitySearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [commandSession, setCommandSession] = useState(0);
+
+  const lookupCities = allCities ?? cities;
 
   const selectedCity = useMemo(
-    () => cities.find((city) => city.id === value),
-    [cities, value],
+    () => lookupCities.find((city) => city.id === value),
+    [lookupCities, value],
   );
 
   const filteredCities = useMemo(() => {
     const query = normalizeSearch(search);
 
-    if (!query) {
-      if (!showDepartment) {
-        return cities;
-      }
-      return [];
-    }
+    const result = query
+      ? cities.filter((city) => {
+          const cityName = normalizeSearch(city.name);
+          const departmentName = normalizeSearch(city.department);
+          return cityName.includes(query) || departmentName.includes(query);
+        })
+      : cities;
 
-    return cities
-      .filter((city) => {
-        const cityName = normalizeSearch(city.name);
-        const departmentName = normalizeSearch(city.department);
-        return cityName.includes(query) || departmentName.includes(query);
-      })
-      .slice(0, MAX_RESULTS);
-  }, [cities, search, showDepartment]);
+    return result.slice(0, MAX_RESULTS);
+  }, [cities, search]);
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
-    if (!nextOpen) {
-      setSearch("");
+    if (nextOpen) {
+      setCommandSession((current) => current + 1);
+      return;
     }
+    setSearch("");
   }
 
   function handleSelect(cityId: string) {
@@ -94,9 +96,11 @@ export function CitySearchSelect({
 
   const emptyMessage = search.trim()
     ? "No se encontró la ciudad."
-    : showDepartment
-      ? "Escribe el nombre de tu ciudad para buscar."
-      : "No hay ciudades disponibles.";
+    : cities.length === 0
+      ? "No hay ciudades disponibles."
+      : showDepartment
+        ? "Escribe para filtrar o elige una ciudad de la lista."
+        : "Elige otra ciudad de la lista.";
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -108,7 +112,7 @@ export function CitySearchSelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "login-field h-11 w-full justify-between rounded-xl border-border/80 bg-background/80 px-3 font-normal text-left transition-all duration-300 hover:bg-background/80 focus-visible:ring-primary/30 disabled:opacity-60",
+            "login-field auth-field-trigger h-11 w-full justify-between rounded-xl border-border/80 bg-background/80 px-3 font-normal text-left transition-all duration-300 focus-visible:ring-primary/30 disabled:opacity-60",
             !selectedCity && "text-muted-foreground",
             className,
           )}
@@ -122,28 +126,36 @@ export function CitySearchSelect({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] rounded-xl border-border/80 p-0"
+        className="z-[100] w-[var(--radix-popover-trigger-width)] rounded-xl border-border/80 p-0"
         align="start"
+        sideOffset={6}
+        onOpenAutoFocus={(event) => event.preventDefault()}
+        onCloseAutoFocus={(event) => event.preventDefault()}
       >
-        <Command shouldFilter={false}>
+        <Command
+          key={commandSession}
+          shouldFilter={false}
+          className="[&_[cmdk-item][data-selected=true]]:bg-primary/[0.1] [&_[cmdk-item][data-selected=true]]:text-foreground"
+        >
           <CommandInput
             placeholder={searchPlaceholder}
             value={search}
             onValueChange={setSearch}
           />
-          <CommandList className="max-h-60">
+          <CommandList className="max-h-60 overscroll-contain">
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {filteredCities.map((city) => (
                 <CommandItem
                   key={city.id}
                   value={city.id}
+                  keywords={[city.name, city.department, city.id]}
                   onSelect={() => handleSelect(city.id)}
-                  className="cursor-pointer rounded-lg"
+                  className="auth-combobox-item cursor-pointer touch-manipulation rounded-lg active:bg-primary/[0.12]"
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4 shrink-0",
+                      "mr-2 h-4 w-4 shrink-0 text-primary",
                       value === city.id ? "opacity-100" : "opacity-0",
                     )}
                   />

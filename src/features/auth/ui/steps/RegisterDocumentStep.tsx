@@ -136,7 +136,7 @@ export function RegisterDocumentStep({
                     <SelectItem
                       key={option.value}
                       value={option.value}
-                      className="cursor-pointer rounded-lg"
+                      className="auth-select-item cursor-pointer rounded-lg"
                     >
                       {option.label}
                     </SelectItem>
