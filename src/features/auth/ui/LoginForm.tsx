@@ -11,7 +11,7 @@ export function LoginForm() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "" } as LoginFormValues,
   });
 
   function onSubmit(values: LoginFormValues) {
