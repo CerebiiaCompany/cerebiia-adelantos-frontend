@@ -15,7 +15,7 @@ export function LoginForm() {
   });
 
   function onSubmit(values: LoginFormValues) {
-    login(values);
+    login(values as unknown as LoginRequest);
   }
 
   return (
