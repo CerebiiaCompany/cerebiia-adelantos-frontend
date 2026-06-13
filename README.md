@@ -1,8 +1,11 @@
 # Cerebiia Adelantos — Frontend
 
+
+
 Plataforma de adelantos de nómina para tres actores: **empleado**, **empleador** y **empresa (admin/superadmin)**.
 
 ## Stack
+
 
 | Herramienta | Rol |
 |---|---|
