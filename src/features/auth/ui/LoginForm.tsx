@@ -5,17 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useLogin } from "../model/useLogin";
 import { loginSchema, type LoginFormValues } from "@/shared/validations/auth.schema";
+import type { LoginRequest } from "@/shared/api/types";
 
 export function LoginForm() {
   const { mutate: login, isPending } = useLogin();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "" } as LoginFormValues,
   });
 
   function onSubmit(values: LoginFormValues) {
-    login(values);
+    login(values as unknown as LoginRequest);
   }
 
   return (

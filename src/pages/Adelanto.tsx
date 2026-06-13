@@ -6,10 +6,12 @@ const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
 
 export default function Adelanto() {
   const [amount, setAmount] = useState(1000000);
+  const [installments, setInstallments] = useState(1);
   const [step, setStep] = useState<"select" | "confirm" | "done">("select");
   const maxAmount = 2400000;
   const fee = Math.round(amount * 0.025);
   const total = amount - fee;
+  const installmentValue = Math.round(total / installments);
 
   if (step === "done") {
     return (
@@ -32,10 +34,20 @@ export default function Adelanto() {
               <span className="text-muted-foreground">Comisión</span>
               <span className="text-foreground font-medium">-{formatCOP(fee)}</span>
             </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Cuotas</span>
+              <span className="text-foreground font-medium">{installments}</span>
+            </div>
             <div className="border-t border-border pt-2 flex justify-between text-sm font-bold">
               <span className="text-foreground">Total a recibir</span>
               <span className="text-primary">{formatCOP(total)}</span>
             </div>
+            {installments > 1 && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Valor por cuota</span>
+                <span>{formatCOP(installmentValue)}</span>
+              </div>
+            )}
           </div>
           <button onClick={() => setStep("select")} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Volver al inicio
@@ -92,6 +104,26 @@ export default function Adelanto() {
           ))}
         </div>
 
+        {/* Installments Selector */}
+        <div className="mb-6">
+          <p className="text-sm font-semibold text-foreground mb-3 text-center">Número de cuotas</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((n) => (
+              <button
+                key={n}
+                onClick={() => setInstallments(n)}
+                className={`py-2 rounded-lg text-sm font-medium transition-all ${
+                  installments === n
+                    ? "bg-gradient-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                }`}
+              >
+                {n} {n === 1 ? "cuota" : "cuotas"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Simulation */}
         <div className="glass-card p-4 space-y-3">
           <h4 className="text-sm font-semibold text-foreground">Simulación del adelanto</h4>
@@ -103,10 +135,20 @@ export default function Adelanto() {
             <span className="text-muted-foreground">Comisión (2.5%)</span>
             <span className="text-foreground">-{formatCOP(fee)}</span>
           </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Cuotas</span>
+            <span className="text-foreground">{installments}</span>
+          </div>
           <div className="border-t border-border pt-2 flex justify-between text-sm font-bold">
             <span className="text-foreground">Recibirás</span>
             <span className="text-primary">{formatCOP(total)}</span>
           </div>
+          {installments > 1 && (
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Valor por cuota</span>
+              <span>{formatCOP(installmentValue)}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -141,6 +183,9 @@ export default function Adelanto() {
         <div className="glass-card glow-border p-6 text-center animate-slide-up">
           <p className="text-sm text-muted-foreground mb-3">¿Confirmas tu adelanto de</p>
           <p className="text-3xl font-display font-bold text-gradient mb-4">{formatCOP(amount)}?</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {installments} {installments === 1 ? "cuota" : "cuotas"} de {formatCOP(installmentValue)}
+          </p>
           <div className="flex gap-3">
             <button onClick={() => setStep("select")} className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80 transition-colors">
               Cancelar
