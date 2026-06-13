@@ -45,7 +45,7 @@ export function LoginForm() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" } as LoginFormValues,
+    defaultValues: { email: "", password: "" },
   });
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function LoginForm() {
   }, []);
 
   function onSubmit(values: LoginFormValues) {
-    login(values);
+    login(values as LoginRequest);
   }
 
   if (!isReady) {
