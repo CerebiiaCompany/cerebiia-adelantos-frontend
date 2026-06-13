@@ -104,6 +104,26 @@ export default function Adelanto() {
           ))}
         </div>
 
+        {/* Installments Selector */}
+        <div className="mb-6">
+          <p className="text-sm font-semibold text-foreground mb-3 text-center">Número de cuotas</p>
+          <div className="grid grid-cols-3 gap-2">
+            {[1, 2, 3].map((n) => (
+              <button
+                key={n}
+                onClick={() => setInstallments(n)}
+                className={`py-2 rounded-lg text-sm font-medium transition-all ${
+                  installments === n
+                    ? "bg-gradient-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                }`}
+              >
+                {n} {n === 1 ? "cuota" : "cuotas"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Simulation */}
         <div className="glass-card p-4 space-y-3">
           <h4 className="text-sm font-semibold text-foreground">Simulación del adelanto</h4>
@@ -115,10 +135,20 @@ export default function Adelanto() {
             <span className="text-muted-foreground">Comisión (2.5%)</span>
             <span className="text-foreground">-{formatCOP(fee)}</span>
           </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Cuotas</span>
+            <span className="text-foreground">{installments}</span>
+          </div>
           <div className="border-t border-border pt-2 flex justify-between text-sm font-bold">
             <span className="text-foreground">Recibirás</span>
             <span className="text-primary">{formatCOP(total)}</span>
           </div>
+          {installments > 1 && (
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Valor por cuota</span>
+              <span>{formatCOP(installmentValue)}</span>
+            </div>
+          )}
         </div>
       </div>
 
