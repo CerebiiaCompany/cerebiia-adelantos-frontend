@@ -10,6 +10,7 @@ import Notificaciones from "@/pages/Notificaciones";
 import Perfil from "@/pages/Perfil";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
+import RegisterPage from "@/pages/public/RegisterPage";
 import { AuthGuard } from "@/app/router/guards/AuthGuard";
 import { GuestGuard } from "@/app/router/guards/GuestGuard";
 
@@ -19,6 +20,7 @@ export function AppRouter() {
       <Routes>
         <Route element={<GuestGuard />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/registro" element={<RegisterPage />} />
         </Route>
 
         <Route element={<AuthGuard />}>

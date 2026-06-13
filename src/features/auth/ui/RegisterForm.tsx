@@ -1,0 +1,576 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/shared/config/routes";
+import type {
+  UserProfileData,
+  VerifyDocumentRequest,
+} from "@/shared/api/types";
+import { PAYMENT_DAY_DEFAULT } from "@/shared/constants/colombia";
+import { loadColombianCities } from "@/shared/constants/colombian-cities.loader";
+import {
+  normalizeEmail,
+  sanitizeColombianPhone,
+  type BasicInfoFormValues,
+  type ContactEmailFormValues,
+  type ContactPhoneFormValues,
+  type IdentityUploadFormValues,
+  type PasswordFormValues,
+  type ReviewStepFormValues,
+  type VerifyDocumentFormValues,
+} from "@/shared/validations/register.schema";
+import { useCompanies } from "../model/useCompanies";
+import {
+  clearRegisterDraft,
+  hydrateRegisterDraftState,
+} from "../model/useRegisterDraftPersistence.types";
+import { useRegisterDraftPersistence } from "../model/useRegisterDraftPersistence";
+import { useRegisterUser } from "../model/useRegisterUser";
+import { useVerifyDocument } from "../model/useVerifyDocument";
+import { RegisterCard } from "./RegisterCard";
+import {
+  RegisterStepIndicator,
+  type RegisterFlowType,
+  type RegisterStepId,
+} from "./RegisterStepIndicator";
+import {
+  RegisterDocumentStep,
+  type DocumentVerificationStatus,
+} from "./steps/RegisterDocumentStep";
+import { RegisterBasicInfoStep } from "./steps/RegisterBasicInfoStep";
+import { RegisterContactEmailStep } from "./steps/RegisterContactEmailStep";
+import { RegisterContactPhoneStep } from "./steps/RegisterContactPhoneStep";
+import { RegisterIdentityUploadStep } from "./steps/RegisterIdentityUploadStep";
+import { RegisterPasswordStep } from "./steps/RegisterPasswordStep";
+import { RegisterReviewStep } from "./steps/RegisterReviewStep";
+import { RegisterSelfieValidationStep } from "./steps/RegisterSelfieValidationStep";
+import { RegisterLaborCertificationStep } from "./steps/RegisterLaborCertificationStep";
+
+const EMPTY_BASIC_INFO: BasicInfoFormValues = {
+  firstNames: "",
+  lastNames: "",
+  gender: undefined as unknown as BasicInfoFormValues["gender"],
+  cityId: "",
+  department: undefined as unknown as BasicInfoFormValues["department"],
+  address: "",
+  companyId: "",
+  paymentDay: PAYMENT_DAY_DEFAULT,
+};
+
+const EMPTY_CONTACT_EMAIL: ContactEmailFormValues = {
+  email: "",
+  acceptDataPolicy: false,
+  acceptRecords: false,
+};
+
+const EMPTY_CONTACT_PHONE: ContactPhoneFormValues = {
+  phone: "",
+  acceptWalletContract: false,
+  acceptTemporaryStorage: false,
+};
+
+const EMPTY_IDENTITY_UPLOAD: IdentityUploadFormValues = {
+  frontFile: null,
+  backFile: null,
+};
+
+const EMPTY_SELFIE_FILE: File | null = null;
+const EMPTY_LABOR_CERT_FILE: File | null = null;
+
+const STEP_HEADERS: Record<
+  RegisterStepId,
+  { title: string; subtitle: string }
+> = {
+  document: {
+    title: "Crea tu cuenta",
+    subtitle: "Ingresa tu documento de identidad para verificar",
+  },
+  "basic-info": {
+    title: "Datos personales",
+    subtitle: "Completa tu información básica para registrarte",
+  },
+  "contact-email": {
+    title: "Correo electrónico",
+    subtitle: "Ingresa tu correo y autoriza el tratamiento de datos",
+  },
+  "contact-phone": {
+    title: "Número celular",
+    subtitle: "Confirma tu celular y las autorizaciones requeridas",
+  },
+  "identity-upload": {
+    title: "Documento de identidad",
+    subtitle: "Cargue su documento oficial para validación de identidad",
+  },
+  review: {
+    title: "Revisa tus datos",
+    subtitle: "Confirma que tu información esté correcta antes de continuar",
+  },
+  "selfie-validation": {
+    title: "Validación facial",
+    subtitle: "Toma una selfie clara para confirmar tu identidad",
+  },
+  "labor-certification": {
+    title: "Certificación laboral",
+    subtitle: "Carga y valida tu certificación laboral vigente",
+  },
+  password: {
+    title: "Crea tu contraseña",
+    subtitle: "Define una contraseña segura para tu cuenta",
+  },
+};
+
+function RegisterSkeleton() {
+  return (
+    <div className="w-full max-w-[420px] animate-pulse space-y-6 p-8 sm:p-10">
+      <div className="space-y-3">
+        <div className="h-7 w-48 rounded-lg bg-secondary" />
+        <div className="h-4 w-full max-w-xs rounded-md bg-secondary/70" />
+      </div>
+      <div className="space-y-4">
+        <div className="h-11 rounded-xl bg-secondary/80" />
+        <div className="h-11 rounded-xl bg-secondary/80" />
+        <div className="h-11 rounded-xl bg-secondary" />
+      </div>
+    </div>
+  );
+}
+
+function toProfileFromBasicInfo(
+  values: BasicInfoFormValues,
+  companies: { id: string; name: string }[],
+  cityName: string,
+): UserProfileData {
+  const company = companies.find((c) => c.id === values.companyId);
+
+  return {
+    firstNames: values.firstNames,
+    lastNames: values.lastNames,
+    gender: values.gender,
+    cityId: values.cityId,
+    cityName,
+    department: values.department,
+    address: values.address,
+    companyId: values.companyId,
+    companyName: company?.name ?? "",
+    paymentDay: values.paymentDay,
+    email: "",
+    phone: "",
+  };
+}
+
+export function RegisterForm() {
+  const [isReady, setIsReady] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(true);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [step, setStep] = useState<RegisterStepId>("document");
+  const [flowType, setFlowType] = useState<RegisterFlowType>("new");
+  const [verificationStatus, setVerificationStatus] =
+    useState<DocumentVerificationStatus>("idle");
+
+  const [documentData, setDocumentData] = useState<VerifyDocumentFormValues>({
+    documentType: undefined as unknown as VerifyDocumentFormValues["documentType"],
+    documentNumber: "",
+  });
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  const [basicInfo, setBasicInfo] =
+    useState<BasicInfoFormValues>(EMPTY_BASIC_INFO);
+  const [contactEmail, setContactEmail] =
+    useState<ContactEmailFormValues>(EMPTY_CONTACT_EMAIL);
+  const [contactPhone, setContactPhone] =
+    useState<ContactPhoneFormValues>(EMPTY_CONTACT_PHONE);
+  const [identityUpload, setIdentityUpload] =
+    useState<IdentityUploadFormValues>(EMPTY_IDENTITY_UPLOAD);
+  const [selfieFile, setSelfieFile] = useState<File | null>(EMPTY_SELFIE_FILE);
+  const [laborCertFile, setLaborCertFile] = useState<File | null>(
+    EMPTY_LABOR_CERT_FILE,
+  );
+
+  const { mutate: verifyDocument, isPending: isVerifying } =
+    useVerifyDocument();
+  const { mutate: registerUser, isPending: isRegistering } = useRegisterUser();
+  const { data: companies = [], isLoading: isLoadingCompanies } =
+    useCompanies();
+
+  const draftState = useMemo(
+    () => ({
+      step,
+      flowType,
+      verificationStatus,
+      documentData,
+      profile,
+      basicInfo,
+      contactEmail,
+      contactPhone,
+      identityUpload,
+      selfieFile,
+      laborCertFile,
+    }),
+    [
+      step,
+      flowType,
+      verificationStatus,
+      documentData,
+      profile,
+      basicInfo,
+      contactEmail,
+      contactPhone,
+      identityUpload,
+      selfieFile,
+      laborCertFile,
+    ],
+  );
+
+  useRegisterDraftPersistence({
+    enabled: isReady && !isHydrating,
+    state: draftState,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void hydrateRegisterDraftState()
+      .then((restored) => {
+        if (cancelled || !restored) return;
+
+        setStep(restored.step);
+        setFlowType(restored.flowType);
+        setVerificationStatus(restored.verificationStatus);
+        setDocumentData(restored.documentData);
+        setProfile(restored.profile);
+        setBasicInfo(restored.basicInfo);
+        setContactEmail(restored.contactEmail);
+        setContactPhone(restored.contactPhone);
+        setIdentityUpload(restored.identityUpload);
+        setSelfieFile(restored.selfieFile);
+        setLaborCertFile(restored.laborCertFile);
+        setDraftRestored(true);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsHydrating(false);
+        window.setTimeout(() => setIsReady(true), 450);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function handleVerify(values: VerifyDocumentFormValues) {
+    setDocumentData(values);
+
+    verifyDocument(values as VerifyDocumentRequest, {
+      onSuccess: (response) => {
+        if (response.exists && response.profile) {
+          setFlowType("existing");
+          setVerificationStatus("verified-existing");
+          setProfile({
+            ...response.profile,
+            email: "",
+            phone: "",
+          });
+          setStep("contact-email");
+          return;
+        }
+
+        setFlowType("new");
+        setVerificationStatus("verified-new");
+      },
+    });
+  }
+
+  function handleProceedNewUser() {
+    setStep("basic-info");
+  }
+
+  async function handleBasicInfoSubmit(values: BasicInfoFormValues) {
+    const cities = await loadColombianCities();
+    const city = cities.find((item) => item.id === values.cityId);
+
+    setBasicInfo(values);
+    setProfile(toProfileFromBasicInfo(values, companies, city?.name ?? ""));
+    setStep("contact-email");
+  }
+
+  function handleContactEmailSubmit(values: ContactEmailFormValues) {
+    setContactEmail(values);
+    setProfile((current) =>
+      current
+        ? { ...current, email: normalizeEmail(values.email) }
+        : current,
+    );
+    setStep("contact-phone");
+  }
+
+  function handleContactPhoneSubmit(values: ContactPhoneFormValues) {
+    setContactPhone(values);
+    setProfile((current) =>
+      current
+        ? { ...current, phone: sanitizeColombianPhone(values.phone) }
+        : current,
+    );
+    setStep("identity-upload");
+  }
+
+  function handleIdentityUploadSubmit(values: IdentityUploadFormValues) {
+    setIdentityUpload(values);
+    setStep("review");
+  }
+
+  function handleReviewSubmit(values: ReviewStepFormValues) {
+    const company = companies.find((item) => item.id === values.companyId);
+
+    setBasicInfo((current) => ({
+      ...current,
+      firstNames: values.firstNames,
+      lastNames: values.lastNames,
+      gender: values.gender,
+      address: values.address,
+      companyId: values.companyId,
+    }));
+
+    setContactEmail((current) => ({
+      ...current,
+      email: values.email,
+    }));
+
+    setContactPhone((current) => ({
+      ...current,
+      phone: values.phone,
+    }));
+
+    setProfile((current) =>
+      current
+        ? {
+            ...current,
+            firstNames: values.firstNames,
+            lastNames: values.lastNames,
+            gender: values.gender,
+            address: values.address,
+            companyId: values.companyId,
+            companyName: company?.name ?? current.companyName,
+            email: normalizeEmail(values.email),
+            phone: sanitizeColombianPhone(values.phone),
+          }
+        : current,
+    );
+
+    setStep("selfie-validation");
+  }
+
+  function handleSelfieValidationSubmit(file: File) {
+    setSelfieFile(file);
+    setStep("labor-certification");
+  }
+
+  function handleLaborCertificationSubmit(file: File) {
+    setLaborCertFile(file);
+    setStep("password");
+  }
+
+  function handlePasswordSubmit(values: PasswordFormValues) {
+    if (!profile || !identityUpload.frontFile || !selfieFile || !laborCertFile) {
+      return;
+    }
+
+    registerUser(
+      {
+        documentType: documentData.documentType,
+        documentNumber: documentData.documentNumber,
+        password: values.password,
+        profile,
+        identityFiles: {
+          front: identityUpload.frontFile,
+          back: identityUpload.backFile ?? undefined,
+          selfie: selfieFile,
+          laborCert: laborCertFile,
+        },
+      },
+      {
+        onSuccess: () => {
+          void clearRegisterDraft();
+        },
+      },
+    );
+  }
+
+  function getPreviousStep(): RegisterStepId | null {
+    switch (step) {
+      case "basic-info":
+        return "document";
+      case "contact-email":
+        return flowType === "new" ? "basic-info" : "document";
+      case "contact-phone":
+        return "contact-email";
+      case "identity-upload":
+        return "contact-phone";
+      case "review":
+        return "identity-upload";
+      case "selfie-validation":
+        return "review";
+      case "labor-certification":
+        return "selfie-validation";
+      case "password":
+        return "labor-certification";
+      default:
+        return null;
+    }
+  }
+
+  const header = STEP_HEADERS[step];
+  const isLoading = isVerifying || isRegistering;
+  const previousStep = getPreviousStep();
+
+  if (!isReady || isHydrating) {
+    return (
+      <div className="glass-card glow-border w-full max-w-[420px] overflow-hidden rounded-xl">
+        <div className="loading-bar">
+          <div className="animate-shimmer h-full w-full" />
+        </div>
+        <RegisterSkeleton />
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-scale-in w-full max-w-[480px]">
+      <RegisterCard
+        isLoading={isLoading}
+        loadingMessage={
+          isVerifying
+            ? "Consultando base de datos..."
+            : "Finalizando registro..."
+        }
+      >
+        {step !== "document" && (
+          <RegisterStepIndicator flowType={flowType} currentStep={step} />
+        )}
+
+        {draftRestored && (
+          <div className="animate-stagger-up mb-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+            <p className="flex items-start gap-2 text-sm text-foreground">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <span>
+                Recuperamos tu registro en progreso. Puedes continuar donde lo
+                dejaste.
+              </span>
+            </p>
+          </div>
+        )}
+
+        <div className="animate-stagger-up mb-8 space-y-2 text-center sm:text-left">
+          <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
+            {header.title}
+          </h2>
+          <p className="text-sm text-muted-foreground">{header.subtitle}</p>
+        </div>
+
+        {step === "document" && (
+          <RegisterDocumentStep
+            defaultValues={documentData}
+            verificationStatus={verificationStatus}
+            isVerifying={isVerifying}
+            onVerify={handleVerify}
+            onProceedNewUser={handleProceedNewUser}
+          />
+        )}
+
+        {step === "basic-info" && (
+          <RegisterBasicInfoStep
+            defaultValues={basicInfo}
+            companies={companies}
+            isLoadingCompanies={isLoadingCompanies}
+            isSubmitting={false}
+            onBack={() => setStep("document")}
+            onSubmit={handleBasicInfoSubmit}
+          />
+        )}
+
+        {step === "contact-email" && (
+          <RegisterContactEmailStep
+            defaultValues={contactEmail}
+            isSubmitting={false}
+            onBack={() => previousStep && setStep(previousStep)}
+            onSubmit={handleContactEmailSubmit}
+          />
+        )}
+
+        {step === "contact-phone" && (
+          <RegisterContactPhoneStep
+            defaultValues={contactPhone}
+            isSubmitting={false}
+            onBack={() => setStep("contact-email")}
+            onSubmit={handleContactPhoneSubmit}
+          />
+        )}
+
+        {step === "identity-upload" && documentData.documentType && (
+          <RegisterIdentityUploadStep
+            documentType={documentData.documentType}
+            documentNumber={documentData.documentNumber}
+            defaultValues={identityUpload}
+            isSubmitting={false}
+            onBack={() => setStep("contact-phone")}
+            onSubmit={handleIdentityUploadSubmit}
+          />
+        )}
+
+        {step === "review" && profile && documentData.documentType && (
+          <RegisterReviewStep
+            documentType={documentData.documentType}
+            documentNumber={documentData.documentNumber}
+            profile={profile}
+            companies={companies}
+            isLoadingCompanies={isLoadingCompanies}
+            isSubmitting={false}
+            onBack={() => setStep("identity-upload")}
+            onSubmit={handleReviewSubmit}
+          />
+        )}
+
+        {step === "selfie-validation" && identityUpload.frontFile && (
+          <RegisterSelfieValidationStep
+            defaultSelfieFile={selfieFile}
+            isSubmitting={false}
+            onBack={() => setStep("review")}
+            onSubmit={handleSelfieValidationSubmit}
+          />
+        )}
+
+        {step === "labor-certification" && profile && (
+          <RegisterLaborCertificationStep
+            profile={profile}
+            defaultLaborCertFile={laborCertFile}
+            isSubmitting={false}
+            onBack={() => setStep("selfie-validation")}
+            onSubmit={handleLaborCertificationSubmit}
+          />
+        )}
+
+        {step === "password" && profile && (
+          <RegisterPasswordStep
+            isExistingUser={flowType === "existing"}
+            isSubmitting={isRegistering}
+            onBack={() => setStep("labor-certification")}
+            onSubmit={handlePasswordSubmit}
+          />
+        )}
+
+        {step === "document" && (
+          <div className="animate-stagger-up stagger-5 mt-8 flex flex-col items-center gap-3 text-center">
+            <p className="text-sm text-muted-foreground">¿Ya tienes cuenta?</p>
+            <Button
+              variant="outline"
+              asChild
+              disabled={isLoading}
+              className="h-9 rounded-xl px-6 font-medium transition-all duration-300 hover:border-primary/40 hover:bg-primary/5"
+            >
+              <Link to={ROUTES.login}>Ingresar</Link>
+            </Button>
+          </div>
+        )}
+      </RegisterCard>
+    </div>
+  );
+}

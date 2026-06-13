@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
@@ -20,6 +21,7 @@ import {
   type LoginFormValues,
 } from "@/shared/validations/auth.schema";
 import type { LoginRequest } from "@/shared/api/types";
+import { ROUTES } from "@/shared/config/routes";
 
 function LoginSkeleton() {
   return (
@@ -217,12 +219,17 @@ export function LoginForm() {
           </form>
         </Form>
 
-        <p className="animate-stagger-up stagger-5 mt-8 text-center text-sm text-muted-foreground">
-          ¿Necesitas acceso?{" "}
-          <span className="font-medium text-gradient transition-opacity duration-300 hover:opacity-80">
-            Contacta a tu administrador
-          </span>
-        </p>
+        <div className="animate-stagger-up stagger-5 mt-8 flex flex-col items-center gap-3 text-center">
+          <p className="text-sm text-muted-foreground">¿Necesitas acceso?</p>
+          <Button
+            variant="outline"
+            asChild
+            disabled={isPending}
+            className="h-9 rounded-xl px-6 font-medium transition-all duration-300 hover:border-primary/40 hover:bg-primary/5"
+          >
+            <Link to={ROUTES.register}>Regístrate</Link>
+          </Button>
+        </div>
 
         {isPending && (
           <div

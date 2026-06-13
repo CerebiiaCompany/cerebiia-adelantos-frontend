@@ -1,4 +1,8 @@
 export { AuthProvider, useAuth } from "./model/AuthProvider";
 export { LoginForm } from "./ui/LoginForm";
+export { RegisterForm } from "./ui/RegisterForm";
 export { useLogin } from "./model/useLogin";
+export { useVerifyDocument } from "./model/useVerifyDocument";
+export { useCompanies } from "./model/useCompanies";
+export { useRegisterUser } from "./model/useRegisterUser";
 export { useLogout } from "./model/useLogout";

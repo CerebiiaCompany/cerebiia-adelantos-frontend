@@ -22,3 +22,12 @@ export interface ApiError {
   message: string;
   code: string;
 }
+
+export type {
+  VerifyDocumentRequest,
+  VerifyDocumentResponse,
+  UserProfileData,
+  CompanyOption,
+  RegisterUserRequest,
+  RegisterUserResponse,
+} from "./register";
