@@ -61,7 +61,7 @@ export function LoginForm() {
 
   if (!isReady) {
     return (
-      <div className="glass-card glow-border w-full max-w-[420px] overflow-hidden rounded-xl">
+      <div className="glass-card glow-border mx-auto w-full max-w-[420px] overflow-hidden rounded-xl">
         <div className="loading-bar">
           <div className="animate-shimmer h-full w-full" />
         </div>
@@ -71,7 +71,7 @@ export function LoginForm() {
   }
 
   return (
-    <div className="animate-scale-in w-full max-w-[420px]">
+    <div className="animate-scale-in mx-auto w-full max-w-[420px]">
       <div
         className={cn(
           "login-card glass-card glow-border relative overflow-hidden p-8 sm:p-10",
@@ -84,7 +84,7 @@ export function LoginForm() {
           </div>
         )}
 
-        <div className="animate-stagger-up mb-8 space-y-2 text-center sm:text-left">
+        <div className="animate-stagger-up mb-8 space-y-2 text-left">
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
             Bienvenido de nuevo
           </h2>
@@ -134,13 +134,12 @@ export function LoginForm() {
                     <FormLabel className="text-foreground/80">
                       Contraseña
                     </FormLabel>
-                    <button
-                      type="button"
-                      disabled={isPending}
-                      className="link-hover text-xs font-medium text-primary hover:text-primary/80 disabled:opacity-50"
+                    <Link
+                      to={ROUTES.forgotPassword}
+                      className="link-hover text-xs font-medium text-primary hover:text-primary/80"
                     >
                       ¿Olvidaste tu contraseña?
-                    </button>
+                    </Link>
                   </div>
                   <FormControl>
                     <div className="login-field relative rounded-xl">

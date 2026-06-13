@@ -124,7 +124,7 @@ export function RegisterPasswordStep({
         />
 
         <div className="animate-stagger-up stagger-2 rounded-xl border border-border/80 bg-muted/10 px-4 py-3">
-          <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:text-left">
+          <p className="mb-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Requisitos de contraseña
           </p>
           <ul className="space-y-2">
@@ -135,7 +135,7 @@ export function RegisterPasswordStep({
                 <li
                   key={requirement.id}
                   className={cn(
-                    "flex items-center justify-center gap-2 text-sm transition-colors lg:justify-start",
+                    "flex items-center justify-start gap-2 text-sm transition-colors",
                     passed ? "text-primary" : "text-muted-foreground",
                   )}
                 >
@@ -194,8 +194,8 @@ export function RegisterPasswordStep({
           )}
         />
 
-        <div className="animate-stagger-up stagger-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-center lg:text-left">
-          <p className="flex items-start justify-center gap-2 text-sm leading-relaxed text-foreground lg:justify-start">
+        <div className="animate-stagger-up stagger-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-left">
+          <p className="flex items-start gap-2 text-sm leading-relaxed text-foreground">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <span>
               <span className="font-semibold">Importante:</span> Conserva tu

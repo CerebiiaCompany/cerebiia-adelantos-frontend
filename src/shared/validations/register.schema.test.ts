@@ -65,6 +65,8 @@ describe("registerSchema", () => {
     const result = registerSchema.safeParse({
       documentType: "CC",
       documentNumber: "123",
+      acceptMandatorySensitiveTreatment: true,
+      acceptAccessoryTreatment: false,
     });
 
     expect(result.success).toBe(false);
@@ -79,9 +81,27 @@ describe("registerSchema", () => {
     const result = verifyDocumentSchema.safeParse({
       documentType: "CC",
       documentNumber: "1234567",
+      acceptMandatorySensitiveTreatment: true,
+      acceptAccessoryTreatment: false,
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("requiere autorización obligatoria y sensible", () => {
+    const result = verifyDocumentSchema.safeParse({
+      documentType: "CC",
+      documentNumber: "1234567",
+      acceptMandatorySensitiveTreatment: false,
+      acceptAccessoryTreatment: false,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        "Debes autorizar el tratamiento obligatorio y sensible para continuar.",
+      );
+    }
   });
 });
 

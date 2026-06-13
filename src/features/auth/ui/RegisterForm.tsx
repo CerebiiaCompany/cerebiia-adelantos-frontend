@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/shared/config/routes";
 import type {
   UserProfileData,
-  VerifyDocumentRequest,
 } from "@/shared/api/types";
 import { PAYMENT_DAY_DEFAULT } from "@/shared/constants/colombia";
 import { loadColombianCities } from "@/shared/constants/colombian-cities.loader";
@@ -45,6 +44,42 @@ import { RegisterPasswordStep } from "./steps/RegisterPasswordStep";
 import { RegisterReviewStep } from "./steps/RegisterReviewStep";
 import { RegisterSelfieValidationStep } from "./steps/RegisterSelfieValidationStep";
 import { RegisterLaborCertificationStep } from "./steps/RegisterLaborCertificationStep";
+import {
+  RegisterStepTransition,
+  type RegisterStepDirection,
+} from "./RegisterStepTransition";
+
+const NEW_USER_STEP_ORDER: RegisterStepId[] = [
+  "document",
+  "basic-info",
+  "contact-email",
+  "contact-phone",
+  "identity-upload",
+  "review",
+  "selfie-validation",
+  "labor-certification",
+  "password",
+];
+
+const EXISTING_USER_STEP_ORDER: RegisterStepId[] = [
+  "document",
+  "contact-email",
+  "contact-phone",
+  "identity-upload",
+  "review",
+  "selfie-validation",
+  "labor-certification",
+  "password",
+];
+
+function getStepOrderIndex(
+  stepId: RegisterStepId,
+  flowType: RegisterFlowType,
+): number {
+  const order =
+    flowType === "existing" ? EXISTING_USER_STEP_ORDER : NEW_USER_STEP_ORDER;
+  return order.indexOf(stepId);
+}
 
 const EMPTY_BASIC_INFO: BasicInfoFormValues = {
   firstNames: "",
@@ -107,7 +142,8 @@ const STEP_HEADERS: Record<
   },
   "selfie-validation": {
     title: "Validación facial",
-    subtitle: "Toma una selfie clara para confirmar tu identidad",
+    subtitle:
+      "Toma una selfie sosteniendo en mano el documento que cargaste, junto a tu rostro",
   },
   "labor-certification": {
     title: "Certificación laboral",
@@ -162,6 +198,8 @@ export function RegisterForm() {
   const [isReady, setIsReady] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);
   const [step, setStep] = useState<RegisterStepId>("document");
+  const [stepDirection, setStepDirection] =
+    useState<RegisterStepDirection>("forward");
   const [flowType, setFlowType] = useState<RegisterFlowType>("new");
   const [verificationStatus, setVerificationStatus] =
     useState<DocumentVerificationStatus>("idle");
@@ -169,6 +207,8 @@ export function RegisterForm() {
   const [documentData, setDocumentData] = useState<VerifyDocumentFormValues>({
     documentType: undefined as unknown as VerifyDocumentFormValues["documentType"],
     documentNumber: "",
+    acceptMandatorySensitiveTreatment: false,
+    acceptAccessoryTreatment: false,
   });
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [basicInfo, setBasicInfo] =
@@ -233,8 +273,19 @@ export function RegisterForm() {
 
         setStep(restored.step);
         setFlowType(restored.flowType);
-        setVerificationStatus(restored.verificationStatus);
-        setDocumentData(restored.documentData);
+        setVerificationStatus(
+          restored.verificationStatus !== "idle" &&
+            !restored.documentData.acceptMandatorySensitiveTreatment
+            ? "idle"
+            : restored.verificationStatus,
+        );
+        setDocumentData({
+          ...restored.documentData,
+          acceptMandatorySensitiveTreatment:
+            restored.documentData.acceptMandatorySensitiveTreatment ?? false,
+          acceptAccessoryTreatment:
+            restored.documentData.acceptAccessoryTreatment ?? false,
+        });
         setProfile(restored.profile);
         setBasicInfo(restored.basicInfo);
         setContactEmail(restored.contactEmail);
@@ -254,31 +305,57 @@ export function RegisterForm() {
     };
   }, []);
 
+  const goToStep = useCallback(
+    (next: RegisterStepId) => {
+      const currentIdx = getStepOrderIndex(step, flowType);
+      const nextIdx = getStepOrderIndex(next, flowType);
+
+      if (currentIdx !== -1 && nextIdx !== -1) {
+        setStepDirection(nextIdx >= currentIdx ? "forward" : "back");
+      } else {
+        setStepDirection("forward");
+      }
+
+      setStep(next);
+    },
+    [flowType, step],
+  );
+
   function handleVerify(values: VerifyDocumentFormValues) {
+    if (!values.acceptMandatorySensitiveTreatment) {
+      return;
+    }
+
     setDocumentData(values);
 
-    verifyDocument(values as VerifyDocumentRequest, {
-      onSuccess: (response) => {
-        if (response.exists && response.profile) {
-          setFlowType("existing");
-          setVerificationStatus("verified-existing");
-          setProfile({
-            ...response.profile,
-            email: "",
-            phone: "",
-          });
-          setStep("contact-email");
-          return;
-        }
-
-        setFlowType("new");
-        setVerificationStatus("verified-new");
+    verifyDocument(
+      {
+        documentType: values.documentType,
+        documentNumber: values.documentNumber,
       },
-    });
+      {
+        onSuccess: (response) => {
+          if (response.exists && response.profile) {
+            setFlowType("existing");
+            setVerificationStatus("verified-existing");
+            setProfile({
+              ...response.profile,
+              email: "",
+              phone: "",
+            });
+            goToStep("contact-email");
+            return;
+          }
+
+          setFlowType("new");
+          setVerificationStatus("verified-new");
+        },
+      },
+    );
   }
 
   function handleProceedNewUser() {
-    setStep("basic-info");
+    goToStep("basic-info");
   }
 
   async function handleBasicInfoSubmit(values: BasicInfoFormValues) {
@@ -287,7 +364,7 @@ export function RegisterForm() {
 
     setBasicInfo(values);
     setProfile(toProfileFromBasicInfo(values, companies, city?.name ?? ""));
-    setStep("contact-email");
+    goToStep("contact-email");
   }
 
   function handleContactEmailSubmit(values: ContactEmailFormValues) {
@@ -297,7 +374,7 @@ export function RegisterForm() {
         ? { ...current, email: normalizeEmail(values.email) }
         : current,
     );
-    setStep("contact-phone");
+    goToStep("contact-phone");
   }
 
   function handleContactPhoneSubmit(values: ContactPhoneFormValues) {
@@ -307,12 +384,12 @@ export function RegisterForm() {
         ? { ...current, phone: sanitizeColombianPhone(values.phone) }
         : current,
     );
-    setStep("identity-upload");
+    goToStep("identity-upload");
   }
 
   function handleIdentityUploadSubmit(values: IdentityUploadFormValues) {
     setIdentityUpload(values);
-    setStep("review");
+    goToStep("review");
   }
 
   function handleReviewSubmit(values: ReviewStepFormValues) {
@@ -353,17 +430,17 @@ export function RegisterForm() {
         : current,
     );
 
-    setStep("selfie-validation");
+    goToStep("selfie-validation");
   }
 
   function handleSelfieValidationSubmit(file: File) {
     setSelfieFile(file);
-    setStep("labor-certification");
+    goToStep("labor-certification");
   }
 
   function handleLaborCertificationSubmit(file: File) {
     setLaborCertFile(file);
-    setStep("password");
+    goToStep("password");
   }
 
   function handlePasswordSubmit(values: PasswordFormValues) {
@@ -421,7 +498,7 @@ export function RegisterForm() {
 
   if (!isReady || isHydrating) {
     return (
-      <div className="glass-card glow-border mx-auto w-full max-w-[420px] overflow-hidden rounded-xl">
+      <div className="glass-card glow-border w-full max-w-[420px] overflow-hidden rounded-xl lg:mx-auto">
         <div className="loading-bar">
           <div className="animate-shimmer h-full w-full" />
         </div>
@@ -431,7 +508,7 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="animate-scale-in mx-auto w-full max-w-[480px]">
+    <div className="animate-scale-in w-full max-w-[480px] lg:mx-auto">
       <RegisterCard
         isLoading={isLoading}
         loadingMessage={
@@ -441,19 +518,32 @@ export function RegisterForm() {
         }
       >
         {step !== "document" && (
-          <RegisterStepIndicator flowType={flowType} currentStep={step} />
+          <RegisterStepTransition
+            stepKey={`indicator-${step}`}
+            direction={stepDirection}
+          >
+            <RegisterStepIndicator flowType={flowType} currentStep={step} />
+          </RegisterStepTransition>
         )}
 
-        <div className="animate-stagger-up mb-8 space-y-2 text-center lg:text-left">
+        <RegisterStepTransition
+          stepKey={`header-${step}`}
+          direction={stepDirection}
+          className="mb-8 space-y-2 text-left"
+        >
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
             {header.title}
           </h2>
-          <p className="mx-auto max-w-sm text-sm text-muted-foreground lg:mx-0 lg:max-w-none">
+          <p className="max-w-sm text-sm text-muted-foreground lg:max-w-none">
             {header.subtitle}
           </p>
-        </div>
+        </RegisterStepTransition>
 
-        <div className="register-step-content">
+        <RegisterStepTransition
+          stepKey={`content-${step}`}
+          direction={stepDirection}
+          className="register-step-content"
+        >
         {step === "document" && (
           <RegisterDocumentStep
             defaultValues={documentData}
@@ -470,7 +560,7 @@ export function RegisterForm() {
             companies={companies}
             isLoadingCompanies={isLoadingCompanies}
             isSubmitting={false}
-            onBack={() => setStep("document")}
+            onBack={() => goToStep("document")}
             onSubmit={handleBasicInfoSubmit}
           />
         )}
@@ -479,7 +569,7 @@ export function RegisterForm() {
           <RegisterContactEmailStep
             defaultValues={contactEmail}
             isSubmitting={false}
-            onBack={() => previousStep && setStep(previousStep)}
+            onBack={() => previousStep && goToStep(previousStep)}
             onSubmit={handleContactEmailSubmit}
           />
         )}
@@ -488,7 +578,7 @@ export function RegisterForm() {
           <RegisterContactPhoneStep
             defaultValues={contactPhone}
             isSubmitting={false}
-            onBack={() => setStep("contact-email")}
+            onBack={() => goToStep("contact-email")}
             onSubmit={handleContactPhoneSubmit}
           />
         )}
@@ -499,7 +589,7 @@ export function RegisterForm() {
             documentNumber={documentData.documentNumber}
             defaultValues={identityUpload}
             isSubmitting={false}
-            onBack={() => setStep("contact-phone")}
+            onBack={() => goToStep("contact-phone")}
             onSubmit={handleIdentityUploadSubmit}
           />
         )}
@@ -512,7 +602,7 @@ export function RegisterForm() {
             companies={companies}
             isLoadingCompanies={isLoadingCompanies}
             isSubmitting={false}
-            onBack={() => setStep("identity-upload")}
+            onBack={() => goToStep("identity-upload")}
             onSubmit={handleReviewSubmit}
           />
         )}
@@ -521,7 +611,7 @@ export function RegisterForm() {
           <RegisterSelfieValidationStep
             defaultSelfieFile={selfieFile}
             isSubmitting={false}
-            onBack={() => setStep("review")}
+            onBack={() => goToStep("review")}
             onSubmit={handleSelfieValidationSubmit}
           />
         )}
@@ -531,7 +621,7 @@ export function RegisterForm() {
             profile={profile}
             defaultLaborCertFile={laborCertFile}
             isSubmitting={false}
-            onBack={() => setStep("selfie-validation")}
+            onBack={() => goToStep("selfie-validation")}
             onSubmit={handleLaborCertificationSubmit}
           />
         )}
@@ -540,14 +630,18 @@ export function RegisterForm() {
           <RegisterPasswordStep
             isExistingUser={flowType === "existing"}
             isSubmitting={isRegistering}
-            onBack={() => setStep("labor-certification")}
+            onBack={() => goToStep("labor-certification")}
             onSubmit={handlePasswordSubmit}
           />
         )}
-        </div>
+        </RegisterStepTransition>
 
         {step === "document" && (
-          <div className="animate-stagger-up stagger-5 mt-8 flex flex-col items-center gap-3 text-center">
+          <RegisterStepTransition
+            stepKey="document-footer"
+            direction={stepDirection}
+            className="mt-8 flex flex-col items-center gap-3 text-center"
+          >
             <p className="text-sm text-muted-foreground">¿Ya tienes cuenta?</p>
             <Button
               variant="outline"
@@ -557,7 +651,7 @@ export function RegisterForm() {
             >
               <Link to={ROUTES.login}>Ingresar</Link>
             </Button>
-          </div>
+          </RegisterStepTransition>
         )}
       </RegisterCard>
     </div>

@@ -12,6 +12,7 @@ import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
 import RegisterValidationPendingPage from "@/pages/public/RegisterValidationPendingPage";
+import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage";
 import { AuthGuard } from "@/app/router/guards/AuthGuard";
 import { GuestGuard } from "@/app/router/guards/GuestGuard";
 
@@ -21,6 +22,10 @@ export function AppRouter() {
       <Routes>
         <Route element={<GuestGuard />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/recuperar-contrasena"
+            element={<ForgotPasswordPage />}
+          />
           <Route path="/registro" element={<RegisterPage />} />
           <Route
             path="/registro/validacion"

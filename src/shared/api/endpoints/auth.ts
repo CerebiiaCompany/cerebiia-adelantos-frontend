@@ -3,6 +3,8 @@ import { http } from "../client";
 import type {
   LoginRequest,
   AuthResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
   VerifyDocumentRequest,
   VerifyDocumentResponse,
   RegisterUserRequest,
@@ -13,6 +15,8 @@ export const authEndpoints = {
   login: (data: LoginRequest) => http.post<AuthResponse>("/auth/login", data),
   logout: () => http.post<void>("/auth/logout", {}),
   me: () => http.get<AuthResponse>("/auth/me"),
+  forgotPassword: (data: ForgotPasswordRequest) =>
+    http.post<ForgotPasswordResponse>("/auth/password/forgot", data),
   verifyDocument: (data: VerifyDocumentRequest) =>
     http.post<VerifyDocumentResponse>("/auth/register/verify", data),
   register: (data: RegisterUserRequest) =>

@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, IdCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -54,28 +55,43 @@ export function RegisterDocumentStep({
 }: RegisterDocumentStepProps) {
   const form = useForm<VerifyDocumentFormValues>({
     resolver: zodResolver(verifyDocumentSchema),
-    defaultValues,
+    defaultValues: {
+      ...defaultValues,
+      acceptMandatorySensitiveTreatment:
+        defaultValues.acceptMandatorySensitiveTreatment ?? false,
+      acceptAccessoryTreatment:
+        defaultValues.acceptAccessoryTreatment ?? false,
+    },
   });
 
   const documentType = form.watch("documentType");
+  const hasMandatoryConsent = form.watch("acceptMandatorySensitiveTreatment");
   const isVerifiedNew = verificationStatus === "verified-new";
-  const isLocked = verificationStatus !== "idle";
+  const isDocumentLocked = verificationStatus !== "idle";
+  const showVerifiedSuccess = isVerifiedNew && hasMandatoryConsent;
+  const canSubmit = hasMandatoryConsent && !isVerifying;
 
   useEffect(() => {
-    if (!documentType || isLocked) return;
+    if (!documentType || isDocumentLocked) return;
 
     const current = form.getValues("documentNumber");
     const sanitized = sanitizeDocumentNumber(documentType, current);
     if (sanitized !== current) {
       form.setValue("documentNumber", sanitized, { shouldValidate: true });
     }
-  }, [documentType, form, isLocked]);
+  }, [documentType, form, isDocumentLocked]);
 
   function handleSubmit(values: VerifyDocumentFormValues) {
+    if (!values.acceptMandatorySensitiveTreatment) {
+      void form.trigger("acceptMandatorySensitiveTreatment");
+      return;
+    }
+
     if (isVerifiedNew) {
       onProceedNewUser();
       return;
     }
+
     onVerify(values);
   }
 
@@ -108,7 +124,7 @@ export function RegisterDocumentStep({
                   form.trigger("documentNumber");
                 }}
                 value={field.value}
-                disabled={isVerifying || isLocked}
+                disabled={isVerifying || isDocumentLocked}
               >
                 <FormControl>
                   <SelectTrigger className="login-field h-11 rounded-xl border-border/80 bg-background/80 text-left transition-all duration-300 focus:ring-primary/30 disabled:opacity-60">
@@ -149,7 +165,7 @@ export function RegisterDocumentStep({
                         ? documentPlaceholders[documentType]
                         : "Selecciona primero el tipo de documento"
                     }
-                    disabled={isVerifying || !documentType || isLocked}
+                    disabled={isVerifying || !documentType || isDocumentLocked}
                     inputMode={
                       documentType === "PASSPORT" ? "text" : "numeric"
                     }
@@ -172,10 +188,77 @@ export function RegisterDocumentStep({
           )}
         />
 
-        {isVerifiedNew && (
+        <FormField
+          control={form.control}
+          name="acceptMandatorySensitiveTreatment"
+          render={({ field }) => (
+            <FormItem className="animate-stagger-up stagger-3 flex flex-row items-start gap-3 space-y-0 rounded-xl border border-border/60 bg-background/40 p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  disabled={isVerifying}
+                  className="mt-0.5"
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="cursor-pointer text-sm font-normal leading-relaxed text-foreground">
+                  Autorizo el tratamiento de mis datos para finalidades
+                  obligatorias y sensibles.{" "}
+                  <a
+                    href="#"
+                    className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+                    onClick={(event) => event.preventDefault()}
+                  >
+                    Ver términos y condiciones y política de tratamiento de
+                    datos.
+                  </a>
+                </FormLabel>
+                <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="acceptAccessoryTreatment"
+          render={({ field }) => (
+            <FormItem className="animate-stagger-up stagger-4 flex flex-row items-start gap-3 space-y-0 rounded-xl border border-border/60 bg-background/40 p-4">
+              <FormControl>
+                <Checkbox
+                  checked={field.value ?? false}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  disabled={isVerifying}
+                  className="mt-0.5"
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="cursor-pointer text-sm font-normal leading-relaxed text-foreground">
+                  Autorizo el tratamiento de mis datos para finalidades
+                  accesorias.{" "}
+                  <a
+                    href="#"
+                    className="font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+                    onClick={(event) => event.preventDefault()}
+                  >
+                    Ver detalle de finalidades accesorias.
+                  </a>
+                </FormLabel>
+                <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
+
+        {showVerifiedSuccess && (
           <div
             role="status"
-            className="animate-stagger-up stagger-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
+            className="animate-stagger-up stagger-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
           >
             Documento verificado. No encontramos una cuenta asociada. Completa
             tus datos para registrarte.
@@ -184,10 +267,11 @@ export function RegisterDocumentStep({
 
         <Button
           type="submit"
-          disabled={isVerifying}
+          disabled={!canSubmit}
           className={cn(
-            "btn-login animate-stagger-up stagger-4 h-11 w-full rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
+            "btn-login animate-stagger-up stagger-6 h-11 w-full rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
             isVerifying && "animate-pulse-glow",
+            !canSubmit && "opacity-60",
           )}
         >
           {isVerifying ? (

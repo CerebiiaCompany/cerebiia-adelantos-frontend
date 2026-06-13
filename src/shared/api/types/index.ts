@@ -5,6 +5,14 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
 export interface AuthResponse {
   token: string;
   role: "employee" | "employer" | "admin";

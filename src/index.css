@@ -166,11 +166,11 @@
   }
 
   .register-step-content label {
-    @apply block text-center lg:text-left;
+    @apply block text-left;
   }
 
   .register-step-content .text-destructive {
-    @apply text-center lg:text-left;
+    @apply text-left;
   }
 
   .login-card {
@@ -277,6 +277,26 @@
     @apply absolute left-0 top-0 h-0.5 w-full overflow-hidden rounded-t-xl;
   }
 
+  .auth-page-enter {
+    animation: auth-page-enter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .auth-step-enter-forward {
+    animation: auth-step-enter-forward 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .auth-step-enter-back {
+    animation: auth-step-enter-back 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .auth-view-enter {
+    animation: auth-view-enter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .auth-step-indicator-pulse {
+    animation: auth-step-indicator-pulse 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-float,
     .animate-pulse-glow,
@@ -288,7 +308,12 @@
     .animate-shake,
     .animate-blob,
     .animate-blob-delayed,
-    .animate-spin-slow {
+    .animate-spin-slow,
+    .auth-page-enter,
+    .auth-step-enter-forward,
+    .auth-step-enter-back,
+    .auth-view-enter,
+    .auth-step-indicator-pulse {
       animation: none !important;
     }
 
@@ -352,4 +377,83 @@
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes auth-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes auth-step-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes auth-step-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes auth-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-step-indicator-pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  @keyframes auth-step-enter-forward {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes auth-step-enter-back {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

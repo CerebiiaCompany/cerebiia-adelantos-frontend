@@ -76,6 +76,11 @@ export const verifyDocumentSchema = z
       invalid_type_error: "Selecciona un tipo de documento",
     }),
     documentNumber: z.string().min(1, "Ingresa el número de documento"),
+    acceptMandatorySensitiveTreatment: z.boolean().refine((value) => value === true, {
+      message:
+        "Debes autorizar el tratamiento obligatorio y sensible para continuar.",
+    }),
+    acceptAccessoryTreatment: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     const trimmed = data.documentNumber.trim();

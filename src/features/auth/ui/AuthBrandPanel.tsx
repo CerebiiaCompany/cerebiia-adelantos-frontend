@@ -92,7 +92,7 @@ export function AuthBrandPanel({ title, description }: AuthBrandPanelProps) {
             </div>
           </div>
 
-          <p className="animate-stagger-up stagger-6 shrink-0 text-sm text-primary-foreground/60">
+          <p className="animate-stagger-up stagger-6 shrink-0 text-center text-sm text-primary-foreground/60">
             © {new Date().getFullYear()} Cerebiia · Todos los derechos reservados
           </p>
         </div>

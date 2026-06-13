@@ -1,29 +1,29 @@
-import { RegisterValidationPendingContent } from "@/features/auth/ui/RegisterValidationPendingContent";
+import { ForgotPasswordForm } from "@/features/auth/ui/ForgotPasswordForm";
 import { AuthBrandPanel } from "@/features/auth/ui/AuthBrandPanel";
 import { AuthPageShell } from "@/features/auth/ui/AuthPageShell";
 
-export default function RegisterValidationPendingPage() {
+export default function ForgotPasswordPage() {
   return (
     <AuthPageShell
       brandPanel={
         <AuthBrandPanel
           title={
             <>
-              Tu registro
+              Recupera tu
               <br />
-              está en revisión.
+              acceso seguro.
             </>
           }
           description={
             <>
-              Validaremos tu información para habilitar tu acceso y tu cupo de
-              crédito con total seguridad.
+              Te ayudamos a restablecer tu contraseña con un proceso verificado,
+              rápido y protegido para tu tranquilidad.
             </>
           }
         />
       }
     >
-      <RegisterValidationPendingContent />
+      <ForgotPasswordForm />
     </AuthPageShell>
   );
 }

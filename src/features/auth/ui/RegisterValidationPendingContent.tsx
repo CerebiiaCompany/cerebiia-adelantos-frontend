@@ -9,7 +9,7 @@ export function RegisterValidationPendingContent() {
   const navigate = useNavigate();
 
   return (
-    <div className="animate-scale-in mx-auto w-full max-w-[480px]">
+    <div className="animate-scale-in w-full max-w-[480px] lg:mx-auto">
       <RegisterCard>
         <div
           className={cn(
@@ -33,7 +33,7 @@ export function RegisterValidationPendingContent() {
             aria-hidden="true"
           />
 
-          <div className="relative flex flex-col items-center gap-3 text-center lg:flex-row lg:items-center lg:text-left">
+          <div className="relative flex items-center gap-3">
             <div
               className={cn(
                 "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
@@ -56,7 +56,7 @@ export function RegisterValidationPendingContent() {
           </div>
         </div>
 
-        <div className="animate-stagger-up stagger-2 mt-8 space-y-6 text-center lg:text-left">
+        <div className="animate-stagger-up stagger-2 mt-8 space-y-6 text-left">
           <h2 className="font-display text-2xl font-bold leading-tight tracking-tight text-primary sm:text-[1.65rem]">
             Validación de identidad en proceso
           </h2>

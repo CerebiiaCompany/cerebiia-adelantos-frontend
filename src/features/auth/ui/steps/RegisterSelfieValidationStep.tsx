@@ -28,6 +28,12 @@ import {
 
 const UPLOAD_ACCEPT = ".jpg,.jpeg,.png,image/jpeg,image/png";
 
+const SELFIE_DOCUMENT_INSTRUCTION =
+  "Debes aparecer sosteniendo en mano el mismo documento de identidad que cargaste en el paso anterior, junto a tu rostro y mirando de frente a la cámara.";
+
+const SELFIE_DOCUMENT_UPLOAD_INSTRUCTION =
+  "Sube una foto donde aparezcas sosteniendo en mano el mismo documento de identidad que cargaste en el paso anterior, junto a tu rostro y mirando de frente.";
+
 interface RegisterSelfieValidationStepProps {
   defaultSelfieFile: File | null;
   isSubmitting: boolean;
@@ -60,7 +66,9 @@ export function RegisterSelfieValidationStep({
       ? "Preparando cámara y modelos de validación..."
       : "Sube una foto clara de tu rostro",
   );
-  const [liveHint, setLiveHint] = useState("Centra tu rostro dentro del marco");
+  const [liveHint, setLiveHint] = useState(
+    "Sostén tu documento junto a tu rostro dentro del marco",
+  );
   const [selectedUploadFile, setSelectedUploadFile] = useState<File | null>(null);
   const [validatedFile, setValidatedFile] = useState<File | null>(
     defaultSelfieFile,
@@ -129,12 +137,12 @@ export function RegisterSelfieValidationStep({
         if (count === 0) {
           setLiveHint("Acércate y asegúrate de que tu rostro sea visible");
         } else if (count > 1) {
-          setLiveHint("Debe aparecer solo tu rostro en la cámara");
+          setLiveHint("Debe aparecer solo tu rostro y el documento en la cámara");
         } else {
-          setLiveHint("Rostro detectado. Puedes capturar la foto");
+          setLiveHint("Rostro detectado. Sostén el documento y captura la foto");
         }
       } catch {
-        setLiveHint("Centra tu rostro dentro del marco");
+        setLiveHint("Sostén tu documento junto a tu rostro dentro del marco");
       }
     }, 900);
   }, [isValidating]);
@@ -179,9 +187,13 @@ export function RegisterSelfieValidationStep({
       return;
     }
 
+    if (defaultSelfieFile) {
+      return;
+    }
+
     void startCamera();
     return () => stopCamera();
-  }, [useLiveCamera, startCamera, stopCamera]);
+  }, [useLiveCamera, startCamera, stopCamera, defaultSelfieFile]);
 
   useEffect(() => {
     if (!validatedFile) {
@@ -220,6 +232,8 @@ export function RegisterSelfieValidationStep({
       const file = await canvasToFile(canvas, "selfie-validacion.jpg");
       setValidatedFile(file);
       stopCamera();
+      setCameraStatus("ready");
+      setCameraMessage("");
     }
   }
 
@@ -254,7 +268,7 @@ export function RegisterSelfieValidationStep({
     setSelectedUploadFile(null);
 
     if (useLiveCamera) {
-      setLiveHint("Centra tu rostro dentro del marco");
+      setLiveHint("Sostén tu documento junto a tu rostro dentro del marco");
       void startCamera();
     }
   }
@@ -272,12 +286,21 @@ export function RegisterSelfieValidationStep({
   const showRetry =
     state.phase === "complete" && !state.isValid && !isValidating;
   const showValidatedPreview = Boolean(previewUrl);
-  const showDesktopUpload = !useLiveCamera && !showValidatedPreview;
+  const cameraUnavailable =
+    cameraStatus === "denied" || cameraStatus === "error";
+  const showCameraError =
+    useLiveCamera && cameraUnavailable && !showValidatedPreview;
+  const showLiveCameraViewer =
+    useLiveCamera && (!cameraUnavailable || showValidatedPreview);
+  const showLiveCaptureControls =
+    useLiveCamera && !showValidatedPreview && !cameraUnavailable;
+  const showUploadSection =
+    !showValidatedPreview && (!useLiveCamera || cameraUnavailable);
 
   return (
     <div className="space-y-4">
       <div className="animate-stagger-up stagger-1 rounded-xl border border-border/80 bg-muted/20 px-4 py-4">
-        <div className="flex flex-col items-center gap-3 text-center lg:flex-row lg:items-start lg:text-left">
+        <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <ShieldCheck className="h-4 w-4" />
           </div>
@@ -289,14 +312,14 @@ export function RegisterSelfieValidationStep({
             </p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               {useLiveCamera
-                ? "Toma una selfie clara mirando de frente, con buena luz."
-                : "Sube una foto clara de tu rostro mirando de frente."}
+                ? SELFIE_DOCUMENT_INSTRUCTION
+                : SELFIE_DOCUMENT_UPLOAD_INSTRUCTION}
             </p>
           </div>
         </div>
       </div>
 
-      {useLiveCamera && (
+      {showLiveCameraViewer && (
         <div className="animate-stagger-up stagger-2 relative overflow-hidden rounded-xl border border-primary/20 bg-background/80">
           <div className="relative aspect-[4/5] max-h-[320px] w-full bg-muted/30">
             {showValidatedPreview ? (
@@ -342,7 +365,7 @@ export function RegisterSelfieValidationStep({
         </div>
       )}
 
-      {showDesktopUpload && (
+      {showUploadSection && (
         <div className="animate-stagger-up stagger-2 space-y-3">
           <input
             ref={uploadInputRef}
@@ -404,16 +427,16 @@ export function RegisterSelfieValidationStep({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <div className="flex flex-col items-start gap-3 py-4 text-left">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-primary/20 bg-primary/5">
                   <Upload className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-display text-sm font-bold uppercase tracking-wide text-primary">
-                    Subir foto de rostro
+                    Subir foto con documento
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    JPG o PNG · rostro centrado y bien iluminado
+                    JPG o PNG · rostro y documento visibles, bien iluminados
                   </p>
                 </div>
               </div>
@@ -432,19 +455,19 @@ export function RegisterSelfieValidationStep({
         </div>
       )}
 
-      {useLiveCamera &&
-        (cameraStatus === "denied" || cameraStatus === "error") && (
-          <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-            {cameraMessage}
-          </div>
-        )}
+      {showCameraError && (
+        <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <p>{cameraMessage}</p>
+          <p className="mt-2 text-xs text-destructive/90">
+            También puedes subir una foto con el selector de archivos.
+          </p>
+        </div>
+      )}
 
       <SelfieValidationChecks state={state} />
 
       <div className="animate-stagger-up stagger-3 flex flex-col gap-3 sm:flex-row">
-        {useLiveCamera &&
-          !showValidatedPreview &&
-          cameraStatus === "ready" && (
+        {showLiveCaptureControls && cameraStatus === "ready" && (
             <Button
               type="button"
               onClick={() => void handleCapture()}
@@ -462,7 +485,7 @@ export function RegisterSelfieValidationStep({
             </Button>
           )}
 
-        {showDesktopUpload && selectedUploadFile && (
+        {showUploadSection && selectedUploadFile && (
           <Button
             type="button"
             onClick={() => void handleUploadValidate()}

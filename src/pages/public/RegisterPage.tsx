@@ -8,7 +8,6 @@ import { AuthPageShell } from "@/features/auth/ui/AuthPageShell";
 export default function RegisterPage() {
   return (
     <AuthPageShell
-      centerMobileLogo
       brandPanel={
         <AuthBrandPanel
           title={<AuthDefaultHeadline />}

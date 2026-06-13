@@ -36,6 +36,8 @@ export interface RegisterDraftSnapshot {
   documentData: {
     documentType?: string;
     documentNumber: string;
+    acceptMandatorySensitiveTreatment?: boolean;
+    acceptAccessoryTreatment?: boolean;
   };
   profile: UserProfileData | null;
   basicInfo: BasicInfoFormValues;

@@ -104,7 +104,7 @@ export function RegisterLaborCertificationStep({
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <div className="animate-stagger-up stagger-1 rounded-xl border border-border/80 bg-muted/20 px-4 py-4">
-        <div className="flex flex-col items-center gap-3 text-center lg:flex-row lg:items-start lg:text-left">
+        <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <BriefcaseBusiness className="h-4 w-4" />
           </div>
@@ -123,7 +123,7 @@ export function RegisterLaborCertificationStep({
         </div>
       </div>
 
-      <div className="animate-stagger-up stagger-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-center lg:text-left">
+      <div className="animate-stagger-up stagger-2 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-left">
         <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
           <span className="font-semibold">Recuerda:</span> Solo puedes subir el
           documento original. No se aceptan documentos con contraseña o
@@ -132,7 +132,7 @@ export function RegisterLaborCertificationStep({
       </div>
 
       <div className="animate-stagger-up stagger-3 rounded-xl border border-border/80 bg-background/60 px-4 py-4">
-        <p className="mb-3 text-center text-sm font-semibold text-foreground lg:text-left">
+        <p className="mb-3 text-sm font-semibold text-foreground">
           Requisitos del documento
         </p>
         <ul className="space-y-2.5">
@@ -141,7 +141,6 @@ export function RegisterLaborCertificationStep({
             `Tamaño máximo: ${IDENTITY_UPLOAD_MAX_MB} MB.`,
             "Documento legible, completo y sin cortes.",
             "Debe corresponder a una certificación laboral vigente.",
-            "Incluye nombre, empresa, cargo y fecha de vinculación o expedición.",
           ].map((requirement) => (
             <li
               key={requirement}
@@ -191,7 +190,7 @@ export function RegisterLaborCertificationStep({
               type="button"
               disabled={isSubmitting || isAnalyzing}
               onClick={() => inputRef.current?.click()}
-              className="flex w-full flex-col items-center gap-3 px-4 py-8 text-center"
+              className="flex w-full flex-col items-start gap-3 px-4 py-8 text-left"
             >
               <GenericDocumentIllustration className="h-16 w-28 text-primary" />
               <div>
