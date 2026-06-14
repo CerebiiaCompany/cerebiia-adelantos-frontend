@@ -5,6 +5,14 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  message: string;
+}
+
 export interface AuthResponse {
   token: string;
   role: "employee" | "employer" | "admin";
@@ -22,3 +30,12 @@ export interface ApiError {
   message: string;
   code: string;
 }
+
+export type {
+  VerifyDocumentRequest,
+  VerifyDocumentResponse,
+  UserProfileData,
+  CompanyOption,
+  RegisterUserRequest,
+  RegisterUserResponse,
+} from "./register";
