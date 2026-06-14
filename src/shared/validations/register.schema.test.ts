@@ -268,14 +268,14 @@ describe("validateIdentityFile", () => {
     expect(validateIdentityFile(file)).toContain("Formato no permitido");
   });
 
-  it("rechaza archivos mayores a 5 MB", () => {
+  it("rechaza archivos mayores al límite de carga", () => {
     const file = {
       name: "cedula.pdf",
-      size: 6 * 1024 * 1024,
+      size: 16 * 1024 * 1024,
       type: "application/pdf",
     };
 
-    expect(validateIdentityFile(file)).toContain("5 MB");
+    expect(validateIdentityFile(file)).toContain("15 MB");
   });
 });
 
