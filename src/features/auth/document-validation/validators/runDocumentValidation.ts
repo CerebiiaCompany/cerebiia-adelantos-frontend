@@ -1,9 +1,7 @@
-import type { DocumentType } from "@/shared/validations/register.schema";
 import type { ValidationCheckItem } from "../types";
 import { CHECK_LABELS } from "../types";
 import { validateFileFormat, validateFileSize } from "../validators/fileFormat.validator";
 import { validateImageQuality } from "../validators/imageQuality.validator";
-import { validateDocumentByType } from "../validators/ocrDocumentType.validator";
 import { fileToImageSource } from "../utils/fileToImageSource";
 import { runOCR } from "../utils/ocrEngine";
 import { prepareAnalysisCanvas } from "../utils/prepareAnalysisCanvas";
@@ -17,8 +15,6 @@ const FILE_PREP_TIMEOUT_MS = 45_000;
 
 interface RunValidationParams {
   file: File;
-  documentType: DocumentType;
-  documentNumber: string;
   onProgress?: (progress: number, message: string) => void;
 }
 
@@ -37,8 +33,6 @@ function buildCheck(
 
 export async function runDocumentFileValidation({
   file,
-  documentType,
-  documentNumber,
   onProgress,
 }: RunValidationParams) {
   const checks: ValidationCheckItem[] = [];
@@ -81,16 +75,12 @@ export async function runDocumentFileValidation({
   );
 
   checks.push(
-    buildCheck("resolution", quality.resolution.passed, quality.resolution.message),
     buildCheck("sharpness", quality.sharpness.passed, quality.sharpness.message),
     buildCheck("brightness", quality.brightness.passed, quality.brightness.message),
     buildCheck("coverage", quality.coverage.passed, quality.coverage.message),
   );
 
-  const qualityPassed =
-    quality.resolution.passed &&
-    quality.sharpness.passed &&
-    quality.coverage.passed;
+  const qualityPassed = quality.sharpness.passed && quality.coverage.passed;
 
   if (!qualityPassed) {
     return { checks, isValid: false, ocrText: "" };
@@ -100,7 +90,7 @@ export async function runDocumentFileValidation({
 
   const ocrResult = await withTimeout(
     runOCR(imageSource, (progress, message) => {
-      onProgress?.(0.5 + progress * 0.42, message);
+      onProgress?.(0.5 + progress * 0.45, message);
     }),
     OCR_RECOGNIZE_TIMEOUT_MS + OCR_CANVAS_PREP_TIMEOUT_MS + 5_000,
     "El reconocimiento de texto tardó demasiado. Intente con JPG o PNG.",
@@ -116,31 +106,11 @@ export async function runDocumentFileValidation({
     ),
   );
 
-  if (!ocrResult.sufficientText) {
-    return { checks, isValid: false, ocrText: ocrResult.text };
-  }
-
-  onProgress?.(0.95, "Validando tipo de documento...");
-
-  const typeValidation = validateDocumentByType(
-    documentType,
-    ocrResult.text,
-    documentNumber,
-  );
-
-  checks.push(
-    buildCheck(
-      "documentType",
-      typeValidation.isValid,
-      typeValidation.errors[0],
-    ),
-  );
-
   onProgress?.(1, "Análisis completado");
 
   return {
     checks,
-    isValid: typeValidation.isValid,
+    isValid: ocrResult.sufficientText,
     ocrText: ocrResult.text,
   };
 }

@@ -8,6 +8,8 @@ import { OCR_CANVAS_PREP_TIMEOUT_MS, OCR_RECOGNIZE_TIMEOUT_MS } from "../constan
 
 type ProgressCallback = (progress: number, message: string) => void;
 
+const HEADER_CROP_HEIGHT_RATIO = 0.38;
+
 let workerPromise: ReturnType<typeof Tesseract.createWorker> | null = null;
 let activeProgressHandler: ProgressCallback | null = null;
 let ocrQueue: Promise<unknown> = Promise.resolve();
@@ -61,6 +63,60 @@ async function getWorker() {
   return workerPromise;
 }
 
+function cropCanvasRegion(
+  canvas: HTMLCanvasElement,
+  y: number,
+  height: number,
+): HTMLCanvasElement {
+  const cropped = document.createElement("canvas");
+  cropped.width = canvas.width;
+  cropped.height = height;
+
+  const context = cropped.getContext("2d");
+  if (!context) {
+    throw new Error("No se pudo recortar la imagen para OCR");
+  }
+
+  context.drawImage(
+    canvas,
+    0,
+    y,
+    canvas.width,
+    height,
+    0,
+    0,
+    canvas.width,
+    height,
+  );
+
+  return cropped;
+}
+
+function cropHeaderRegion(canvas: HTMLCanvasElement): HTMLCanvasElement {
+  const height = Math.max(Math.round(canvas.height * HEADER_CROP_HEIGHT_RATIO), 120);
+  return cropCanvasRegion(canvas, 0, Math.min(height, canvas.height));
+}
+
+async function recognizeCanvasText(
+  worker: Awaited<ReturnType<typeof Tesseract.createWorker>>,
+  canvas: HTMLCanvasElement,
+  pagesegMode: Tesseract.PSM,
+): Promise<string> {
+  const imageBlob = await canvasToImageBlob(canvas);
+
+  await worker.setParameters({
+    tessedit_pageseg_mode: pagesegMode,
+  });
+
+  const result = await withTimeout(
+    worker.recognize(imageBlob),
+    OCR_RECOGNIZE_TIMEOUT_MS,
+    "El reconocimiento de texto tardó demasiado. Intente con JPG o PNG.",
+  );
+
+  return result.data.text ?? "";
+}
+
 export async function warmupOcrEngine(): Promise<void> {
   await getWorker();
 }
@@ -78,20 +134,22 @@ export async function runOCR(
     activeProgressHandler = (progress, message) => onProgress?.(progress, message);
 
     try {
-      const imageBlob = await canvasToImageBlob(analysisCanvas);
-
-      await worker.setParameters({
-        tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-      });
-
-      const result = await withTimeout(
-        worker.recognize(imageBlob),
-        OCR_RECOGNIZE_TIMEOUT_MS,
-        "El reconocimiento de texto tardó demasiado. Intente con JPG o PNG.",
+      const fullText = await recognizeCanvasText(
+        worker,
+        analysisCanvas,
+        Tesseract.PSM.AUTO,
       );
 
-      const text = result.data.text ?? "";
-      const confidence = result.data.confidence ?? 0;
+      onProgress?.(0.72, "Leyendo número del documento...");
+      const headerCanvas = cropHeaderRegion(analysisCanvas);
+      const headerText = await recognizeCanvasText(
+        worker,
+        headerCanvas,
+        Tesseract.PSM.SINGLE_BLOCK,
+      );
+
+      const text = [fullText, headerText].filter(Boolean).join("\n");
+      const confidence = fullText.length > 0 ? 100 : 0;
 
       return {
         text,

@@ -1,8 +1,5 @@
 import type { ImageQualityResult } from "../types";
-import {
-  analyzeImageCanvas,
-  meetsMinimumResolution,
-} from "../utils/imageAnalysis";
+import { analyzeImageCanvas } from "../utils/imageAnalysis";
 
 export function validateImageQuality(
   analysisCanvas: HTMLCanvasElement,
@@ -10,16 +7,12 @@ export function validateImageQuality(
   originalHeight: number,
 ): ImageQualityResult {
   const analysis = analyzeImageCanvas(analysisCanvas);
-  const resolutionPassed = meetsMinimumResolution(originalWidth, originalHeight);
 
   return {
     resolution: {
-      passed: resolutionPassed,
+      passed: true,
       width: originalWidth,
       height: originalHeight,
-      message: resolutionPassed
-        ? undefined
-        : "La imagen debe tener al menos 1000 x 600 píxeles",
     },
     sharpness: {
       passed: analysis.sharpnessPassed,

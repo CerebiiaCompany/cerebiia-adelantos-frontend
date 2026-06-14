@@ -74,6 +74,58 @@ describe("validateDocumentByType", () => {
     );
   });
 
+  it("valida CC con número en formato colombiano separado por puntos", () => {
+    const result = validateDocumentByType(
+      "CC",
+      "REPUBLICA DE COLOMBIA CEDULA DE CIUDADANIA IDENTIFICACION PERSONAL 1.005.026.054",
+      "1005026054",
+    );
+
+    expect(result.isValid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("valida CC usando OCR del reverso como texto complementario", () => {
+    const result = validateDocumentByType(
+      "CC",
+      "REGISTRADURIA FECHA DE NACIMIENTO INDICE DERECHO",
+      "1005026054",
+      {
+        side: "back",
+        supplementalOcrText:
+          "REPUBLICA DE COLOMBIA CEDULA DE CIUDADANIA 1 005 026 054",
+      },
+    );
+
+    expect(result.isValid).toBe(true);
+  });
+
+  it("permite diferir la validación del número en el frente cuando falta el reverso", () => {
+    const result = validateDocumentByType(
+      "CC",
+      "REPUBLICA DE COLOMBIA CEDULA DE CIUDADANIA IDENTIFICACION PERSONAL",
+      "1005026054",
+      {
+        side: "front",
+        deferDocumentNumberCheck: true,
+      },
+    );
+
+    expect(result.isValid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it("valida reverso de CC con palabras clave del dorso", () => {
+    const result = validateDocumentByType(
+      "CC",
+      "REGISTRADURIA FECHA DE NACIMIENTO INDICE DERECHO LUGAR DE NACIMIENTO P-2500150-01224280-F-1005026054-20210324",
+      "1005026054",
+      { side: "back" },
+    );
+
+    expect(result.isValid).toBe(true);
+  });
+
   it("retorna estructura completa de validación", () => {
     const result = validateDocumentByType("CE", "TEXTO SIN COINCIDENCIAS");
 

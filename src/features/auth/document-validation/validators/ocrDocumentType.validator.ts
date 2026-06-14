@@ -1,14 +1,30 @@
 import type { DocumentType } from "@/shared/validations/register.schema";
 import type { DocumentTypeValidationResult } from "../types";
+import { isDocumentNumberInOcrText, normalizeOcrDigits } from "../utils/ocrDigitUtils";
 import { countKeywordMatches, normalizeOcrText } from "../utils/ocrNormalizer";
 
 const MIN_KEYWORD_MATCHES = 2;
 
-const DOCUMENT_KEYWORDS: Record<DocumentType, string[]> = {
+const DOCUMENT_KEYWORDS_FRONT: Record<DocumentType, string[]> = {
   CC: ["CEDULA DE CIUDADANIA", "IDENTIFICACION PERSONAL", "REPUBLICA DE COLOMBIA"],
   CE: ["CEDULA DE EXTRANJERIA", "MIGRACION COLOMBIA", "EXTRANJERIA"],
   PASSPORT: ["PASSPORT", "PASAPORTE", "P<"],
   PPT: ["PERMISO POR PROTECCION TEMPORAL", "PPT", "MIGRACION COLOMBIA"],
+};
+
+const DOCUMENT_KEYWORDS_BACK: Partial<Record<DocumentType, string[]>> = {
+  CC: [
+    "REGISTRADURIA",
+    "FECHA DE NACIMIENTO",
+    "INDICE DERECHO",
+    "LUGAR DE NACIMIENTO",
+  ],
+  CE: [
+    "REGISTRADURIA",
+    "FECHA DE NACIMIENTO",
+    "MIGRACION COLOMBIA",
+    "EXTRANJERIA",
+  ],
 };
 
 const DOCUMENT_TYPE_ERRORS: Record<DocumentType, string> = {
@@ -19,27 +35,52 @@ const DOCUMENT_TYPE_ERRORS: Record<DocumentType, string> = {
 };
 
 const DOCUMENT_NUMBER_PATTERNS: Record<DocumentType, RegExp> = {
-  CC: /\b\d{6,10}\b/,
-  CE: /\b\d{6,11}\b/,
-  PASSPORT: /\b[A-Z0-9]{6,10}\b/,
-  PPT: /\b\d{15}\b/,
+  CC: /\d{6,10}/,
+  CE: /\d{6,11}/,
+  PASSPORT: /[A-Z0-9]{6,10}/,
+  PPT: /\d{15}/,
 };
+
+export type DocumentSide = "front" | "back" | "single";
+
+interface ValidateDocumentOptions {
+  expectedDocumentNumber?: string;
+  supplementalOcrText?: string;
+  side?: DocumentSide;
+  deferDocumentNumberCheck?: boolean;
+}
+
+function getKeywordsForSide(
+  documentType: DocumentType,
+  side: DocumentSide,
+): string[] {
+  if (side === "back") {
+    return DOCUMENT_KEYWORDS_BACK[documentType] ?? DOCUMENT_KEYWORDS_FRONT[documentType];
+  }
+
+  return DOCUMENT_KEYWORDS_FRONT[documentType];
+}
 
 function scoreDocumentTypes(
   normalizedText: string,
+  side: DocumentSide,
 ): Record<DocumentType, { matches: string[]; score: number }> {
   return {
-    CC: scoreType("CC", normalizedText),
-    CE: scoreType("CE", normalizedText),
-    PASSPORT: scoreType("PASSPORT", normalizedText),
-    PPT: scoreType("PPT", normalizedText),
+    CC: scoreType("CC", normalizedText, side),
+    CE: scoreType("CE", normalizedText, side),
+    PASSPORT: scoreType("PASSPORT", normalizedText, side),
+    PPT: scoreType("PPT", normalizedText, side),
   };
 }
 
-function scoreType(documentType: DocumentType, normalizedText: string) {
+function scoreType(
+  documentType: DocumentType,
+  normalizedText: string,
+  side: DocumentSide,
+) {
   const matches = countKeywordMatches(
     normalizedText,
-    DOCUMENT_KEYWORDS[documentType],
+    getKeywordsForSide(documentType, side),
   );
   return { matches, score: matches.length };
 }
@@ -56,35 +97,56 @@ function findBestDetectedType(
   return ranked[0]?.[0];
 }
 
-function documentNumberMatchesType(
+export function validateDocumentNumberInOcr(
   documentType: DocumentType,
-  normalizedText: string,
+  ocrText: string,
   expectedDocumentNumber?: string,
+  supplementalOcrText?: string,
 ): boolean {
+  const combinedText = [ocrText, supplementalOcrText].filter(Boolean).join("\n");
+
   if (expectedDocumentNumber) {
-    const normalizedExpected = normalizeOcrText(expectedDocumentNumber).replace(
-      /\s+/g,
-      "",
-    );
-    const compactText = normalizedText.replace(/\s+/g, "");
-    if (compactText.includes(normalizedExpected)) {
+    if (isDocumentNumberInOcrText(combinedText, expectedDocumentNumber)) {
       return true;
     }
   }
 
-  return DOCUMENT_NUMBER_PATTERNS[documentType].test(normalizedText);
+  const normalizedDigits = normalizeOcrDigits(combinedText);
+  return DOCUMENT_NUMBER_PATTERNS[documentType].test(normalizedDigits);
+}
+
+function documentNumberMatchesType(
+  documentType: DocumentType,
+  ocrText: string,
+  expectedDocumentNumber?: string,
+  supplementalOcrText?: string,
+): boolean {
+  return validateDocumentNumberInOcr(
+    documentType,
+    ocrText,
+    expectedDocumentNumber,
+    supplementalOcrText,
+  );
 }
 
 export function validateDocumentByType(
   documentType: DocumentType,
   ocrText: string,
   expectedDocumentNumber?: string,
+  options: Omit<ValidateDocumentOptions, "expectedDocumentNumber"> = {},
 ): DocumentTypeValidationResult {
+  const {
+    supplementalOcrText = "",
+    side = "single",
+    deferDocumentNumberCheck = false,
+  } = options;
+
   const normalizedText = normalizeOcrText(ocrText);
-  const scores = scoreDocumentTypes(normalizedText);
+  const scores = scoreDocumentTypes(normalizedText, side);
   const selected = scores[documentType];
   const detectedType = findBestDetectedType(scores);
   const errors: string[] = [];
+  const keywords = getKeywordsForSide(documentType, side);
 
   if (selected.score < MIN_KEYWORD_MATCHES) {
     errors.push(DOCUMENT_TYPE_ERRORS[documentType]);
@@ -100,16 +162,22 @@ export function validateDocumentByType(
     );
   }
 
-  if (
-    selected.score >= MIN_KEYWORD_MATCHES &&
-    !documentNumberMatchesType(documentType, normalizedText, expectedDocumentNumber)
-  ) {
-    errors.push(
-      "No se pudo validar el número de documento dentro del archivo cargado.",
-    );
+  const numberMatches = documentNumberMatchesType(
+    documentType,
+    ocrText,
+    expectedDocumentNumber,
+    supplementalOcrText,
+  );
+
+  if (selected.score >= MIN_KEYWORD_MATCHES && !numberMatches) {
+    if (!deferDocumentNumberCheck) {
+      errors.push(
+        "No se pudo validar el número de documento dentro del archivo cargado.",
+      );
+    }
   }
 
-  const confidence = Math.min(selected.score / DOCUMENT_KEYWORDS[documentType].length, 1);
+  const confidence = Math.min(selected.score / keywords.length, 1);
 
   return {
     isValid: errors.length === 0 && selected.score >= MIN_KEYWORD_MATCHES,
@@ -120,4 +188,8 @@ export function validateDocumentByType(
   };
 }
 
-export { DOCUMENT_KEYWORDS, DOCUMENT_TYPE_ERRORS, MIN_KEYWORD_MATCHES };
+export {
+  DOCUMENT_KEYWORDS_FRONT as DOCUMENT_KEYWORDS,
+  DOCUMENT_TYPE_ERRORS,
+  MIN_KEYWORD_MATCHES,
+};
