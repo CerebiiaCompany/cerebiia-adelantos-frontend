@@ -19,6 +19,7 @@ import {
   useSelfieValidation,
 } from "@/features/auth/selfie-validation";
 import { getSelfieCaptureMode, isMobileDevice } from "@/features/auth/selfie-validation/utils/captureDevice";
+import { warmupOcrEngine } from "@/features/auth/document-validation/utils/ocrEngine";
 import {
   canvasToFile,
   imageFileToCanvas,
@@ -153,7 +154,7 @@ export function RegisterSelfieValidationStep({
     setCameraMessage("Solicitando acceso a la cámara...");
 
     try {
-      await warmupFaceEngine();
+      await Promise.all([warmupFaceEngine(), warmupOcrEngine()]);
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
@@ -184,7 +185,7 @@ export function RegisterSelfieValidationStep({
 
   useEffect(() => {
     if (!useLiveCamera) {
-      void warmupFaceEngine();
+      void Promise.all([warmupFaceEngine(), warmupOcrEngine()]);
       return;
     }
 
@@ -261,6 +262,10 @@ export function RegisterSelfieValidationStep({
     setSelectedUploadFile(file);
     resetValidation();
     setValidatedFile(null);
+
+    if (file) {
+      void Promise.all([warmupFaceEngine(), warmupOcrEngine()]);
+    }
 
     if (file && useLiveCamera) {
       stopCamera();

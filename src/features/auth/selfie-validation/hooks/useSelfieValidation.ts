@@ -4,6 +4,7 @@ import {
   type SelfieValidationState,
 } from "../types";
 import { runSelfieValidationWithTimeout } from "../validators/runSelfieValidation";
+import { warmupOcrEngine } from "@/features/auth/document-validation/utils/ocrEngine";
 import { warmupFaceEngine } from "../utils/faceEngine";
 import type { SelfieCaptureMode } from "../utils/captureDevice";
 
@@ -20,7 +21,7 @@ export function useSelfieValidation() {
   const requestIdRef = useRef(0);
 
   useEffect(() => {
-    void warmupFaceEngine();
+    void Promise.all([warmupFaceEngine(), warmupOcrEngine()]);
   }, []);
 
   const validateSelfie = useCallback(

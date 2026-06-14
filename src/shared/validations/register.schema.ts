@@ -296,8 +296,9 @@ export type RegisterFormValues = VerifyDocumentFormValues;
 
 // ── Carga de documento de identidad ──────────────────────────────────────────
 
-export const IDENTITY_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
-export const IDENTITY_UPLOAD_MAX_MB = 5;
+// Límite pensado para fotos directas de cámara móvil (12–48 MP, distintos fabricantes).
+export const IDENTITY_UPLOAD_MAX_MB = 15;
+export const IDENTITY_UPLOAD_MAX_BYTES = IDENTITY_UPLOAD_MAX_MB * 1024 * 1024;
 
 const IDENTITY_ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "pdf"] as const;
 const IDENTITY_ALLOWED_MIME_TYPES = [

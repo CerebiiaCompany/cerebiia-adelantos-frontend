@@ -101,6 +101,7 @@ async function recognizeCanvasText(
   worker: Awaited<ReturnType<typeof Tesseract.createWorker>>,
   canvas: HTMLCanvasElement,
   pagesegMode: Tesseract.PSM,
+  timeoutMs = OCR_RECOGNIZE_TIMEOUT_MS,
 ): Promise<string> {
   const imageBlob = await canvasToImageBlob(canvas);
 
@@ -110,11 +111,22 @@ async function recognizeCanvasText(
 
   const result = await withTimeout(
     worker.recognize(imageBlob),
-    OCR_RECOGNIZE_TIMEOUT_MS,
+    timeoutMs,
     "El reconocimiento de texto tardó demasiado. Intente con JPG o PNG.",
   );
 
   return result.data.text ?? "";
+}
+
+export async function recognizeTextFromCanvas(
+  canvas: HTMLCanvasElement,
+  pagesegMode: Tesseract.PSM = Tesseract.PSM.SINGLE_BLOCK,
+  timeoutMs = OCR_RECOGNIZE_TIMEOUT_MS,
+): Promise<string> {
+  return enqueueOcrTask(async () => {
+    const worker = await getWorker();
+    return recognizeCanvasText(worker, canvas, pagesegMode, timeoutMs);
+  });
 }
 
 export async function warmupOcrEngine(): Promise<void> {

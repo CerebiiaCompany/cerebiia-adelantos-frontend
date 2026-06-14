@@ -2,6 +2,7 @@ export type SelfieValidationCheckId =
   | "quality"
   | "faceCount"
   | "facePosition"
+  | "documentInHand"
   | "security"
   | "biometrics"
   | "liveness";
@@ -47,6 +48,7 @@ export const CHECK_LABELS: Record<SelfieValidationCheckId, string> = {
   quality: "Calidad de imagen",
   faceCount: "Rostro detectado",
   facePosition: "Rostro centrado",
+  documentInHand: "Documento visible en la foto",
   security: "Autenticidad básica",
   biometrics: "Validación biométrica",
   liveness: "Prueba de vida",

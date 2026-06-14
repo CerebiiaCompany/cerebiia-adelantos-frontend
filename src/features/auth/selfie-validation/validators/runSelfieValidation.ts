@@ -4,15 +4,24 @@ import type {
   SelfieValidationResult,
 } from "../types";
 import { CHECK_LABELS } from "../types";
-import { withTimeout } from "@/features/auth/document-validation/utils/asyncUtils";
+import { withTimeout, yieldToMainThread } from "@/features/auth/document-validation/utils/asyncUtils";
+import { warmupOcrEngine } from "@/features/auth/document-validation/utils/ocrEngine";
 import {
   validateBiometrics,
   validateFacePosition,
 } from "../utils/biometricChecks";
 import type { BiometricCheckResult } from "../utils/biometricChecks";
-import { detectFaces } from "../utils/faceEngine";
+import {
+  classifySelfieFaces,
+  validateDocumentInHand,
+} from "../utils/documentInHandHeuristics";
+import {
+  detectFacesForSelfieValidation,
+  warmupFaceEngine,
+} from "../utils/faceEngine";
 import { evaluateLiveness } from "../utils/livenessHeuristics";
 import type { SelfieCaptureMode } from "../utils/captureDevice";
+import { prepareSelfieAnalysisCanvas } from "../utils/prepareSelfieAnalysisCanvas";
 import { analyzeSelfieQuality } from "../utils/selfieQuality";
 import { detectSecurityIssues } from "../utils/securityHeuristics";
 
@@ -58,8 +67,12 @@ export async function runSelfieValidation({
 }: RunSelfieValidationParams): Promise<SelfieValidationResult> {
   const checks: SelfieValidationCheckItem[] = [];
 
+  onProgress?.(0.05, "Optimizando imagen...");
+  await yieldToMainThread();
+  const analysisCanvas = prepareSelfieAnalysisCanvas(selfieCanvas);
+
   onProgress?.(0.08, "Verificando imagen...");
-  const quality = analyzeSelfieQuality(selfieCanvas);
+  const quality = analyzeSelfieQuality(analysisCanvas);
 
   checks.push(
     buildCheck(
@@ -76,39 +89,36 @@ export async function runSelfieValidation({
     return { checks, isValid: false, livenessPassed: false };
   }
 
+  onProgress?.(0.14, "Cargando modelos de validación...");
+  await Promise.all([warmupFaceEngine(), warmupOcrEngine()]);
+  await yieldToMainThread();
+
   onProgress?.(0.22, "Detectando rostro...");
-  const selfieFaces = await detectFaces(selfieCanvas);
+  const selfieFaces = await detectFacesForSelfieValidation(analysisCanvas);
+  const faceClassification = classifySelfieFaces(selfieFaces);
 
-  if (selfieFaces.length === 0) {
-    checks.push(
-      buildCheck(
-        "faceCount",
-        false,
-        "No detectamos rostro. Asegúrate de que tu cara sea visible y clara",
-      ),
-    );
+  if (faceClassification.error) {
+    checks.push(buildCheck("faceCount", false, faceClassification.error));
     return { checks, isValid: false, livenessPassed: false };
   }
 
-  if (selfieFaces.length > 1) {
-    checks.push(
-      buildCheck(
-        "faceCount",
-        false,
-        "Detectamos más de un rostro. Debe aparecer solo tu cara",
-      ),
-    );
-    return { checks, isValid: false, livenessPassed: false };
-  }
+  checks.push(
+    buildCheck(
+      "faceCount",
+      true,
+      faceClassification.secondary
+        ? "Rostro detectado con documento visible"
+        : "Rostro detectado correctamente",
+    ),
+  );
 
-  checks.push(buildCheck("faceCount", true, "Rostro detectado correctamente"));
-  const selfieFace = selfieFaces[0];
+  const selfieFace = faceClassification.primary;
 
   onProgress?.(0.38, "Verificando postura...");
   const position = validateFacePosition(
     selfieFace,
-    selfieCanvas.width,
-    selfieCanvas.height,
+    analysisCanvas.width,
+    analysisCanvas.height,
   );
   checks.push(buildPostureCheck("facePosition", position));
 
@@ -116,8 +126,23 @@ export async function runSelfieValidation({
     return { checks, isValid: false, livenessPassed: false };
   }
 
-  onProgress?.(0.52, "Revisando autenticidad...");
-  const security = detectSecurityIssues(selfieCanvas);
+  onProgress?.(0.48, "Verificando documento en mano...");
+  await yieldToMainThread();
+  const documentInHand = await validateDocumentInHand(
+    analysisCanvas,
+    selfieFace,
+    faceClassification.secondary,
+  );
+  checks.push(
+    buildCheck("documentInHand", documentInHand.passed, documentInHand.message),
+  );
+
+  if (!documentInHand.passed) {
+    return { checks, isValid: false, livenessPassed: false };
+  }
+
+  onProgress?.(0.58, "Revisando autenticidad...");
+  const security = detectSecurityIssues(analysisCanvas);
   checks.push(
     buildCheck(
       "security",
@@ -129,7 +154,7 @@ export async function runSelfieValidation({
     ),
   );
 
-  onProgress?.(0.66, "Analizando rostro...");
+  onProgress?.(0.72, "Analizando rostro...");
   const biometrics = validateBiometrics(selfieFace);
   checks.push(buildPostureCheck("biometrics", biometrics));
 
@@ -137,10 +162,10 @@ export async function runSelfieValidation({
     return { checks, isValid: false, livenessPassed: false };
   }
 
-  onProgress?.(0.82, "Verificando captura...");
-  const currentFrame = selfieCanvas
+  onProgress?.(0.86, "Verificando captura...");
+  const currentFrame = analysisCanvas
     .getContext("2d")
-    ?.getImageData(0, 0, selfieCanvas.width, selfieCanvas.height);
+    ?.getImageData(0, 0, analysisCanvas.width, analysisCanvas.height);
 
   const liveness = evaluateLiveness(
     previousFrame,
