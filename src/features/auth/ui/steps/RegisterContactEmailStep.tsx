@@ -17,6 +17,10 @@ import {
   contactEmailSchema,
   type ContactEmailFormValues,
 } from "@/shared/validations/register.schema";
+import {
+  isRegisterContinueDisabled,
+  REGISTER_STEP_FORM_OPTIONS,
+} from "@/features/auth/ui/registerFormOptions";
 
 interface RegisterContactEmailStepProps {
   defaultValues: ContactEmailFormValues;
@@ -32,6 +36,7 @@ export function RegisterContactEmailStep({
   onSubmit,
 }: RegisterContactEmailStepProps) {
   const form = useForm<ContactEmailFormValues>({
+    ...REGISTER_STEP_FORM_OPTIONS,
     resolver: zodResolver(contactEmailSchema),
     defaultValues: {
       email: defaultValues.email ?? "",
@@ -39,6 +44,9 @@ export function RegisterContactEmailStep({
       acceptRecords: defaultValues.acceptRecords ?? false,
     },
   });
+
+  const { isValid } = form.formState;
+  const isContinueDisabled = isRegisterContinueDisabled(isValid, isSubmitting);
 
   return (
     <Form {...form}>
@@ -146,7 +154,7 @@ export function RegisterContactEmailStep({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isContinueDisabled}
             className={cn(
               "btn-login h-11 flex-1 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
               isSubmitting && "animate-pulse-glow",

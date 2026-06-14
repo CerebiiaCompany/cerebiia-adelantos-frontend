@@ -12,7 +12,7 @@ export const documentTypes = ["CC", "PASSPORT", "CE", "PPT"] as const;
 export type DocumentType = (typeof documentTypes)[number];
 
 export const DOCUMENT_TYPE_OPTIONS = [
-  { value: "CC", label: "Cédula de Ciudadanía - Colombianos" },
+  { value: "CC", label: "Cédula de Ciudadanía Colombiana" },
   { value: "PASSPORT", label: "Pasaporte" },
   { value: "CE", label: "Cédula de Extranjería" },
   { value: "PPT", label: "Permiso por protección temporal -PPT" },
