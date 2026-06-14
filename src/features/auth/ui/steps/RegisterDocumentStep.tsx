@@ -28,6 +28,10 @@ import {
   type DocumentType,
   type VerifyDocumentFormValues,
 } from "@/shared/validations/register.schema";
+import {
+  isRegisterContinueDisabled,
+  REGISTER_STEP_FORM_OPTIONS,
+} from "@/features/auth/ui/registerFormOptions";
 
 const documentPlaceholders: Record<DocumentType, string> = {
   CC: "Ej: 1234567890",
@@ -54,6 +58,7 @@ export function RegisterDocumentStep({
   onProceedNewUser,
 }: RegisterDocumentStepProps) {
   const form = useForm<VerifyDocumentFormValues>({
+    ...REGISTER_STEP_FORM_OPTIONS,
     resolver: zodResolver(verifyDocumentSchema),
     defaultValues: {
       ...defaultValues,
@@ -66,10 +71,11 @@ export function RegisterDocumentStep({
 
   const documentType = form.watch("documentType");
   const hasMandatoryConsent = form.watch("acceptMandatorySensitiveTreatment");
+  const { isValid } = form.formState;
   const isVerifiedNew = verificationStatus === "verified-new";
   const isDocumentLocked = verificationStatus !== "idle";
   const showVerifiedSuccess = isVerifiedNew && hasMandatoryConsent;
-  const canSubmit = hasMandatoryConsent && !isVerifying;
+  const isContinueDisabled = isRegisterContinueDisabled(isValid, isVerifying);
 
   useEffect(() => {
     if (!documentType || isDocumentLocked) return;
@@ -267,11 +273,10 @@ export function RegisterDocumentStep({
 
         <Button
           type="submit"
-          disabled={!canSubmit}
+          disabled={isContinueDisabled}
           className={cn(
             "btn-login animate-stagger-up stagger-6 h-11 w-full rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
             isVerifying && "animate-pulse-glow",
-            !canSubmit && "opacity-60",
           )}
         >
           {isVerifying ? (

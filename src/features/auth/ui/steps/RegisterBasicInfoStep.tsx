@@ -44,6 +44,10 @@ import {
   type BasicInfoFormValues,
 } from "@/shared/validations/register.schema";
 import type { CompanyOption } from "@/shared/api/types";
+import {
+  isRegisterContinueDisabled,
+  REGISTER_STEP_FORM_OPTIONS,
+} from "@/features/auth/ui/registerFormOptions";
 
 interface RegisterBasicInfoStepProps {
   defaultValues: BasicInfoFormValues;
@@ -63,12 +67,16 @@ export function RegisterBasicInfoStep({
   onSubmit,
 }: RegisterBasicInfoStepProps) {
   const form = useForm<BasicInfoFormValues>({
+    ...REGISTER_STEP_FORM_OPTIONS,
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       ...defaultValues,
       paymentDay: defaultValues.paymentDay ?? PAYMENT_DAY_DEFAULT,
     },
   });
+
+  const { isValid } = form.formState;
+  const isContinueDisabled = isRegisterContinueDisabled(isValid, isSubmitting);
 
   const [cities, setCities] = useState<ColombianCity[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(true);
@@ -389,7 +397,7 @@ export function RegisterBasicInfoStep({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isContinueDisabled}
             className={cn(
               "btn-login h-11 flex-1 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
               isSubmitting && "animate-pulse-glow",

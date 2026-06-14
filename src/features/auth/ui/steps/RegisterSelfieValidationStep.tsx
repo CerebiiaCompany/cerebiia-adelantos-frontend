@@ -18,7 +18,7 @@ import {
   detectFaceCount,
   useSelfieValidation,
 } from "@/features/auth/selfie-validation";
-import { getSelfieCaptureMode } from "@/features/auth/selfie-validation/utils/captureDevice";
+import { getSelfieCaptureMode, isMobileDevice } from "@/features/auth/selfie-validation/utils/captureDevice";
 import {
   canvasToFile,
   imageFileToCanvas,
@@ -50,6 +50,7 @@ export function RegisterSelfieValidationStep({
   onSubmit,
 }: RegisterSelfieValidationStepProps) {
   const captureMode = useMemo(() => getSelfieCaptureMode(), []);
+  const isMobile = useMemo(() => isMobileDevice(), []);
   const useLiveCamera = captureMode === "live";
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -260,6 +261,14 @@ export function RegisterSelfieValidationStep({
     setSelectedUploadFile(file);
     resetValidation();
     setValidatedFile(null);
+
+    if (file && useLiveCamera) {
+      stopCamera();
+      setCameraStatus("ready");
+      setCameraMessage("Foto seleccionada. Valida la imagen para continuar.");
+    } else if (!file && useLiveCamera && !validatedFile) {
+      void startCamera();
+    }
   }
 
   function handleRetry() {
@@ -291,11 +300,18 @@ export function RegisterSelfieValidationStep({
   const showCameraError =
     useLiveCamera && cameraUnavailable && !showValidatedPreview;
   const showLiveCameraViewer =
-    useLiveCamera && (!cameraUnavailable || showValidatedPreview);
+    useLiveCamera &&
+    !selectedUploadFile &&
+    (!cameraUnavailable || showValidatedPreview);
   const showLiveCaptureControls =
-    useLiveCamera && !showValidatedPreview && !cameraUnavailable;
-  const showUploadSection =
-    !showValidatedPreview && (!useLiveCamera || cameraUnavailable);
+    useLiveCamera &&
+    !showValidatedPreview &&
+    !selectedUploadFile &&
+    !cameraUnavailable;
+  const showGalleryUpload =
+    !showValidatedPreview && (!useLiveCamera || isMobile || cameraUnavailable);
+  const showGalleryDivider =
+    showLiveCameraViewer || (useLiveCamera && isMobile && !cameraUnavailable);
 
   return (
     <div className="space-y-4">
@@ -315,6 +331,15 @@ export function RegisterSelfieValidationStep({
                 ? SELFIE_DOCUMENT_INSTRUCTION
                 : SELFIE_DOCUMENT_UPLOAD_INSTRUCTION}
             </p>
+            {isMobile && useLiveCamera && (
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                Si tu celular es lento o la validación falla, usa la opción{" "}
+                <span className="font-medium text-foreground">
+                  Elegir foto de la galería
+                </span>
+                .
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -365,7 +390,17 @@ export function RegisterSelfieValidationStep({
         </div>
       )}
 
-      {showUploadSection && (
+      {showGalleryDivider && showGalleryUpload && (
+        <div className="animate-stagger-up stagger-2 flex items-center gap-3 px-1">
+          <div className="h-px flex-1 bg-border/80" />
+          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            o sube desde galería
+          </span>
+          <div className="h-px flex-1 bg-border/80" />
+        </div>
+      )}
+
+      {showGalleryUpload && (
         <div className="animate-stagger-up stagger-2 space-y-3">
           <input
             ref={uploadInputRef}
@@ -378,7 +413,21 @@ export function RegisterSelfieValidationStep({
             }
           />
 
-          <div
+          {!selectedUploadFile && isMobile && useLiveCamera && !cameraUnavailable && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting || isValidating}
+              onClick={() => uploadInputRef.current?.click()}
+              className="auth-outline-btn h-11 w-full rounded-xl border-primary/25 text-sm font-semibold"
+            >
+              <ImageUp className="mr-2 h-4 w-4" />
+              Elegir foto de la galería
+            </Button>
+          )}
+
+          {(selectedUploadFile || !useLiveCamera || cameraUnavailable) && (
+            <div
             role="button"
             tabIndex={0}
             onKeyDown={(event) => {
@@ -441,11 +490,12 @@ export function RegisterSelfieValidationStep({
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
-      {showValidatedPreview && !useLiveCamera && (
+      {showValidatedPreview && selectedUploadFile && (
         <div className="animate-stagger-up stagger-2 overflow-hidden rounded-xl border border-primary/20 bg-background/80">
           <img
             src={previewUrl ?? undefined}
@@ -459,7 +509,7 @@ export function RegisterSelfieValidationStep({
         <div className="rounded-xl border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           <p>{cameraMessage}</p>
           <p className="mt-2 text-xs text-destructive/90">
-            También puedes subir una foto con el selector de archivos.
+            Puedes continuar subiendo una foto desde tu galería.
           </p>
         </div>
       )}
@@ -485,7 +535,7 @@ export function RegisterSelfieValidationStep({
             </Button>
           )}
 
-        {showUploadSection && selectedUploadFile && (
+        {showGalleryUpload && selectedUploadFile && (
           <Button
             type="button"
             onClick={() => void handleUploadValidate()}
