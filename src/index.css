@@ -367,6 +367,11 @@
     scrollbar-gutter: stable;
   }
 
+  .auth-form-dot-grid {
+    background-image: radial-gradient(hsl(var(--primary) / 0.1) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
   @media (min-width: 1024px) {
     .auth-form-scroll {
       -webkit-overflow-scrolling: touch;
