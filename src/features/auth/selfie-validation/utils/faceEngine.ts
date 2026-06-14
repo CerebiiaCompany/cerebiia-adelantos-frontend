@@ -1,10 +1,8 @@
 import * as faceapi from "@vladmandic/face-api";
-import {
-  FACE_MODEL_URL,
-} from "../constants";
+import { FACE_MODEL_URL } from "../constants";
+import { isMobileDevice } from "./captureDevice";
 
 export interface FaceAnalysis {
-  descriptor: Float32Array;
   box: { x: number; y: number; width: number; height: number };
   landmarks: faceapi.FaceLandmarks68;
   score: number;
@@ -12,11 +10,14 @@ export interface FaceAnalysis {
 
 let modelsPromise: Promise<void> | null = null;
 
+function getDetectorInputSize(): number {
+  return isMobileDevice() ? 160 : 224;
+}
+
 async function loadModels() {
   await Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_URL),
     faceapi.nets.faceLandmark68TinyNet.loadFromUri(FACE_MODEL_URL),
-    faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODEL_URL),
   ]);
 }
 
@@ -40,15 +41,13 @@ export async function detectFaces(source: FaceInput): Promise<FaceAnalysis[]> {
     .detectAllFaces(
       source,
       new faceapi.TinyFaceDetectorOptions({
-        inputSize: 224,
-        scoreThreshold: 0.45,
+        inputSize: getDetectorInputSize(),
+        scoreThreshold: isMobileDevice() ? 0.4 : 0.45,
       }),
     )
-    .withFaceLandmarks(true)
-    .withFaceDescriptors();
+    .withFaceLandmarks(true);
 
   return detections.map((item) => ({
-    descriptor: item.descriptor,
     box: item.detection.box,
     landmarks: item.landmarks,
     score: item.detection.score,

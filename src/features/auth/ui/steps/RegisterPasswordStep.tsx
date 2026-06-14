@@ -28,6 +28,10 @@ import {
   passwordSchema,
   type PasswordFormValues,
 } from "@/shared/validations/register.schema";
+import {
+  isRegisterContinueDisabled,
+  REGISTER_STEP_FORM_OPTIONS,
+} from "@/features/auth/ui/registerFormOptions";
 
 interface RegisterPasswordStepProps {
   isExistingUser: boolean;
@@ -65,12 +69,14 @@ export function RegisterPasswordStep({
   const [showConfirm, setShowConfirm] = useState(false);
 
   const form = useForm<PasswordFormValues>({
+    ...REGISTER_STEP_FORM_OPTIONS,
     resolver: zodResolver(passwordSchema),
     defaultValues: { password: "", confirmPassword: "" },
-    mode: "onChange",
   });
 
   const passwordValue = form.watch("password");
+  const { isValid } = form.formState;
+  const isContinueDisabled = isRegisterContinueDisabled(isValid, isSubmitting);
   const requirementChecks = getPasswordRequirementChecks(passwordValue ?? "");
 
   return (
@@ -220,7 +226,7 @@ export function RegisterPasswordStep({
           )}
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isContinueDisabled}
             className={cn(
               "btn-login h-11 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
               onBack ? "flex-1" : "w-full",

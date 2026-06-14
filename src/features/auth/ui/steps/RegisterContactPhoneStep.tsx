@@ -18,6 +18,10 @@ import {
   sanitizeColombianPhone,
   type ContactPhoneFormValues,
 } from "@/shared/validations/register.schema";
+import {
+  isRegisterContinueDisabled,
+  REGISTER_STEP_FORM_OPTIONS,
+} from "@/features/auth/ui/registerFormOptions";
 
 interface RegisterContactPhoneStepProps {
   defaultValues: ContactPhoneFormValues;
@@ -33,6 +37,7 @@ export function RegisterContactPhoneStep({
   onSubmit,
 }: RegisterContactPhoneStepProps) {
   const form = useForm<ContactPhoneFormValues>({
+    ...REGISTER_STEP_FORM_OPTIONS,
     resolver: zodResolver(contactPhoneSchema),
     defaultValues: {
       phone: defaultValues.phone ?? "",
@@ -40,6 +45,9 @@ export function RegisterContactPhoneStep({
       acceptTemporaryStorage: defaultValues.acceptTemporaryStorage ?? false,
     },
   });
+
+  const { isValid } = form.formState;
+  const isContinueDisabled = isRegisterContinueDisabled(isValid, isSubmitting);
 
   return (
     <Form {...form}>
@@ -147,7 +155,7 @@ export function RegisterContactPhoneStep({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isContinueDisabled}
             className={cn(
               "btn-login h-11 flex-1 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
               isSubmitting && "animate-pulse-glow",

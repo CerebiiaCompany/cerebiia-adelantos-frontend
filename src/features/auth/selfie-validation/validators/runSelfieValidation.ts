@@ -1,4 +1,4 @@
-import { SELFIE_VALIDATION_TIMEOUT_MS } from "../constants";
+import { getSelfieValidationTimeoutMs } from "../constants";
 import type {
   SelfieValidationCheckItem,
   SelfieValidationResult,
@@ -171,7 +171,7 @@ export function runSelfieValidationWithTimeout(
 ): Promise<SelfieValidationResult> {
   return withTimeout(
     runSelfieValidation(params),
-    SELFIE_VALIDATION_TIMEOUT_MS,
-    "La validación tardó demasiado. Intenta nuevamente",
+    getSelfieValidationTimeoutMs(),
+    "La validación tardó demasiado. Intenta nuevamente o sube una foto desde galería",
   );
 }

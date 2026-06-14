@@ -406,7 +406,7 @@ export function RegisterIdentityUploadStep({
         </Button>
         <Button
           type="submit"
-          disabled={!canContinue}
+          disabled={!canContinue || isSubmitting}
           className={cn(
             "btn-login h-11 flex-1 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
             isSubmitting && "animate-pulse-glow",

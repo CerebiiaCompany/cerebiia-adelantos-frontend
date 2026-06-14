@@ -41,6 +41,10 @@ import {
   type ReviewStepFormValues,
 } from "@/shared/validations/register.schema";
 import type { CompanyOption, UserProfileData } from "@/shared/api/types";
+import {
+  isRegisterContinueDisabled,
+  REGISTER_STEP_FORM_OPTIONS,
+} from "@/features/auth/ui/registerFormOptions";
 
 interface RegisterReviewStepProps {
   documentType: DocumentType;
@@ -126,6 +130,7 @@ export function RegisterReviewStep({
       ?.label ?? documentType;
 
   const form = useForm<ReviewStepFormValues>({
+    ...REGISTER_STEP_FORM_OPTIONS,
     resolver: zodResolver(reviewStepSchema),
     defaultValues: {
       firstNames: profile.firstNames,
@@ -137,6 +142,9 @@ export function RegisterReviewStep({
       phone: profile.phone,
     },
   });
+
+  const { isValid } = form.formState;
+  const isContinueDisabled = isRegisterContinueDisabled(isValid, isSubmitting);
 
   return (
     <Form {...form}>
@@ -409,7 +417,7 @@ export function RegisterReviewStep({
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isContinueDisabled}
             className={cn(
               "btn-login h-11 flex-1 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
               isSubmitting && "animate-pulse-glow",
