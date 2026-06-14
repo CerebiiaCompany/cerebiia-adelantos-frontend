@@ -10,6 +10,7 @@ export const MAX_SELFIE_BRIGHT_RATIO = 0.32;
 
 export const SELFIE_VALIDATION_TIMEOUT_MS = 25_000;
 export const SELFIE_VALIDATION_TIMEOUT_MOBILE_MS = 50_000;
+export const SELFIE_DOCUMENT_OCR_TIMEOUT_MS = 5_000;
 
 export function getSelfieValidationTimeoutMs(): number {
   return isMobileDevice()

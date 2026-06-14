@@ -1,9 +1,42 @@
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2 } from "lucide-react";
+import { Bell, CalendarClock, CheckCircle2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RegisterCard } from "@/features/auth/ui/RegisterCard";
 import { ROUTES } from "@/shared/config/routes";
 import { cn } from "@/lib/utils";
+
+const NEXT_STEPS = [
+  {
+    icon: Bell,
+    title: "Te notificaremos el resultado",
+    description: (
+      <>
+        Recibirás una respuesta en un plazo máximo de{" "}
+        <span className="font-medium text-foreground">24 horas hábiles</span>{" "}
+        por los canales de contacto que registraste.
+      </>
+    ),
+  },
+  {
+    icon: CalendarClock,
+    title: "Registros en fin de semana",
+    description: (
+      <>
+        Si completas el registro durante el fin de semana, te contactaremos el{" "}
+        <span className="font-medium text-foreground">siguiente día hábil</span>
+        .
+      </>
+    ),
+  },
+  {
+    icon: Sparkles,
+    title: "Accede a tu cupo de crédito",
+    description:
+      "Una vez aprobada tu identidad, podrás ingresar a la plataforma y solicitar tu cupo conforme a las condiciones disponibles para tu perfil.",
+  },
+] as const;
+
+const stepStagger = ["stagger-3", "stagger-4", "stagger-5"] as const;
 
 export function RegisterValidationPendingContent() {
   const navigate = useNavigate();
@@ -61,31 +94,60 @@ export function RegisterValidationPendingContent() {
             Validación de identidad en proceso
           </h2>
 
-          <div className="animate-stagger-up stagger-3 space-y-2">
+          <div className="animate-stagger-up stagger-3 space-y-4">
             <h3 className="font-display text-base font-bold text-primary">
               Próximos pasos
             </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Te notificaremos el resultado en un plazo máximo de{" "}
-              <span className="font-medium text-foreground">24 horas hábiles</span>
-              . Si completas el registro durante el fin de semana, recibirás la
-              respuesta el siguiente día hábil.
-            </p>
-          </div>
 
-          <div className="animate-stagger-up stagger-4 space-y-2">
-            <h3 className="font-display text-base font-bold text-primary">
-              Información importante
-            </h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Una vez aprobada tu identidad, podrás acceder a la plataforma y
-              solicitar tu cupo de crédito conforme a las condiciones
-              disponibles para tu perfil.
-            </p>
+            <ol className="relative space-y-0 rounded-xl border border-border/70 bg-muted/15 p-4 sm:p-5">
+              <div
+                className="pointer-events-none absolute left-[2.125rem] top-10 bottom-10 hidden w-px bg-gradient-to-b from-primary/30 via-primary/15 to-primary/30 sm:block"
+                aria-hidden="true"
+              />
+
+              {NEXT_STEPS.map(({ icon: Icon, title, description }, index) => (
+                <li
+                  key={title}
+                  className={cn(
+                    "animate-stagger-up relative flex gap-3 sm:gap-4",
+                    stepStagger[index],
+                    index < NEXT_STEPS.length - 1 && "pb-5",
+                  )}
+                >
+                  <div className="relative z-[1] flex shrink-0 flex-col items-center">
+                    <span
+                      className={cn(
+                        "flex h-9 w-9 items-center justify-center rounded-full",
+                        "bg-gradient-to-br from-primary/20 to-accent/10",
+                        "text-sm font-bold text-primary ring-2 ring-primary/20 shadow-sm",
+                      )}
+                      aria-hidden="true"
+                    >
+                      {index + 1}
+                    </span>
+                  </div>
+
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <div className="flex items-start gap-2">
+                      <Icon
+                        className="mt-0.5 h-4 w-4 shrink-0 text-primary/80"
+                        aria-hidden="true"
+                      />
+                      <p className="text-sm font-semibold leading-snug text-foreground">
+                        {title}
+                      </p>
+                    </div>
+                    <p className="mt-1.5 pl-6 text-sm leading-relaxed text-muted-foreground">
+                      {description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
 
-        <div className="animate-stagger-up stagger-5 mt-8">
+        <div className="animate-stagger-up stagger-6 mt-8">
           <Button
             type="button"
             onClick={() => navigate(ROUTES.login, { replace: true })}

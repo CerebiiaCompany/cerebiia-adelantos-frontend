@@ -1,5 +1,6 @@
 import {
   IDENTITY_UPLOAD_MAX_BYTES,
+  IDENTITY_UPLOAD_MAX_MB,
   isAllowedIdentityFile,
   type IdentityFileLike,
 } from "@/shared/validations/register.schema";
@@ -25,7 +26,7 @@ export function validateFileSize(file: IdentityFileLike): {
   if (file.size > IDENTITY_UPLOAD_MAX_BYTES) {
     return {
       passed: false,
-      message: "El archivo supera el tamaño máximo de 5 MB",
+      message: `El archivo supera el tamaño máximo de ${IDENTITY_UPLOAD_MAX_MB} MB`,
     };
   }
 

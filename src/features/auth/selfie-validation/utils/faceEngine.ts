@@ -34,6 +34,57 @@ type FaceInput =
   | HTMLVideoElement
   | OffscreenCanvas;
 
+function mapFaceDetections(
+  detections: Array<{
+    detection: { box: FaceAnalysis["box"]; score: number };
+    landmarks: FaceAnalysis["landmarks"];
+  }>,
+): FaceAnalysis[] {
+  return detections.map((item) => ({
+    box: item.detection.box,
+    landmarks: item.landmarks,
+    score: item.detection.score,
+  }));
+}
+
+function getFaceOverlapRatio(
+  left: FaceAnalysis["box"],
+  right: FaceAnalysis["box"],
+): number {
+  const overlapWidth = Math.max(
+    0,
+    Math.min(left.x + left.width, right.x + right.width) - Math.max(left.x, right.x),
+  );
+  const overlapHeight = Math.max(
+    0,
+    Math.min(left.y + left.height, right.y + right.height) -
+      Math.max(left.y, right.y),
+  );
+  return (overlapWidth * overlapHeight) / (left.width * left.height || 1);
+}
+
+function mergeFaceDetections(
+  baseFaces: FaceAnalysis[],
+  extraFaces: FaceAnalysis[],
+): FaceAnalysis[] {
+  const merged = [...baseFaces];
+
+  for (const candidate of extraFaces) {
+    const overlapsExisting = merged.some(
+      (existing) => getFaceOverlapRatio(existing.box, candidate.box) > 0.35,
+    );
+
+    if (!overlapsExisting) {
+      merged.push(candidate);
+    }
+  }
+
+  return merged.sort(
+    (left, right) =>
+      right.box.width * right.box.height - left.box.width * left.box.height,
+  );
+}
+
 export async function detectFaces(source: FaceInput): Promise<FaceAnalysis[]> {
   await warmupFaceEngine();
 
@@ -47,11 +98,30 @@ export async function detectFaces(source: FaceInput): Promise<FaceAnalysis[]> {
     )
     .withFaceLandmarks(true);
 
-  return detections.map((item) => ({
-    box: item.detection.box,
-    landmarks: item.landmarks,
-    score: item.detection.score,
-  }));
+  return mapFaceDetections(detections);
+}
+
+/** Segunda pasada sensible solo si hace falta detectar la foto pequeña en la cédula. */
+export async function detectFacesForSelfieValidation(
+  source: FaceInput,
+): Promise<FaceAnalysis[]> {
+  const primaryFaces = await detectFaces(source);
+
+  if (primaryFaces.length >= 2) {
+    return primaryFaces;
+  }
+
+  const sensitiveDetections = await faceapi
+    .detectAllFaces(
+      source,
+      new faceapi.TinyFaceDetectorOptions({
+        inputSize: 320,
+        scoreThreshold: 0.28,
+      }),
+    )
+    .withFaceLandmarks(true);
+
+  return mergeFaceDetections(primaryFaces, mapFaceDetections(sensitiveDetections));
 }
 
 export async function detectFaceCount(source: FaceInput): Promise<number> {
