@@ -6,6 +6,7 @@ import type {
   ForgotPasswordRequest,
   ForgotPasswordResponse,
   ChangePasswordRequest,
+  ChangePasswordResponse,
   ResetPasswordRequest,
   VerifyDocumentRequest,
   VerifyDocumentResponse,
@@ -20,7 +21,7 @@ export const authEndpoints = {
   forgotPassword: (data: ForgotPasswordRequest) =>
     http.post<ForgotPasswordResponse>("/auth/password/forgot", data),
   changePassword: (data: ChangePasswordRequest) =>
-    http.post<void>("/auth/password/change", data),
+    http.post<ChangePasswordResponse>("/auth/password/change", data),
   resetPassword: (data: ResetPasswordRequest) =>
     http.post<void>("/auth/password/reset", data),
   verifyDocument: (data: VerifyDocumentRequest) =>

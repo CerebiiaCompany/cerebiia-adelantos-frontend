@@ -11,7 +11,6 @@ import Control from "./pages/Control";
 import Asistente from "./pages/Asistente";
 import Logros from "./pages/Logros";
 import Notificaciones from "./pages/Notificaciones";
-import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +30,6 @@ const App = () => (
             <Route path="/asistente" element={<Asistente />} />
             <Route path="/logros" element={<Logros />} />
             <Route path="/notificaciones" element={<Notificaciones />} />
-            <Route path="/perfil" element={<Perfil />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

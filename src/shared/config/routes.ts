@@ -12,7 +12,6 @@ export const ROUTES = {
     asistente: "/asistente",
     logros: "/logros",
     notificaciones: "/notificaciones",
-    perfil: "/perfil",
   },
   employer: {
     panel: "/empleador/panel",
