@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Camera,
   ImageUp,
-  Loader2,
   RefreshCw,
   ScanFace,
   ShieldCheck,
@@ -15,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   SelfieValidationChecks,
+  SelfieVerificationLoader,
   detectFaceCount,
   useSelfieValidation,
 } from "@/features/auth/selfie-validation";
@@ -386,7 +386,7 @@ export function RegisterSelfieValidationStep({
             {cameraStatus === "loading" && !showValidatedPreview && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[1px]">
                 <div className="flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 text-xs text-muted-foreground shadow-sm">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                  <SelfieVerificationLoader compact />
                   {cameraMessage}
                 </div>
               </div>
@@ -530,7 +530,7 @@ export function RegisterSelfieValidationStep({
               className="btn-login h-11 flex-1 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md"
             >
               {isValidating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <SelfieVerificationLoader compact />
               ) : (
                 <>
                   <Camera className="mr-2 h-4 w-4" />
@@ -548,7 +548,7 @@ export function RegisterSelfieValidationStep({
             className="btn-login h-11 flex-1 rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md"
           >
             {isValidating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <SelfieVerificationLoader compact />
             ) : (
               <>
                 <ImageUp className="mr-2 h-4 w-4" />

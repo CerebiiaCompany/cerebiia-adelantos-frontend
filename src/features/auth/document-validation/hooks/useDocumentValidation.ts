@@ -37,7 +37,7 @@ export function useDocumentValidation(_options: UseDocumentValidationOptions) {
     setState({
       status: "analyzing",
       progress: 0,
-      progressMessage: "Iniciando análisis del documento...",
+      progressMessage: "Preparando verificación de tu documento...",
       checks: [],
       isValid: false,
       ocrText: "",

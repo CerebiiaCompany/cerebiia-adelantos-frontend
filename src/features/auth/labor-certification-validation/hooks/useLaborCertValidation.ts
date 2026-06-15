@@ -36,7 +36,7 @@ export function useLaborCertValidation({
       setState({
         ...INITIAL_LABOR_CERT_VALIDATION,
         phase: "analyzing",
-        progressMessage: "Iniciando validación de certificación laboral...",
+        progressMessage: "Preparando escaneo de tu certificación...",
       });
 
       try {

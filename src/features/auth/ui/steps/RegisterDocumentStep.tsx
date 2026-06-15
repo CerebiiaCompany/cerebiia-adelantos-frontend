@@ -71,10 +71,12 @@ export function RegisterDocumentStep({
 
   const documentType = form.watch("documentType");
   const hasMandatoryConsent = form.watch("acceptMandatorySensitiveTreatment");
+  const hasAccessoryConsent = form.watch("acceptAccessoryTreatment");
   const { isValid } = form.formState;
   const isVerifiedNew = verificationStatus === "verified-new";
   const isDocumentLocked = verificationStatus !== "idle";
-  const showVerifiedSuccess = isVerifiedNew && hasMandatoryConsent;
+  const showVerifiedSuccess =
+    isVerifiedNew && hasMandatoryConsent && hasAccessoryConsent;
   const isContinueDisabled = isRegisterContinueDisabled(isValid, isVerifying);
 
   useEffect(() => {
@@ -88,8 +90,14 @@ export function RegisterDocumentStep({
   }, [documentType, form, isDocumentLocked]);
 
   function handleSubmit(values: VerifyDocumentFormValues) {
-    if (!values.acceptMandatorySensitiveTreatment) {
-      void form.trigger("acceptMandatorySensitiveTreatment");
+    if (
+      !values.acceptMandatorySensitiveTreatment ||
+      !values.acceptAccessoryTreatment
+    ) {
+      void form.trigger([
+        "acceptMandatorySensitiveTreatment",
+        "acceptAccessoryTreatment",
+      ]);
       return;
     }
 

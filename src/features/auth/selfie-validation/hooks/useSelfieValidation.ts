@@ -36,7 +36,7 @@ export function useSelfieValidation() {
       setState({
         phase: "validating",
         progress: 0,
-        progressMessage: "Iniciando validación facial...",
+        progressMessage: "Iniciando verificación facial...",
         checks: [],
         isValid: false,
       });

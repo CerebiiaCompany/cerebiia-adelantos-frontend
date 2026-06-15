@@ -36,7 +36,11 @@ const NEXT_STEPS = [
   },
 ] as const;
 
-const stepStagger = ["stagger-3", "stagger-4", "stagger-5"] as const;
+const NEXT_STEP_DELAYS = [
+  "next-step-delay-0",
+  "next-step-delay-1",
+  "next-step-delay-2",
+] as const;
 
 export function RegisterValidationPendingContent() {
   const navigate = useNavigate();
@@ -99,27 +103,42 @@ export function RegisterValidationPendingContent() {
               Próximos pasos
             </h3>
 
-            <ol className="relative space-y-0 rounded-xl border border-border/70 bg-muted/15 p-4 sm:p-5">
+            <ol className="relative overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-muted/20 via-background to-primary/[0.04] p-4 sm:p-5">
               <div
-                className="pointer-events-none absolute left-[2.125rem] top-10 bottom-10 hidden w-px bg-gradient-to-b from-primary/30 via-primary/15 to-primary/30 sm:block"
+                className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsl(var(--primary)/0.08),transparent_55%)]"
                 aria-hidden="true"
               />
+
+              <div
+                className="pointer-events-none absolute left-[1.6875rem] top-[1.375rem] bottom-[1.375rem] w-1.5 overflow-hidden rounded-full bg-primary/10 sm:left-[1.8125rem]"
+                aria-hidden="true"
+              >
+                <div className="animate-next-step-timeline relative h-full w-full rounded-full bg-gradient-to-b from-primary via-accent to-primary shadow-[0_0_12px_hsl(var(--primary)/0.25)]" />
+                <div className="animate-next-step-timeline-glow absolute inset-x-0 top-0 h-1/3 rounded-full bg-gradient-to-b from-white/50 to-transparent" />
+              </div>
 
               {NEXT_STEPS.map(({ icon: Icon, title, description }, index) => (
                 <li
                   key={title}
                   className={cn(
-                    "animate-stagger-up relative flex gap-3 sm:gap-4",
-                    stepStagger[index],
-                    index < NEXT_STEPS.length - 1 && "pb-5",
+                    "animate-next-step-reveal relative flex gap-3 sm:gap-4",
+                    NEXT_STEP_DELAYS[index],
+                    index < NEXT_STEPS.length - 1 && "pb-4 sm:pb-5",
                   )}
                 >
-                  <div className="relative z-[1] flex shrink-0 flex-col items-center">
+                  <div
+                    className={cn(
+                      "animate-next-step-node relative z-[1] flex shrink-0 flex-col items-center",
+                      NEXT_STEP_DELAYS[index],
+                    )}
+                  >
                     <span
                       className={cn(
                         "flex h-9 w-9 items-center justify-center rounded-full",
-                        "bg-gradient-to-br from-primary/20 to-accent/10",
-                        "text-sm font-bold text-primary ring-2 ring-primary/20 shadow-sm",
+                        "border-2 border-primary/30 bg-background",
+                        "text-sm font-bold text-primary",
+                        "shadow-[0_4px_14px_hsl(var(--primary)/0.18)]",
+                        "ring-4 ring-primary/10",
                       )}
                       aria-hidden="true"
                     >
@@ -127,19 +146,29 @@ export function RegisterValidationPendingContent() {
                     </span>
                   </div>
 
-                  <div className="min-w-0 flex-1 pt-0.5">
-                    <div className="flex items-start gap-2">
-                      <Icon
-                        className="mt-0.5 h-4 w-4 shrink-0 text-primary/80"
-                        aria-hidden="true"
-                      />
-                      <p className="text-sm font-semibold leading-snug text-foreground">
-                        {title}
-                      </p>
+                  <div
+                    className={cn(
+                      "min-w-0 flex-1 rounded-xl border border-border/60",
+                      "bg-background/80 p-3.5 shadow-sm backdrop-blur-[1px]",
+                      "transition-all duration-300 hover:border-primary/25 hover:shadow-md",
+                    )}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/15">
+                        <Icon
+                          className="h-4 w-4 text-primary"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold leading-snug text-foreground">
+                          {title}
+                        </p>
+                        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                          {description}
+                        </p>
+                      </div>
                     </div>
-                    <p className="mt-1.5 pl-6 text-sm leading-relaxed text-muted-foreground">
-                      {description}
-                    </p>
                   </div>
                 </li>
               ))}

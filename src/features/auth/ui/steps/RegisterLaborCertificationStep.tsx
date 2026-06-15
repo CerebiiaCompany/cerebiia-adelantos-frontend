@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
-  Loader2,
   Upload,
   X,
 } from "lucide-react";
@@ -16,6 +15,7 @@ import {
 } from "@/shared/validations/register.schema";
 import {
   LaborCertValidationChecks,
+  LaborCertVerificationLoader,
   useLaborCertValidation,
 } from "@/features/auth/labor-certification-validation";
 import { GenericDocumentIllustration } from "./DocumentUploadIllustrations";
@@ -274,8 +274,8 @@ export function RegisterLaborCertificationStep({
             isSubmitting && "animate-pulse-glow",
           )}
         >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+          {isSubmitting || isAnalyzing ? (
+            <LaborCertVerificationLoader compact />
           ) : (
             <>
               Continuar
