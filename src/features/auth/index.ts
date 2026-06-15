@@ -6,5 +6,10 @@ export { useVerifyDocument } from "./model/useVerifyDocument";
 export { useCompanies } from "./model/useCompanies";
 export { useRegisterUser } from "./model/useRegisterUser";
 export { useLogout } from "./model/useLogout";
+export {
+  useChangePassword,
+  syncRememberedCredentialsAfterPasswordReset,
+} from "./model/useChangePassword";
+export { rememberedCredentialsStorage } from "./model/rememberedCredentialsStorage";
 export { ForgotPasswordForm } from "./ui/ForgotPasswordForm";
 export { useForgotPassword } from "./model/useForgotPassword";

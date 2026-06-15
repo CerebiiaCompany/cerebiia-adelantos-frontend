@@ -80,7 +80,10 @@ export const verifyDocumentSchema = z
       message:
         "Debes autorizar el tratamiento obligatorio y sensible para continuar.",
     }),
-    acceptAccessoryTreatment: z.boolean().optional(),
+    acceptAccessoryTreatment: z.boolean().refine((value) => value === true, {
+      message:
+        "Debes autorizar el tratamiento para finalidades accesorias para continuar.",
+    }),
   })
   .superRefine((data, ctx) => {
     const trimmed = data.documentNumber.trim();

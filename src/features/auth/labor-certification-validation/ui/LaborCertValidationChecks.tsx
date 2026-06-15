@@ -2,11 +2,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock3,
-  Loader2,
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LaborCertValidationState } from "../types";
+import { LaborCertVerificationLoader } from "./LaborCertVerificationLoader";
 
 interface LaborCertValidationChecksProps {
   state: LaborCertValidationState;
@@ -29,10 +29,30 @@ export function LaborCertValidationChecks({
   return (
     <div className="space-y-3 rounded-lg border border-border/60 bg-muted/10 px-3 py-3">
       {state.phase === "analyzing" && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-          <span>{state.progressMessage}</span>
-          <span className="ml-auto font-medium text-primary">
+        <div
+          className="flex items-center gap-3 rounded-lg border border-primary/20 bg-gradient-to-r from-primary/[0.06] via-primary/[0.03] to-accent/[0.04] px-3 py-2.5"
+          role="status"
+          aria-live="polite"
+          aria-label={state.progressMessage}
+        >
+          <LaborCertVerificationLoader />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium leading-snug text-foreground">
+              {state.progressMessage}
+            </p>
+            <div
+              className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-primary/10"
+              aria-hidden="true"
+            >
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent transition-[width] duration-500 ease-out"
+                style={{
+                  width: `${Math.max(8, Math.round(state.progress * 100))}%`,
+                }}
+              />
+            </div>
+          </div>
+          <span className="shrink-0 text-xs font-bold tabular-nums text-primary">
             {Math.round(state.progress * 100)}%
           </span>
         </div>

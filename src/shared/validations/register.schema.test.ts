@@ -66,7 +66,7 @@ describe("registerSchema", () => {
       documentType: "CC",
       documentNumber: "123",
       acceptMandatorySensitiveTreatment: true,
-      acceptAccessoryTreatment: false,
+      acceptAccessoryTreatment: true,
     });
 
     expect(result.success).toBe(false);
@@ -82,10 +82,26 @@ describe("registerSchema", () => {
       documentType: "CC",
       documentNumber: "1234567",
       acceptMandatorySensitiveTreatment: true,
-      acceptAccessoryTreatment: false,
+      acceptAccessoryTreatment: true,
     });
 
     expect(result.success).toBe(true);
+  });
+
+  it("requiere autorización para finalidades accesorias", () => {
+    const result = verifyDocumentSchema.safeParse({
+      documentType: "CC",
+      documentNumber: "1234567",
+      acceptMandatorySensitiveTreatment: true,
+      acceptAccessoryTreatment: false,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        "Debes autorizar el tratamiento para finalidades accesorias para continuar.",
+      );
+    }
   });
 
   it("requiere autorización obligatoria y sensible", () => {

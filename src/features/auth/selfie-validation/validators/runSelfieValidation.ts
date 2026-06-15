@@ -67,11 +67,11 @@ export async function runSelfieValidation({
 }: RunSelfieValidationParams): Promise<SelfieValidationResult> {
   const checks: SelfieValidationCheckItem[] = [];
 
-  onProgress?.(0.05, "Optimizando imagen...");
+  onProgress?.(0.05, "Preparando tu selfie...");
   await yieldToMainThread();
   const analysisCanvas = prepareSelfieAnalysisCanvas(selfieCanvas);
 
-  onProgress?.(0.08, "Verificando imagen...");
+  onProgress?.(0.08, "Revisando calidad de la imagen...");
   const quality = analyzeSelfieQuality(analysisCanvas);
 
   checks.push(
@@ -89,11 +89,11 @@ export async function runSelfieValidation({
     return { checks, isValid: false, livenessPassed: false };
   }
 
-  onProgress?.(0.14, "Cargando modelos de validación...");
+  onProgress?.(0.14, "Activando verificación facial...");
   await Promise.all([warmupFaceEngine(), warmupOcrEngine()]);
   await yieldToMainThread();
 
-  onProgress?.(0.22, "Detectando rostro...");
+  onProgress?.(0.22, "Escaneando tu rostro...");
   const selfieFaces = await detectFacesForSelfieValidation(analysisCanvas);
   const faceClassification = classifySelfieFaces(selfieFaces);
 
@@ -114,7 +114,7 @@ export async function runSelfieValidation({
 
   const selfieFace = faceClassification.primary;
 
-  onProgress?.(0.38, "Verificando postura...");
+  onProgress?.(0.38, "Comprobando posición del rostro...");
   const position = validateFacePosition(
     selfieFace,
     analysisCanvas.width,
@@ -126,7 +126,7 @@ export async function runSelfieValidation({
     return { checks, isValid: false, livenessPassed: false };
   }
 
-  onProgress?.(0.48, "Verificando documento en mano...");
+  onProgress?.(0.48, "Buscando tu documento en la selfie...");
   await yieldToMainThread();
   const documentInHand = await validateDocumentInHand(
     analysisCanvas,
@@ -141,7 +141,7 @@ export async function runSelfieValidation({
     return { checks, isValid: false, livenessPassed: false };
   }
 
-  onProgress?.(0.58, "Revisando autenticidad...");
+  onProgress?.(0.58, "Revisando que la foto sea auténtica...");
   const security = detectSecurityIssues(analysisCanvas);
   checks.push(
     buildCheck(
@@ -154,7 +154,7 @@ export async function runSelfieValidation({
     ),
   );
 
-  onProgress?.(0.72, "Analizando rostro...");
+  onProgress?.(0.72, "Analizando rasgos faciales...");
   const biometrics = validateBiometrics(selfieFace);
   checks.push(buildPostureCheck("biometrics", biometrics));
 
@@ -162,7 +162,7 @@ export async function runSelfieValidation({
     return { checks, isValid: false, livenessPassed: false };
   }
 
-  onProgress?.(0.86, "Verificando captura...");
+  onProgress?.(0.86, "Confirmando que eres tú...");
   const currentFrame = analysisCanvas
     .getContext("2d")
     ?.getImageData(0, 0, analysisCanvas.width, analysisCanvas.height);
@@ -182,7 +182,7 @@ export async function runSelfieValidation({
     ),
   );
 
-  onProgress?.(1, "Validación completada");
+  onProgress?.(1, "¡Selfie verificada!");
 
   return {
     checks,

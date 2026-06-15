@@ -53,7 +53,7 @@ async function getWorker() {
         ) {
           activeProgressHandler(
             0.05 + message.progress * 0.95,
-            "Extrayendo texto del documento...",
+            "Escaneando tu documento...",
           );
         }
       },
@@ -138,11 +138,11 @@ export async function runOCR(
   onProgress?: ProgressCallback,
 ): Promise<OCRResult> {
   return enqueueOcrTask(async () => {
-    onProgress?.(0, "Preparando motor de reconocimiento...");
+    onProgress?.(0, "Activando verificación segura...");
     const worker = await getWorker();
     const { analysisCanvas } = prepareAnalysisCanvas(imageSource.source);
 
-    onProgress?.(0.05, "Extrayendo texto del documento...");
+    onProgress?.(0.05, "Escaneando tu documento...");
     activeProgressHandler = (progress, message) => onProgress?.(progress, message);
 
     try {
@@ -152,7 +152,7 @@ export async function runOCR(
         Tesseract.PSM.AUTO,
       );
 
-      onProgress?.(0.72, "Leyendo número del documento...");
+      onProgress?.(0.72, "Verificando número de identidad...");
       const headerCanvas = cropHeaderRegion(analysisCanvas);
       const headerText = await recognizeCanvasText(
         worker,

@@ -130,7 +130,7 @@ export async function runLaborCertValidation({
 }: RunLaborCertValidationParams): Promise<LaborCertValidationResult> {
   const checks: LaborCertCheckItem[] = [];
 
-  onProgress?.(0.05, "Validando formato del archivo...");
+  onProgress?.(0.05, "Revisando formato del archivo...");
 
   const formatResult = validateFileFormat(file);
   checks.push(buildCheck("format", formatResult.passed, formatResult.message));
@@ -151,7 +151,7 @@ export async function runLaborCertValidation({
     });
   }
 
-  onProgress?.(0.12, "Preparando documento...");
+  onProgress?.(0.12, "Preparando tu certificación...");
 
   const imageSource = await withTimeout(
     fileToImageSource(file, (message) => {
@@ -162,13 +162,13 @@ export async function runLaborCertValidation({
   );
 
   await yieldToMainThread();
-  onProgress?.(0.32, "Optimizando imagen para análisis...");
+  onProgress?.(0.32, "Optimizando imagen para el escaneo...");
 
   const { analysisCanvas, originalWidth, originalHeight } =
     prepareAnalysisCanvas(imageSource.source);
 
   await yieldToMainThread();
-  onProgress?.(0.4, "Analizando calidad de imagen...");
+  onProgress?.(0.4, "Comprobando nitidez y legibilidad...");
 
   const qualityResult = validateLaborCertImageQuality(
     analysisCanvas,
@@ -213,7 +213,7 @@ export async function runLaborCertValidation({
     });
   }
 
-  onProgress?.(0.52, "Leyendo contenido del documento...");
+  onProgress?.(0.52, "Escaneando certificación laboral...");
 
   const ocrResult = await withTimeout(
     runOCR(imageSource, (progress, message) => {
@@ -246,7 +246,7 @@ export async function runLaborCertValidation({
     });
   }
 
-  onProgress?.(0.84, "Identificando certificación laboral...");
+  onProgress?.(0.84, "Confirmando que es una certificación laboral...");
 
   const typeValidation = validateLaborCertDocumentType(ocrResult.text);
   checks.push(
@@ -257,7 +257,7 @@ export async function runLaborCertValidation({
     ),
   );
 
-  onProgress?.(0.9, "Extrayendo información laboral...");
+  onProgress?.(0.9, "Extrayendo datos laborales...");
 
   const fieldsValidation = validateLaborCertFields(ocrResult.text, {
     employeeFullName,
@@ -272,12 +272,12 @@ export async function runLaborCertValidation({
     ),
   );
 
-  onProgress?.(0.94, "Verificando vigencia...");
+  onProgress?.(0.94, "Verificando vigencia del documento...");
 
   const validity = validateLaborCertValidity(fieldsValidation.extractedData.issueDate);
   checks.push(buildCheck("validity", validity.isValid, validity.message));
 
-  onProgress?.(0.97, "Revisando autenticidad...");
+  onProgress?.(0.97, "Revisando autenticidad del documento...");
 
   const authenticity = validateLaborCertAuthenticity(ocrResult.text);
   checks.push(
@@ -289,7 +289,7 @@ export async function runLaborCertValidation({
     ),
   );
 
-  onProgress?.(1, "Validación completada");
+  onProgress?.(1, "¡Certificación verificada!");
 
   return resolveFinalResult(checks, {
     typeValid: typeValidation.isValid,
