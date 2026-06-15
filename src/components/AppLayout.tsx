@@ -1,27 +1,30 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Outlet } from "react-router-dom";
-import { Bell } from "lucide-react";
+import { AppAnimatedBackground } from "@/components/AppAnimatedBackground";
+import { NotificationPopover } from "@/components/header/NotificationPopover";
+import { UserProfilePopover } from "@/components/header/UserProfilePopover";
+import { Outlet, useLocation } from "react-router-dom";
 
 export function AppLayout() {
+  const location = useLocation();
+
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="relative flex min-h-screen w-full bg-background">
         <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between border-b border-border/50 px-4 backdrop-blur-sm bg-background/80 sticky top-0 z-10">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+          <AppAnimatedBackground />
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary/10 bg-background/75 px-4 backdrop-blur-md">
+            <SidebarTrigger className="rounded-lg text-muted-foreground transition-colors duration-300 hover:bg-primary/5 hover:text-primary" />
             <div className="flex items-center gap-3">
-              <button className="relative p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors">
-                <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
-              </button>
-              <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center">
-                <span className="text-primary-foreground text-xs font-semibold">EH</span>
-              </div>
+              <NotificationPopover />
+              <UserProfilePopover />
             </div>
           </header>
-          <main className="flex-1 p-4 md:p-6 overflow-auto">
+          <main
+            key={location.pathname}
+            className="animate-app-page-enter relative z-10 flex-1 overflow-auto p-4 md:p-6"
+          >
             <Outlet />
           </main>
         </div>

@@ -121,6 +121,10 @@
     animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
+  .animate-activity-item-enter {
+    animation: activity-item-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
   .animate-shimmer {
     background: linear-gradient(
       90deg,
@@ -190,6 +194,67 @@
   .next-step-delay-0 { animation-delay: 0.35s; }
   .next-step-delay-1 { animation-delay: 0.55s; }
   .next-step-delay-2 { animation-delay: 0.75s; }
+
+  .animate-app-page-enter {
+    animation: app-page-enter 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-sidebar-nav-indicator {
+    animation: sidebar-nav-indicator 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-sidebar-icon-glow {
+    animation: sidebar-icon-glow 3s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
+
+  .sidebar-icon-motion-dashboard {
+    animation: sidebar-motion-dashboard 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .sidebar-icon-motion-zap {
+    animation: sidebar-motion-zap 2.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .sidebar-icon-motion-wallet {
+    animation: sidebar-motion-wallet 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .sidebar-icon-motion-chart {
+    animation: sidebar-motion-chart 2.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .sidebar-icon-motion-sparkle {
+    animation: sidebar-motion-sparkle 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .sidebar-icon-motion-trophy {
+    animation: sidebar-motion-trophy 2.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .sidebar-icon-motion-bell {
+    animation: sidebar-motion-bell 2.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: top center;
+  }
+
+  .sidebar-icon-motion-profile {
+    animation: sidebar-motion-profile 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .sidebar-menu-link--collapsed {
+    width: auto !important;
+    height: auto !important;
+    min-height: unset !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
 
   .stagger-1 { animation-delay: 0.08s; }
   .stagger-2 { animation-delay: 0.16s; }
@@ -439,6 +504,23 @@
     background-size: 28px 28px;
   }
 
+  .app-panel-dot-grid {
+    background-image: radial-gradient(hsl(var(--primary) / 0.11) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  .animate-app-wave-drift-slow {
+    animation: app-wave-drift 36s linear infinite;
+  }
+
+  .animate-app-wave-drift-medium {
+    animation: app-wave-drift-reverse 28s linear infinite;
+  }
+
+  .animate-app-wave-drift-fast {
+    animation: app-wave-drift 22s linear infinite;
+  }
+
   @media (min-width: 1024px) {
     .auth-form-scroll {
       -webkit-overflow-scrolling: touch;
@@ -471,10 +553,14 @@
     .animate-fade-in,
     .animate-scale-in,
     .animate-stagger-up,
+    .animate-activity-item-enter,
     .animate-shimmer,
     .animate-shake,
     .animate-blob,
     .animate-blob-delayed,
+    .animate-app-wave-drift-slow,
+    .animate-app-wave-drift-medium,
+    .animate-app-wave-drift-fast,
     .animate-spin-slow,
     .animate-document-scan,
     .animate-document-verify-pulse,
@@ -485,6 +571,17 @@
     .animate-next-step-timeline-glow,
     .animate-next-step-reveal,
     .animate-next-step-node,
+    .animate-app-page-enter,
+    .animate-sidebar-nav-indicator,
+    .animate-sidebar-icon-glow,
+    .sidebar-icon-motion-dashboard,
+    .sidebar-icon-motion-zap,
+    .sidebar-icon-motion-wallet,
+    .sidebar-icon-motion-chart,
+    .sidebar-icon-motion-sparkle,
+    .sidebar-icon-motion-trophy,
+    .sidebar-icon-motion-bell,
+    .sidebar-icon-motion-profile,
     .auth-page-enter,
     .auth-step-enter-forward,
     .auth-step-enter-back,
@@ -525,6 +622,17 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes activity-item-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -556,6 +664,16 @@
   0%, 100% { transform: translate(0, 0) scale(1); }
   33% { transform: translate(24px, -18px) scale(1.06); }
   66% { transform: translate(-16px, 12px) scale(0.96); }
+}
+
+@keyframes app-wave-drift {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes app-wave-drift-reverse {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
 }
 
 @keyframes spin-slow {
@@ -671,6 +789,78 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+@keyframes app-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sidebar-nav-indicator {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) scaleY(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) scaleY(1);
+  }
+}
+
+@keyframes sidebar-icon-glow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.65; }
+}
+
+@keyframes sidebar-motion-dashboard {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes sidebar-motion-zap {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  40% { transform: scale(1.08) rotate(-5deg); }
+  70% { transform: scale(1.05) rotate(4deg); }
+}
+
+@keyframes sidebar-motion-wallet {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+@keyframes sidebar-motion-chart {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-1px) scale(1.05); }
+}
+
+@keyframes sidebar-motion-sparkle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(8deg) scale(1.06); }
+}
+
+@keyframes sidebar-motion-trophy {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-4deg); }
+  70% { transform: rotate(4deg); }
+}
+
+@keyframes sidebar-motion-bell {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(7deg); }
+  40% { transform: rotate(-6deg); }
+  60% { transform: rotate(4deg); }
+  80% { transform: rotate(-2deg); }
+}
+
+@keyframes sidebar-motion-profile {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 @keyframes auth-page-enter {

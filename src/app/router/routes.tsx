@@ -7,7 +7,6 @@ import Control from "@/pages/Control";
 import Asistente from "@/pages/Asistente";
 import Logros from "@/pages/Logros";
 import Notificaciones from "@/pages/Notificaciones";
-import Perfil from "@/pages/Perfil";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
@@ -42,7 +41,6 @@ export function AppRouter() {
             <Route path="/asistente" element={<Asistente />} />
             <Route path="/logros" element={<Logros />} />
             <Route path="/notificaciones" element={<Notificaciones />} />
-            <Route path="/perfil" element={<Perfil />} />
           </Route>
         </Route>
 

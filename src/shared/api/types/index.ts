@@ -18,6 +18,10 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface ChangePasswordResponse {
+  message: string;
+}
+
 export interface ResetPasswordRequest {
   email: string;
   token: string;
