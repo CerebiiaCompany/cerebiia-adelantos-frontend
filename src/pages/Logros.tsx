@@ -1,48 +1,114 @@
 import { Trophy, Star, Shield, Flame, Target, Award } from "lucide-react";
+import {
+  AnimatedNumber,
+  AnimatedProgressBar,
+} from "@/components/ui/animated-number";
 
 const achievements = [
-  { icon: Shield, title: "Control total", desc: "No te sobreendeudaste 3 meses seguidos", points: 500, unlocked: true },
-  { icon: Flame, title: "Racha de 5", desc: "5 meses consecutivos bajo el 50% del límite", points: 300, unlocked: true },
-  { icon: Star, title: "Primera vez", desc: "Completaste tu primer adelanto", points: 100, unlocked: true },
-  { icon: Target, title: "Meta ahorro", desc: "Ahorraste el equivalente a 1 semana de ingresos", points: 400, unlocked: false },
-  { icon: Award, title: "Usuario premium", desc: "Mantén puntaje 90+ por 6 meses", points: 1000, unlocked: false },
+  {
+    icon: Shield,
+    title: "Control total",
+    desc: "No te sobreendeudaste 3 meses seguidos",
+    points: 500,
+    unlocked: true,
+  },
+  {
+    icon: Flame,
+    title: "Racha de 5",
+    desc: "5 meses consecutivos bajo el 50% del límite",
+    points: 300,
+    unlocked: true,
+  },
+  {
+    icon: Star,
+    title: "Primera vez",
+    desc: "Completaste tu primer adelanto",
+    points: 100,
+    unlocked: true,
+  },
+  {
+    icon: Target,
+    title: "Meta ahorro",
+    desc: "Ahorraste el equivalente a 1 semana de ingresos",
+    points: 400,
+    unlocked: false,
+  },
+  {
+    icon: Award,
+    title: "Usuario premium",
+    desc: "Mantén puntaje 90+ por 6 meses",
+    points: 1000,
+    unlocked: false,
+  },
 ];
 
+const TOTAL_POINTS = 900;
+const MAX_POINTS = 1200;
+const POINTS_TO_NEXT_LEVEL = 300;
+const LEVEL = 3;
+
 export default function Logros() {
-  const totalPoints = 900;
-  const level = 3;
-
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-      <h1 className="text-2xl font-display font-bold text-foreground">Logros y puntos</h1>
+    <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
+      <h1 className="font-display text-2xl font-bold text-foreground">
+        Logros y puntos
+      </h1>
 
-      {/* Level Card */}
       <div className="glass-card glow-border p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center mx-auto mb-3">
+        <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-primary">
           <Trophy className="h-8 w-8 text-primary-foreground" />
         </div>
         <p className="text-sm text-muted-foreground">Nivel actual</p>
-        <p className="text-4xl font-display font-bold text-gradient">{level}</p>
-        <p className="text-sm text-muted-foreground mt-1">Financiero responsable</p>
+        <AnimatedNumber
+          value={LEVEL}
+          className="font-display text-4xl font-bold text-gradient"
+        />
+        <p className="mt-1 text-sm text-muted-foreground">
+          Financiero responsable
+        </p>
         <div className="mt-4">
-          <div className="flex justify-between text-xs text-muted-foreground mb-1">
-            <span>{totalPoints} pts</span>
-            <span>1,200 pts</span>
+          <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+            <span>
+              <AnimatedNumber value={TOTAL_POINTS} className="inline" /> pts
+            </span>
+            <span>
+              <AnimatedNumber
+                value={MAX_POINTS}
+                className="inline"
+                duration={800}
+              />{" "}
+              pts
+            </span>
           </div>
-          <div className="w-full bg-secondary rounded-full h-2">
-            <div className="bg-gradient-primary h-2 rounded-full" style={{ width: "75%" }} />
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">300 pts para nivel 4</p>
+          <AnimatedProgressBar
+            value={TOTAL_POINTS}
+            max={MAX_POINTS}
+            className="h-2"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            <AnimatedNumber
+              value={POINTS_TO_NEXT_LEVEL}
+              className="inline font-medium text-foreground"
+              duration={850}
+            />{" "}
+            pts para nivel 4
+          </p>
         </div>
       </div>
 
-      {/* Achievements */}
       <div className="space-y-3">
         {achievements.map((a, i) => (
-          <div key={i} className={`glass-card p-4 flex items-center gap-4 ${!a.unlocked ? "opacity-50" : ""}`}>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-              a.unlocked ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
-            }`}>
+          <div
+            key={i}
+            className={`glass-card flex items-center gap-4 p-4 ${!a.unlocked ? "opacity-50" : ""}`}
+          >
+            <div
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+                a.unlocked
+                  ? "bg-primary/15 text-primary"
+                  : "bg-secondary text-muted-foreground"
+              }`}
+            >
               <a.icon className="h-6 w-6" />
             </div>
             <div className="flex-1">
@@ -50,10 +116,20 @@ export default function Logros() {
               <p className="text-xs text-muted-foreground">{a.desc}</p>
             </div>
             <div className="text-right">
-              <p className={`text-sm font-bold ${a.unlocked ? "text-primary" : "text-muted-foreground"}`}>
-                +{a.points}
+              <p
+                className={`text-sm font-bold ${a.unlocked ? "text-primary" : "text-muted-foreground"}`}
+              >
+                +
+                <AnimatedNumber
+                  value={a.points}
+                  className="inline"
+                  duration={650}
+                  delay={i * 70 + 60}
+                />
               </p>
-              <p className="text-xs text-muted-foreground">{a.unlocked ? "Desbloqueado" : "Bloqueado"}</p>
+              <p className="text-xs text-muted-foreground">
+                {a.unlocked ? "Desbloqueado" : "Bloqueado"}
+              </p>
             </div>
           </div>
         ))}

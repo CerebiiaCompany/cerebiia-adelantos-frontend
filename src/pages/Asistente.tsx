@@ -1,4 +1,8 @@
 import { Brain, TrendingUp, AlertTriangle, Lightbulb, Shield } from "lucide-react";
+import {
+  AnimatedNumber,
+  AnimatedProgressBar,
+} from "@/components/ui/animated-number";
 
 const tips = [
   {
@@ -39,40 +43,63 @@ const iconStyles = {
   info: "bg-info/15 text-info",
 };
 
+const FINANCIAL_SCORE = 85;
+const MAX_SCORE = 100;
+
 export default function Asistente() {
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+    <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-primary">
           <Brain className="h-6 w-6 text-primary-foreground" />
         </div>
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Asistente financiero</h1>
-          <p className="text-muted-foreground text-sm">Recomendaciones personalizadas</p>
+          <h1 className="font-display text-2xl font-bold text-foreground">
+            Asistente financiero
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Recomendaciones personalizadas
+          </p>
         </div>
       </div>
 
-      {/* Score */}
       <div className="glass-card glow-border p-6 text-center">
-        <p className="text-sm text-muted-foreground mb-2">Tu puntaje financiero</p>
-        <p className="text-6xl font-display font-bold text-gradient">85</p>
-        <p className="text-sm text-muted-foreground mt-2">de 100 · <span className="text-primary">Excelente</span></p>
-        <div className="w-full bg-secondary rounded-full h-2 mt-4">
-          <div className="bg-gradient-primary h-2 rounded-full transition-all" style={{ width: "85%" }} />
-        </div>
+        <p className="mb-2 text-sm text-muted-foreground">Tu puntaje financiero</p>
+        <AnimatedNumber
+          value={FINANCIAL_SCORE}
+          className="font-display text-6xl font-bold text-gradient"
+          duration={1000}
+        />
+        <p className="mt-2 text-sm text-muted-foreground">
+          de{" "}
+          <AnimatedNumber value={MAX_SCORE} className="inline font-medium" /> ·{" "}
+          <span className="text-primary">Excelente</span>
+        </p>
+        <AnimatedProgressBar
+          value={FINANCIAL_SCORE}
+          max={MAX_SCORE}
+          className="mt-4 h-2"
+        />
       </div>
 
-      {/* Tips */}
       <div className="space-y-3">
         {tips.map((tip, i) => (
-          <div key={i} className={`glass-card p-4 border ${typeStyles[tip.type]} animate-slide-up`} style={{ animationDelay: `${i * 100}ms` }}>
+          <div
+            key={i}
+            className={`glass-card animate-slide-up border p-4 ${typeStyles[tip.type]}`}
+            style={{ animationDelay: `${i * 100}ms` }}
+          >
             <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${iconStyles[tip.type]}`}>
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconStyles[tip.type]}`}
+              >
                 <tip.icon className="h-5 w-5" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-foreground">{tip.title}</p>
-                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{tip.desc}</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  {tip.desc}
+                </p>
               </div>
             </div>
           </div>

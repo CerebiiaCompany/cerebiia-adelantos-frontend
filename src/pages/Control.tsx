@@ -1,5 +1,18 @@
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  Cell,
+} from "recharts";
 import { AlertTriangle, TrendingDown, ShieldCheck } from "lucide-react";
+import {
+  AnimatedCurrency,
+  AnimatedPercent,
+} from "@/components/ui/animated-number";
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 
 const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
 
@@ -10,61 +23,127 @@ const monthlyData = [
   { name: "Abr", adelantos: 500000, limite: 2400000 },
 ];
 
+const USED_PERCENT = 21;
+const USED_AMOUNT = 500000;
+const LIMIT_DYNAMIC = 2400000;
+const NEXT_PAYMENT = 4300000;
+
 export default function Control() {
-  const usedPercent = 21;
-  const limitDynamic = 2400000;
+  const animatedPercent = useAnimatedNumber(USED_PERCENT, { duration: 1000 });
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
+    <div className="mx-auto max-w-3xl animate-fade-in space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Control de uso</h1>
-        <p className="text-muted-foreground text-sm mt-1">Monitorea tus adelantos y límites</p>
+        <h1 className="font-display text-2xl font-bold text-foreground">
+          Control de uso
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Monitorea tus adelantos y límites
+        </p>
       </div>
 
-      {/* Usage Ring */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="glass-card p-5 flex flex-col items-center text-center">
-          <div className="relative w-28 h-28 mb-3">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(220, 14%, 90%)" strokeWidth="8" />
-              <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(220, 90%, 55%)" strokeWidth="8"
-                strokeDasharray={`${usedPercent * 2.64} 264`} strokeLinecap="round" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="glass-card flex flex-col items-center p-5 text-center">
+          <div className="relative mb-3 h-28 w-28">
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                stroke="hsl(220, 14%, 90%)"
+                strokeWidth="8"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="42"
+                fill="none"
+                stroke="hsl(220, 90%, 55%)"
+                strokeWidth="8"
+                strokeDasharray={`${animatedPercent * 2.64} 264`}
+                strokeLinecap="round"
+              />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-display font-bold text-foreground">{usedPercent}%</span>
+              <AnimatedPercent
+                value={USED_PERCENT}
+                className="font-display text-2xl font-bold text-foreground"
+              />
             </div>
           </div>
           <p className="text-sm font-medium text-foreground">Utilizado este mes</p>
-          <p className="text-xs text-muted-foreground">$500.000 de $2.400.000</p>
+          <p className="text-xs text-muted-foreground">
+            <AnimatedCurrency
+              value={USED_AMOUNT}
+              className="inline font-medium text-foreground"
+              duration={800}
+            />{" "}
+            de{" "}
+            <AnimatedCurrency
+              value={LIMIT_DYNAMIC}
+              className="inline font-medium text-foreground"
+              duration={900}
+            />
+          </p>
         </div>
 
         <div className="glass-card p-5 text-center">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-3">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <ShieldCheck className="h-5 w-5 text-primary" />
           </div>
-          <p className="text-2xl font-display font-bold text-foreground">{formatCOP(limitDynamic)}</p>
+          <AnimatedCurrency
+            value={LIMIT_DYNAMIC}
+            className="font-display text-2xl font-bold text-foreground"
+          />
           <p className="text-sm text-muted-foreground">Límite dinámico</p>
-          <p className="text-xs text-primary mt-1">+$150.000 vs mes anterior</p>
+          <p className="mt-1 text-xs text-primary">
+            +
+            <AnimatedCurrency
+              value={150000}
+              className="inline"
+              duration={800}
+            />{" "}
+            vs mes anterior
+          </p>
         </div>
 
         <div className="glass-card p-5 text-center">
-          <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center mx-auto mb-3">
+          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
             <TrendingDown className="h-5 w-5 text-warning" />
           </div>
-          <p className="text-2xl font-display font-bold text-foreground">$4.300.000</p>
+          <AnimatedCurrency
+            value={NEXT_PAYMENT}
+            className="font-display text-2xl font-bold text-foreground"
+          />
           <p className="text-sm text-muted-foreground">Próximo pago neto</p>
-          <p className="text-xs text-muted-foreground mt-1">Descontando adelantos</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Descontando adelantos
+          </p>
         </div>
       </div>
 
-      {/* Chart */}
       <div className="glass-card p-5">
-        <h3 className="font-display font-semibold text-foreground mb-4">Historial de adelantos</h3>
+        <h3 className="mb-4 font-display font-semibold text-foreground">
+          Historial de adelantos
+        </h3>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} barSize={32}>
-              <XAxis dataKey="name" stroke="hsl(220, 10%, 70%)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="hsl(220, 10%, 70%)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v/1000000).toFixed(1)}M`} />
+              <XAxis
+                dataKey="name"
+                stroke="hsl(220, 10%, 70%)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="hsl(220, 10%, 70%)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`}
+              />
               <Tooltip
                 contentStyle={{
                   background: "hsl(0, 0%, 100%)",
@@ -78,7 +157,14 @@ export default function Control() {
               />
               <Bar dataKey="adelantos" radius={[6, 6, 0, 0]}>
                 {monthlyData.map((_, i) => (
-                  <Cell key={i} fill={i === monthlyData.length - 1 ? "hsl(220, 90%, 55%)" : "hsl(220, 14%, 88%)"} />
+                  <Cell
+                    key={i}
+                    fill={
+                      i === monthlyData.length - 1
+                        ? "hsl(220, 90%, 55%)"
+                        : "hsl(220, 14%, 88%)"
+                    }
+                  />
                 ))}
               </Bar>
             </BarChart>
@@ -86,12 +172,20 @@ export default function Control() {
         </div>
       </div>
 
-      {/* Alert */}
-      <div className="glass-card p-4 flex items-start gap-3 border-warning/20">
-        <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
+      <div className="glass-card flex items-start gap-3 border-warning/20 p-4">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
         <div>
           <p className="text-sm font-medium text-foreground">Consejo financiero</p>
-          <p className="text-xs text-muted-foreground">Estás usando solo el 21% de tu límite este mes. ¡Excelente control financiero! Tu límite puede aumentar el próximo mes.</p>
+          <p className="text-xs text-muted-foreground">
+            Estás usando solo el{" "}
+            <AnimatedPercent
+              value={USED_PERCENT}
+              className="inline font-medium text-foreground"
+              duration={800}
+            />{" "}
+            de tu límite este mes. ¡Excelente control financiero! Tu límite puede
+            aumentar el próximo mes.
+          </p>
         </div>
       </div>
     </div>
