@@ -46,25 +46,25 @@ export function UserProfileSettingsPanel({
   };
 
   return (
-    <div className="flex max-h-[min(85vh,640px)] flex-col overflow-hidden">
-      <div className="border-b border-border/60 bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] px-4 py-4">
+    <div className="flex max-h-[min(85dvh,640px)] min-w-0 flex-col overflow-hidden">
+      <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] px-3 py-4 sm:px-4">
         <button
           type="button"
           onClick={onBack}
           className="mb-3 flex items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:text-primary/80"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
           Volver al perfil
         </button>
         <h2 className="font-display text-lg font-bold text-foreground">
           Configuración
         </h2>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           Administra tu información personal y seguridad de la cuenta.
         </p>
       </div>
 
-      <div className="overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
         {SETTINGS_SECTIONS.map((section) => {
           const isOpen = openSection === section.id;
           const Icon = section.icon;
@@ -75,15 +75,15 @@ export function UserProfileSettingsPanel({
               open={isOpen}
               onOpenChange={handleSectionChange(section.id)}
             >
-              <CollapsibleTrigger className="flex w-full items-center gap-3 border-b border-border/60 px-4 py-3.5 text-left transition-colors hover:bg-secondary/40">
+              <CollapsibleTrigger className="flex w-full min-w-0 items-center gap-2.5 border-b border-border/60 px-3 py-3.5 text-left transition-colors hover:bg-secondary/40 sm:gap-3 sm:px-4">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/[0.08] text-primary">
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {section.label}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="truncate text-xs text-muted-foreground">
                     {section.description}
                   </p>
                 </div>
@@ -113,7 +113,7 @@ export function UserProfileSettingsPanel({
         })}
       </div>
 
-      <ProfileLogoutButton />
+      <ProfileLogoutButton className="shrink-0" />
     </div>
   );
 }

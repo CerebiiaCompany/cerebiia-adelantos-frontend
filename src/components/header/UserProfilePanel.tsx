@@ -18,8 +18,8 @@ export function UserProfilePanel({ onOpenSettings }: UserProfilePanelProps) {
   const profile = DEMO_EMPLOYEE_PROFILE;
 
   return (
-    <div className="overflow-hidden">
-      <div className="border-b border-border/60 bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] p-4">
+    <div className="min-w-0 overflow-hidden">
+      <div className="border-b border-border/60 bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] p-3 sm:p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-primary shadow-sm shadow-primary/20 ring-2 ring-primary/15">
             <span className="font-display text-base font-bold text-primary-foreground">
@@ -56,7 +56,7 @@ export function UserProfilePanel({ onOpenSettings }: UserProfilePanelProps) {
         <button
           type="button"
           onClick={onOpenSettings}
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-secondary/50"
+          className="flex w-full min-w-0 items-center justify-between px-3 py-3 text-left text-sm text-foreground transition-colors hover:bg-secondary/50 sm:px-4"
         >
           <span>Configuración</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -66,7 +66,7 @@ export function UserProfilePanel({ onOpenSettings }: UserProfilePanelProps) {
           <button
             key={item}
             type="button"
-            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-foreground transition-colors hover:bg-secondary/50"
+            className="flex w-full min-w-0 items-center justify-between px-3 py-3 text-left text-sm text-foreground transition-colors hover:bg-secondary/50 sm:px-4"
           >
             <span>{item}</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -89,7 +89,7 @@ function ProfileRow({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div className="flex items-center gap-3 px-3 py-3 sm:px-4">
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>

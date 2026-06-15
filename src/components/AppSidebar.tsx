@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import {
   Sidebar,
@@ -22,14 +23,20 @@ import {
 } from "@/components/sidebar/sidebarNavConfig";
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const location = useLocation();
+
+  useEffect(() => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  }, [isMobile, location.pathname, setOpenMobile]);
 
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-primary/10 bg-gradient-to-b from-background via-background to-primary/[0.04]"
+      className="border-r border-primary/10"
     >
       <SidebarHeader className={cn("pb-2 pt-3", collapsed ? "px-2" : "px-3")}>
         <div

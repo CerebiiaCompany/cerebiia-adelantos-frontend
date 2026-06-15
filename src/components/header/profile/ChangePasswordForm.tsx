@@ -87,7 +87,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-3 px-4 pb-4 pt-1"
+        className="space-y-3 px-3 pb-4 pt-1 sm:px-4"
         noValidate
       >
         <FormField

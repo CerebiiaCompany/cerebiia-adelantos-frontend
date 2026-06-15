@@ -6,8 +6,11 @@ import {
 } from "@/components/ui/popover";
 import { UserProfilePanel } from "@/components/header/UserProfilePanel";
 import { UserProfileSettingsPanel } from "@/components/header/profile/UserProfileSettingsPanel";
+import {
+  HEADER_POPOVER_COLLISION_PADDING,
+  headerPopoverContentClass,
+} from "@/components/header/headerPopoverStyles";
 import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
-import { cn } from "@/lib/utils";
 
 type ProfileView = "profile" | "settings";
 
@@ -37,11 +40,10 @@ export function UserProfilePopover() {
       </PopoverTrigger>
       <PopoverContent
         align="end"
+        side="bottom"
         sideOffset={10}
-        className={cn(
-          "overflow-hidden border-primary/10 p-0 shadow-lg shadow-primary/5",
-          view === "settings" ? "w-96" : "w-80",
-        )}
+        collisionPadding={HEADER_POPOVER_COLLISION_PADDING}
+        className={headerPopoverContentClass(view === "settings")}
       >
         {view === "profile" ? (
           <UserProfilePanel onOpenSettings={() => setView("settings")} />

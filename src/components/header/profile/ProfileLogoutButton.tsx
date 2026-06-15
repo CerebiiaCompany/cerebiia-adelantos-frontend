@@ -10,7 +10,7 @@ export function ProfileLogoutButton({ className }: ProfileLogoutButtonProps) {
   const { mutate: logout, isPending } = useLogout();
 
   return (
-    <div className={cn("border-t border-border/60 bg-background p-3", className)}>
+    <div className={cn("border-t border-border/60 bg-background p-2.5 sm:p-3", className)}>
       <button
         type="button"
         disabled={isPending}
