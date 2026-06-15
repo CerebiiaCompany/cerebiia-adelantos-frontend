@@ -5,6 +5,8 @@ import type {
   AuthResponse,
   ForgotPasswordRequest,
   ForgotPasswordResponse,
+  ChangePasswordRequest,
+  ResetPasswordRequest,
   VerifyDocumentRequest,
   VerifyDocumentResponse,
   RegisterUserRequest,
@@ -17,6 +19,10 @@ export const authEndpoints = {
   me: () => http.get<AuthResponse>("/auth/me"),
   forgotPassword: (data: ForgotPasswordRequest) =>
     http.post<ForgotPasswordResponse>("/auth/password/forgot", data),
+  changePassword: (data: ChangePasswordRequest) =>
+    http.post<void>("/auth/password/change", data),
+  resetPassword: (data: ResetPasswordRequest) =>
+    http.post<void>("/auth/password/reset", data),
   verifyDocument: (data: VerifyDocumentRequest) =>
     http.post<VerifyDocumentResponse>("/auth/register/verify", data),
   register: (data: RegisterUserRequest) =>

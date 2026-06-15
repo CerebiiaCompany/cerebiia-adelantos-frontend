@@ -16,12 +16,14 @@ import {
 } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import { useLogin } from "../model/useLogin";
+import { rememberedCredentialsStorage } from "../model/rememberedCredentialsStorage";
 import {
   loginSchema,
   type LoginFormValues,
 } from "@/shared/validations/auth.schema";
-import type { LoginRequest } from "@/shared/api/types";
 import { ROUTES } from "@/shared/config/routes";
+
+const LOGIN_BOOTSTRAP_MS = 450;
 
 function LoginSkeleton() {
   return (
@@ -47,16 +49,42 @@ export function LoginForm() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: false },
   });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setIsReady(true), 450);
-    return () => window.clearTimeout(timer);
-  }, []);
+    let cancelled = false;
+
+    async function bootstrapForm() {
+      const [savedCredentials] = await Promise.all([
+        rememberedCredentialsStorage.load(),
+        new Promise<void>((resolve) => {
+          window.setTimeout(resolve, LOGIN_BOOTSTRAP_MS);
+        }),
+      ]);
+
+      if (cancelled) return;
+
+      if (savedCredentials) {
+        form.reset({
+          email: savedCredentials.email,
+          password: savedCredentials.password,
+          rememberMe: true,
+        });
+      }
+
+      setIsReady(true);
+    }
+
+    void bootstrapForm();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form]);
 
   function onSubmit(values: LoginFormValues) {
-    login(values as LoginRequest);
+    login(values);
   }
 
   if (!isReady) {
@@ -176,15 +204,30 @@ export function LoginForm() {
               )}
             />
 
-            <div className="animate-stagger-up stagger-3 flex items-center gap-2">
-              <Checkbox id="remember" disabled={isPending} />
-              <label
-                htmlFor="remember"
-                className="cursor-pointer text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground"
-              >
-                Recordarme en este dispositivo
-              </label>
-            </div>
+            <FormField
+              control={form.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <FormItem className="animate-stagger-up stagger-3 flex items-center gap-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      id="remember"
+                      checked={field.value}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormLabel
+                    htmlFor="remember"
+                    className="cursor-pointer text-sm font-normal text-muted-foreground transition-colors duration-300 hover:text-foreground"
+                  >
+                    Recordarme en este dispositivo
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
 
             {isError && (
               <div

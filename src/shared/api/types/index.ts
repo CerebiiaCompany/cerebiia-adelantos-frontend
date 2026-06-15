@@ -13,6 +13,17 @@ export interface ForgotPasswordResponse {
   message: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  newPassword: string;
+}
+
 export interface AuthResponse {
   token: string;
   role: "employee" | "employer" | "admin";

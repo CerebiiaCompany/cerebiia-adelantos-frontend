@@ -149,6 +149,48 @@
     animation: spin-slow 2.5s linear infinite;
   }
 
+  .animate-document-scan {
+    animation: document-scan 1.75s ease-in-out infinite;
+  }
+
+  .animate-document-verify-pulse {
+    animation: document-verify-pulse 2.2s ease-in-out infinite;
+  }
+
+  .animate-face-scan {
+    animation: face-scan 1.6s ease-in-out infinite;
+  }
+
+  .animate-face-verify-pulse {
+    animation: face-verify-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-face-smile {
+    animation: face-smile 2.4s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .animate-next-step-timeline {
+    animation: next-step-timeline-draw 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+    transform-origin: top center;
+  }
+
+  .animate-next-step-timeline-glow {
+    animation: next-step-timeline-glow 2.8s ease-in-out infinite;
+  }
+
+  .animate-next-step-reveal {
+    animation: next-step-reveal 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-next-step-node {
+    animation: next-step-node-pop 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .next-step-delay-0 { animation-delay: 0.35s; }
+  .next-step-delay-1 { animation-delay: 0.55s; }
+  .next-step-delay-2 { animation-delay: 0.75s; }
+
   .stagger-1 { animation-delay: 0.08s; }
   .stagger-2 { animation-delay: 0.16s; }
   .stagger-3 { animation-delay: 0.24s; }
@@ -434,6 +476,15 @@
     .animate-blob,
     .animate-blob-delayed,
     .animate-spin-slow,
+    .animate-document-scan,
+    .animate-document-verify-pulse,
+    .animate-face-scan,
+    .animate-face-verify-pulse,
+    .animate-face-smile,
+    .animate-next-step-timeline,
+    .animate-next-step-timeline-glow,
+    .animate-next-step-reveal,
+    .animate-next-step-node,
     .auth-page-enter,
     .auth-step-enter-forward,
     .auth-step-enter-back,
@@ -510,6 +561,116 @@
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes document-scan {
+  0% {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(420%);
+    opacity: 0;
+  }
+}
+
+@keyframes document-verify-pulse {
+  0%, 100% {
+    transform: scale(1) rotate(-1deg);
+  }
+  50% {
+    transform: scale(1.04) rotate(1deg);
+  }
+}
+
+@keyframes face-scan {
+  0% {
+    transform: translateX(-140%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(340%);
+    opacity: 0;
+  }
+}
+
+@keyframes face-verify-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.12);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.08);
+  }
+}
+
+@keyframes face-smile {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.15);
+  }
+}
+
+@keyframes next-step-timeline-draw {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes next-step-timeline-glow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translateY(-4%);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translateY(4%);
+  }
+}
+
+@keyframes next-step-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes next-step-node-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes auth-page-enter {

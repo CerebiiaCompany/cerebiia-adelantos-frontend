@@ -37,7 +37,7 @@ export async function runDocumentFileValidation({
 }: RunValidationParams) {
   const checks: ValidationCheckItem[] = [];
 
-  onProgress?.(0.05, "Validando formato del archivo...");
+  onProgress?.(0.05, "Revisando formato del archivo...");
 
   const formatResult = validateFileFormat(file);
   checks.push(buildCheck("format", formatResult.passed, formatResult.message));
@@ -49,7 +49,7 @@ export async function runDocumentFileValidation({
     return { checks, isValid: false, ocrText: "" };
   }
 
-  onProgress?.(0.12, "Preparando imagen para análisis...");
+  onProgress?.(0.12, "Preparando tu documento...");
 
   const imageSource = await withTimeout(
     fileToImageSource(file, (message) => {
@@ -60,13 +60,13 @@ export async function runDocumentFileValidation({
   );
 
   await yieldToMainThread();
-  onProgress?.(0.35, "Optimizando imagen para análisis...");
+  onProgress?.(0.35, "Optimizando imagen para la verificación...");
 
   const { analysisCanvas, originalWidth, originalHeight } =
     prepareAnalysisCanvas(imageSource.source);
 
   await yieldToMainThread();
-  onProgress?.(0.42, "Analizando calidad de imagen...");
+  onProgress?.(0.42, "Comprobando nitidez y legibilidad...");
 
   const quality = validateImageQuality(
     analysisCanvas,
@@ -86,7 +86,7 @@ export async function runDocumentFileValidation({
     return { checks, isValid: false, ocrText: "" };
   }
 
-  onProgress?.(0.5, "Iniciando reconocimiento de texto...");
+  onProgress?.(0.5, "Iniciando escaneo de tu documento...");
 
   const ocrResult = await withTimeout(
     runOCR(imageSource, (progress, message) => {
@@ -106,7 +106,7 @@ export async function runDocumentFileValidation({
     ),
   );
 
-  onProgress?.(1, "Análisis completado");
+  onProgress?.(1, "¡Documento verificado!");
 
   return {
     checks,
