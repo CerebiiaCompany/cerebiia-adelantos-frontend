@@ -1,10 +1,16 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { PayrollCalendarDialog } from "@/features/dashboard/ui/PayrollCalendarDialog";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import {
+  getDaysUntilPayment,
+  getNextPaymentDate,
+} from "@/shared/config/payrollCalendar";
 import { ROUTES } from "@/shared/config/routes";
 import {
   ArrowUpRight,
@@ -25,6 +31,11 @@ import {
   AnimatedCurrency,
   AnimatedNumber,
 } from "@/components/ui/animated-number";
+
+const CHART_COLORS = {
+  ingresos: "hsl(220, 90%, 55%)",
+  adelantos: "hsl(260, 70%, 55%)",
+} as const;
 
 const chartData = [
   { name: "Ene", ingresos: 4200000, adelantos: 800000 },
@@ -61,6 +72,18 @@ const ACTIVITY_COUNT_DELAY_OFFSET_MS = 100;
 export default function Dashboard() {
   const navigate = useNavigate();
   const greeting = useTimeBasedGreeting(DEMO_EMPLOYEE_PROFILE.fullName);
+  const [payrollCalendarOpen, setPayrollCalendarOpen] = useState(false);
+
+  const nextPayment = useMemo(() => getNextPaymentDate(), []);
+  const daysUntilPayment = useMemo(() => getDaysUntilPayment(), []);
+  const nextPaymentLabel = useMemo(
+    () =>
+      nextPayment.toLocaleDateString("es-CO", {
+        day: "numeric",
+        month: "short",
+      }),
+    [nextPayment],
+  );
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -91,7 +114,8 @@ export default function Dashboard() {
               />
             </>
           }
-          icon={<Zap className="h-4 w-4" />}
+          icon={<Zap className="h-5 w-5" strokeWidth={2.25} />}
+          iconMotion="zap"
           accent
         />
         <StatCard
@@ -113,7 +137,8 @@ export default function Dashboard() {
               hoy
             </>
           }
-          icon={<TrendingUp className="h-4 w-4" />}
+          icon={<TrendingUp className="h-5 w-5" strokeWidth={2.25} />}
+          iconMotion="trend-up"
           trend="up"
         />
         <StatCard
@@ -125,27 +150,52 @@ export default function Dashboard() {
             />
           }
           sub="este mes"
-          icon={<ArrowDownRight className="h-4 w-4" />}
+          icon={<ArrowDownRight className="h-5 w-5" strokeWidth={2.25} />}
+          iconMotion="withdraw"
           trend="neutral"
         />
         <StatCard
           label="Próximo pago"
-          value="15 Abr"
+          value={nextPaymentLabel}
           sub={
             <>
-              en <AnimatedNumber value={10} className="inline font-semibold" />{" "}
+              en{" "}
+              <AnimatedNumber
+                value={daysUntilPayment}
+                className="inline font-semibold"
+              />{" "}
               días
             </>
           }
-          icon={<Calendar className="h-4 w-4" />}
+          icon={<Calendar className="h-5 w-5" strokeWidth={2.25} />}
+          onIconClick={() => setPayrollCalendarOpen(true)}
+          iconAriaLabel="Ver calendario de nómina"
+          iconMotion="calendar"
         />
       </div>
 
+      <PayrollCalendarDialog
+        open={payrollCalendarOpen}
+        onOpenChange={setPayrollCalendarOpen}
+      />
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="glass-card p-5 lg:col-span-2">
-          <h3 className="mb-4 font-display font-semibold text-foreground">
-            Ingresos vs Adelantos
-          </h3>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="font-display font-semibold text-foreground">
+              Ingresos vs Adelantos
+            </h3>
+            <div className="flex flex-wrap items-center gap-4">
+              <ChartLegendItem
+                color={CHART_COLORS.ingresos}
+                label="Ingresos"
+              />
+              <ChartLegendItem
+                color={CHART_COLORS.adelantos}
+                label="Adelantos"
+              />
+            </div>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -153,24 +203,24 @@ export default function Dashboard() {
                   <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
                     <stop
                       offset="5%"
-                      stopColor="hsl(220, 90%, 55%)"
+                      stopColor={CHART_COLORS.ingresos}
                       stopOpacity={0.3}
                     />
                     <stop
                       offset="95%"
-                      stopColor="hsl(220, 90%, 55%)"
+                      stopColor={CHART_COLORS.ingresos}
                       stopOpacity={0}
                     />
                   </linearGradient>
                   <linearGradient id="colorAdelantos" x1="0" y1="0" x2="0" y2="1">
                     <stop
                       offset="5%"
-                      stopColor="hsl(260, 70%, 55%)"
+                      stopColor={CHART_COLORS.adelantos}
                       stopOpacity={0.3}
                     />
                     <stop
                       offset="95%"
-                      stopColor="hsl(260, 70%, 55%)"
+                      stopColor={CHART_COLORS.adelantos}
                       stopOpacity={0}
                     />
                   </linearGradient>
@@ -198,19 +248,24 @@ export default function Dashboard() {
                     fontSize: "12px",
                     boxShadow: "0 4px 24px hsl(220 40% 50% / 0.08)",
                   }}
-                  formatter={(value: number) => [formatCOP(value), undefined]}
+                  formatter={(value: number, name: string) => [
+                    formatCOP(value),
+                    name === "ingresos" ? "Ingresos" : "Adelantos",
+                  ]}
                 />
                 <Area
                   type="monotone"
                   dataKey="ingresos"
-                  stroke="hsl(220, 90%, 55%)"
+                  name="ingresos"
+                  stroke={CHART_COLORS.ingresos}
                   fill="url(#colorIngresos)"
                   strokeWidth={2}
                 />
                 <Area
                   type="monotone"
                   dataKey="adelantos"
-                  stroke="hsl(260, 70%, 55%)"
+                  name="adelantos"
+                  stroke={CHART_COLORS.adelantos}
                   fill="url(#colorAdelantos)"
                   strokeWidth={2}
                 />
@@ -227,22 +282,23 @@ export default function Dashboard() {
             {recentActivity.map((item, i) => (
               <div
                 key={item.desc + item.date}
-                className="animate-activity-item-enter flex items-center gap-3"
+                className="group/activity-item animate-activity-item-enter flex items-center gap-3 rounded-lg px-1 py-0.5 transition-colors hover:bg-secondary/30"
                 style={{ animationDelay: `${i * ACTIVITY_STAGGER_MS}ms` }}
               >
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                <span
+                  className={cn(
+                    "inline-flex shrink-0 items-center justify-center",
                     item.type === "ingreso"
-                      ? "bg-primary/10 text-primary"
-                      : "bg-warning/10 text-warning"
-                  }`}
+                      ? "text-primary activity-icon-motion-ingreso"
+                      : "text-[hsl(260_70%_50%)] activity-icon-motion-adelanto",
+                  )}
                 >
                   {item.type === "ingreso" ? (
-                    <ArrowUpRight className="h-4 w-4" />
+                    <ArrowUpRight className="h-5 w-5" strokeWidth={2.25} />
                   ) : (
-                    <ArrowDownRight className="h-4 w-4" />
+                    <ArrowDownRight className="h-5 w-5" strokeWidth={2.25} />
                   )}
-                </div>
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">
                     {item.desc}
@@ -289,6 +345,25 @@ export default function Dashboard() {
   );
 }
 
+function ChartLegendItem({
+  color,
+  label,
+}: {
+  color: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="h-3 w-3 shrink-0 rounded-sm shadow-sm"
+        style={{ backgroundColor: color }}
+        aria-hidden
+      />
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
 function StatCard({
   label,
   value,
@@ -296,6 +371,9 @@ function StatCard({
   icon,
   accent,
   trend,
+  onIconClick,
+  iconAriaLabel,
+  iconMotion,
 }: {
   label: string;
   value: ReactNode;
@@ -303,22 +381,76 @@ function StatCard({
   icon: ReactNode;
   accent?: boolean;
   trend?: "up" | "neutral";
+  onIconClick?: () => void;
+  iconAriaLabel?: string;
+  iconMotion?: "zap" | "trend-up" | "withdraw" | "calendar";
 }) {
+  const motionStyles: Record<
+    NonNullable<typeof iconMotion>,
+    { color: string; icon: string }
+  > = {
+    zap: {
+      color: "text-primary",
+      icon: "stat-card-icon-motion-zap",
+    },
+    "trend-up": {
+      color: "text-primary",
+      icon: "stat-card-icon-motion-trend-up",
+    },
+    withdraw: {
+      color: "text-[hsl(260_70%_50%)]",
+      icon: "stat-card-icon-motion-withdraw",
+    },
+    calendar: {
+      color: "text-primary",
+      icon: "stat-card-icon-motion-calendar",
+    },
+  };
+
+  const motionConfig = iconMotion ? motionStyles[iconMotion] : null;
+
+  const iconWrapperClass = cn(
+    "flex shrink-0 items-center justify-center transition-opacity duration-300",
+    motionConfig?.color ??
+      (accent ? "text-primary" : "text-muted-foreground"),
+    onIconClick &&
+      "cursor-pointer rounded-sm hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+  );
+
+  const iconContent = (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center",
+        motionConfig?.icon,
+      )}
+    >
+      {icon}
+    </span>
+  );
+
   return (
-    <div className={cn("glass-card p-4", accent && "glow-border")}>
+    <div
+      className={cn(
+        "glass-card group/stat-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+        accent && "glow-border",
+      )}
+    >
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
-        <div
-          className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-            accent
-              ? "bg-primary/15 text-primary"
-              : "bg-secondary text-muted-foreground"
-          }`}
-        >
-          {icon}
-        </div>
+        {onIconClick ? (
+          <button
+            type="button"
+            onClick={onIconClick}
+            aria-label={iconAriaLabel ?? "Abrir detalle"}
+            className={iconWrapperClass}
+          >
+            {iconContent}
+          </button>
+        ) : (
+          <div className={iconWrapperClass}>{iconContent}</div>
+        )}
       </div>
       <div
         className={`font-display text-2xl font-bold ${

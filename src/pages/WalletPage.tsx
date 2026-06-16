@@ -13,25 +13,29 @@ import { useState } from "react";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { cn } from "@/lib/utils";
 
 const allies = [
   {
     name: "Planes de Salud",
     desc: "Medicina prepagada, odontología, óptica y más",
     icon: Heart,
-    color: "bg-primary/10 text-primary",
+    iconColor: "text-primary",
+    iconMotion: "wallet-icon-motion-heart",
   },
   {
     name: "Restaurantes",
     desc: "Descuentos en restaurantes aliados",
     icon: Utensils,
-    color: "bg-warning/10 text-warning",
+    iconColor: "text-[hsl(260_70%_50%)]",
+    iconMotion: "wallet-icon-motion-utensils",
   },
   {
     name: "Tiendas",
     desc: "Compras en comercios aliados con beneficios",
     icon: ShoppingBag,
-    color: "bg-info/10 text-info",
+    iconColor: "text-primary",
+    iconMotion: "wallet-icon-motion-bag",
   },
 ];
 
@@ -102,21 +106,25 @@ export default function WalletPage() {
           Servicios aliados
         </h3>
         <div className="space-y-3">
-          {allies.map((ally, i) => (
+          {allies.map((ally) => (
             <div
-              key={i}
-              className="flex items-center gap-3 rounded-xl bg-secondary/30 p-3 transition-colors hover:bg-secondary/50"
+              key={ally.name}
+              className="group/wallet-ally flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-secondary/40"
             >
-              <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${ally.color}`}
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center justify-center",
+                  ally.iconColor,
+                  ally.iconMotion,
+                )}
               >
-                <ally.icon className="h-5 w-5" />
-              </div>
+                <ally.icon className="h-5 w-5" strokeWidth={2.25} />
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground">{ally.name}</p>
                 <p className="text-xs text-muted-foreground">{ally.desc}</p>
               </div>
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300 group-hover/wallet-ally:translate-x-0.5" />
             </div>
           ))}
         </div>
@@ -132,22 +140,23 @@ export default function WalletPage() {
         <div className="space-y-1">
           {movements.map((m, i) => (
             <div
-              key={i}
-              className="flex items-center gap-3 border-b border-border/50 py-3 last:border-0"
+              key={m.desc + m.date}
+              className="group/wallet-movement flex items-center gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-secondary/30 last:border-0"
             >
-              <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center justify-center",
                   m.type === "in"
-                    ? "bg-primary/10 text-primary"
-                    : "bg-destructive/10 text-destructive"
-                }`}
+                    ? "text-primary activity-icon-motion-ingreso"
+                    : "text-[hsl(260_70%_50%)] activity-icon-motion-adelanto",
+                )}
               >
                 {m.type === "in" ? (
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ArrowUpRight className="h-5 w-5" strokeWidth={2.25} />
                 ) : (
-                  <ArrowDownRight className="h-4 w-4" />
+                  <ArrowDownRight className="h-5 w-5" strokeWidth={2.25} />
                 )}
-              </div>
+              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">
                   {m.desc}

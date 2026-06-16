@@ -38,10 +38,10 @@ const typeStyles = {
   info: "border-info/20 bg-info/5",
 };
 
-const iconStyles = {
-  success: "bg-primary/15 text-primary",
-  warning: "bg-warning/15 text-warning",
-  info: "bg-info/15 text-info",
+const iconColors = {
+  success: "text-primary",
+  warning: "text-[hsl(260_70%_50%)]",
+  info: "text-primary",
 };
 
 const FINANCIAL_SCORE = 85;
@@ -83,11 +83,11 @@ export default function Asistente() {
             style={{ animationDelay: `${i * 100}ms` }}
           >
             <div className="flex items-start gap-3">
-              <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconStyles[tip.type]}`}
+              <span
+                className={`inline-flex shrink-0 items-center justify-center ${iconColors[tip.type]}`}
               >
-                <tip.icon className="h-5 w-5" />
-              </div>
+                <tip.icon className="h-5 w-5" strokeWidth={2.25} />
+              </span>
               <div>
                 <p className="text-sm font-semibold text-foreground">{tip.title}</p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">

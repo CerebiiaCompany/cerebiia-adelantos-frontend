@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Moon, Sun, Sunset } from "lucide-react";
+import { CloudSun, MoonStar, Sunrise } from "lucide-react";
 
 export type DayPeriod = "morning" | "afternoon" | "night";
 
@@ -16,26 +16,26 @@ const GREETING_BY_PERIOD = {
   morning: {
     greeting: "Buenos días",
     description: "Un buen momento para revisar tus finanzas",
-    icon: Sun,
+    icon: Sunrise,
     iconContainerClassName:
-      "border border-amber-500/10 bg-amber-500/10",
-    iconClassName: "text-amber-600/65",
+      "rounded-full bg-primary/15 ring-4 ring-primary/10",
+    iconClassName: "text-primary",
   },
   afternoon: {
     greeting: "Buenas tardes",
     description: "Tu resumen financiero de hoy",
-    icon: Sunset,
+    icon: CloudSun,
     iconContainerClassName:
-      "border border-orange-500/10 bg-orange-500/10",
-    iconClassName: "text-orange-600/65",
+      "rounded-full bg-[hsl(260_70%_55%_/_0.12)] ring-4 ring-[hsl(260_70%_55%_/_0.1)]",
+    iconClassName: "text-[hsl(260_70%_50%)]",
   },
   night: {
     greeting: "Buenas noches",
     description: "Cierra el día con tus números al día",
-    icon: Moon,
+    icon: MoonStar,
     iconContainerClassName:
-      "border border-primary/10 bg-primary/10",
-    iconClassName: "text-primary/65",
+      "rounded-full bg-primary/15 ring-4 ring-primary/10",
+    iconClassName: "text-primary",
   },
 } as const satisfies Record<
   DayPeriod,

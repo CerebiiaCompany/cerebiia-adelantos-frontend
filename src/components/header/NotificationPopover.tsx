@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Bell } from "lucide-react";
 import {
   Popover,
@@ -17,11 +18,21 @@ import { ROUTES } from "@/shared/config/routes";
 export function NotificationPopover() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const { unreadNotifications, unreadCount, markAsRead } = useNotifications();
+  const { unreadNotifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotifications();
 
   const handleViewAll = () => {
     setOpen(false);
     navigate(ROUTES.employee.notificaciones);
+  };
+
+  const handleMarkAllAsRead = () => {
+    if (unreadCount === 0) {
+      return;
+    }
+
+    markAllAsRead();
+    toast.success("Todas las notificaciones fueron marcadas como leídas");
   };
 
   const handleNotificationClick = (id: string) => {
@@ -42,7 +53,7 @@ export function NotificationPopover() {
           }
           className="relative rounded-xl p-2 text-muted-foreground transition-all duration-300 hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 data-[state=open]:bg-primary/5 data-[state=open]:text-primary"
         >
-          <Bell className="h-4 w-4" />
+          <Bell className="h-5 w-5" strokeWidth={2} />
           {unreadCount > 0 && (
             <span className="absolute right-1.5 top-1.5 flex h-2 w-2 items-center justify-center rounded-full bg-gradient-primary ring-2 ring-background">
               <span className="sr-only">{unreadCount} notificaciones nuevas</span>
@@ -59,7 +70,9 @@ export function NotificationPopover() {
       >
         <NotificationPanel
           unreadNotifications={unreadNotifications}
+          unreadCount={unreadCount}
           onNotificationClick={handleNotificationClick}
+          onMarkAllAsRead={handleMarkAllAsRead}
           onViewAll={handleViewAll}
         />
       </PopoverContent>
