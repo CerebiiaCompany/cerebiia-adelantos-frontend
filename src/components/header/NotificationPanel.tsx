@@ -2,17 +2,19 @@ import { Bell } from "lucide-react";
 import { NotificationItem } from "@/components/header/NotificationItem";
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber } from "@/components/ui/animated-number";
-import {
-  DEMO_NOTIFICATIONS,
-  getUnreadNotifications,
-} from "@/shared/config/demoNotifications";
+import type { DemoNotification } from "@/shared/config/demoNotifications";
+
 interface NotificationPanelProps {
+  unreadNotifications: DemoNotification[];
+  onNotificationClick: (id: string) => void;
   onViewAll: () => void;
 }
 
-export function NotificationPanel({ onViewAll }: NotificationPanelProps) {
-  const unreadNotifications = getUnreadNotifications(DEMO_NOTIFICATIONS);
-
+export function NotificationPanel({
+  unreadNotifications,
+  onNotificationClick,
+  onViewAll,
+}: NotificationPanelProps) {
   return (
     <div className="flex max-h-[min(85vh,520px)] flex-col overflow-hidden">
       <div className="border-b border-border/60 bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] px-4 py-4">
@@ -37,7 +39,8 @@ export function NotificationPanel({ onViewAll }: NotificationPanelProps) {
               ) : (
                 "Estás al día con tus avisos"
               )}
-            </p>          </div>
+            </p>
+          </div>
         </div>
       </div>
 
@@ -49,6 +52,7 @@ export function NotificationPanel({ onViewAll }: NotificationPanelProps) {
                 key={notification.id}
                 notification={notification}
                 compact
+                onClick={() => onNotificationClick(notification.id)}
               />
             ))}
           </div>

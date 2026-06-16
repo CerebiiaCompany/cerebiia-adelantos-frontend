@@ -7,9 +7,12 @@ import {
   EyeOff,
   ChevronRight,
   ShoppingBag,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
+import { PrimaryActionButton } from "@/components/ui/primary-action-button";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const allies = [
   {
@@ -58,7 +61,11 @@ export default function WalletPage() {
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
-      <h1 className="font-display text-2xl font-bold text-foreground">Wallet</h1>
+      <PageHeader
+        icon={Wallet}
+        title="Wallet"
+        description="Saldo, movimientos y beneficios aliados"
+      />
 
       <div className="glass-card glow-border relative overflow-hidden p-6">
         <div className="absolute right-0 top-0 h-40 w-40 -translate-y-1/2 translate-x-1/2 rounded-full bg-primary/5" />
@@ -113,12 +120,9 @@ export default function WalletPage() {
             </div>
           ))}
         </div>
-        <button
-          type="button"
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-primary py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          Conocer más aliados →
-        </button>
+        <PrimaryActionButton type="button" className="mt-4 w-full py-3 text-sm">
+          Conocer más aliados
+        </PrimaryActionButton>
       </div>
 
       <div className="glass-card p-5">

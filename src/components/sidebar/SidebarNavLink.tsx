@@ -18,29 +18,19 @@ export function SidebarNavLink({ item, collapsed = false }: SidebarNavLinkProps)
       to={item.url}
       end={item.end ?? item.url === "/"}
       className={cn(
-        "group relative flex items-center overflow-visible rounded-lg transition-colors duration-300 ease-out",
+        "group relative flex items-center rounded-lg transition-colors duration-300 ease-out",
         collapsed
-          ? "mx-auto h-9 w-9 shrink-0 justify-center p-0 hover:bg-transparent"
-          : "w-full gap-2.5 px-2 py-1.5 hover:bg-primary/[0.06] hover:pl-2.5",
-        isActive &&
-          !collapsed &&
-          "bg-gradient-to-r from-primary/14 via-primary/8 to-transparent font-semibold text-primary shadow-sm ring-1 ring-primary/15",
-        isActive && collapsed && "text-primary",
-        !isActive && "text-muted-foreground hover:text-foreground",
+          ? "mx-auto h-9 w-9 shrink-0 justify-center p-0"
+          : "w-full gap-3 px-3 py-2",
+        isActive
+          ? "bg-primary/[0.08] font-medium text-primary"
+          : "text-muted-foreground hover:bg-primary/[0.06] hover:text-foreground",
       )}
     >
-      {isActive && !collapsed && (
-        <span
-          className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-gradient-primary animate-sidebar-nav-indicator"
-          aria-hidden="true"
-        />
-      )}
-
       <SidebarNavIcon
         icon={item.icon}
         animation={item.animation}
         isActive={isActive}
-        collapsed={collapsed}
       />
 
       {!collapsed && (

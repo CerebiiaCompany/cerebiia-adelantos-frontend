@@ -13,8 +13,11 @@ export function useLogin() {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: async ({ rememberMe: _rememberMe, ...data }: LoginFormValues) => {
-      const credentials = data as LoginRequest;
+    mutationFn: async ({ rememberMe: _rememberMe, username, password }: LoginFormValues) => {
+      const credentials: LoginRequest = {
+        documentNumber: username,
+        password,
+      };
 
       if (env.apiUrl) {
         return authEndpoints.login(credentials);
@@ -29,7 +32,7 @@ export function useLogin() {
     onSuccess: async (_data, variables) => {
       if (variables.rememberMe) {
         await rememberedCredentialsStorage.save(
-          variables.email,
+          variables.username,
           variables.password,
         );
       } else {

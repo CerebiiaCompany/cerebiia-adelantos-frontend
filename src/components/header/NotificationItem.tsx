@@ -4,23 +4,19 @@ import { cn } from "@/lib/utils";
 interface NotificationItemProps {
   notification: DemoNotification;
   compact?: boolean;
+  onClick?: () => void;
 }
 
 export function NotificationItem({
   notification,
   compact = false,
+  onClick,
 }: NotificationItemProps) {
   const Icon = notification.icon;
+  const isInteractive = Boolean(onClick);
 
-  return (
-    <div
-      className={cn(
-        "flex items-start gap-3 transition-colors",
-        compact ? "px-4 py-3 hover:bg-secondary/40" : "glass-card p-4",
-        !compact && !notification.read && "glow-border",
-        compact && !notification.read && "bg-primary/[0.04]",
-      )}
-    >
+  const content = (
+    <>
       <div
         className={cn(
           "flex shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary",
@@ -29,7 +25,7 @@ export function NotificationItem({
       >
         <Icon className="h-4 w-4" />
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
           <p
             className={cn(
@@ -63,6 +59,28 @@ export function NotificationItem({
           {notification.time}
         </p>
       </div>
-    </div>
+    </>
   );
+
+  const className = cn(
+    "flex w-full items-start gap-3 transition-colors",
+    compact ? "px-4 py-3 hover:bg-secondary/40" : "glass-card p-4",
+    !compact && !notification.read && "glow-border",
+    compact && !notification.read && "bg-primary/[0.04]",
+    isInteractive && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+  );
+
+  if (isInteractive) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={className}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }

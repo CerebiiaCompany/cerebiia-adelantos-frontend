@@ -1,9 +1,6 @@
 import { Loader2, LogOut } from "lucide-react";
 import { useLogout } from "@/features/auth";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenuItem } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 interface SidebarLogoutButtonProps {
@@ -15,46 +12,37 @@ export function SidebarLogoutButton({ collapsed = false }: SidebarLogoutButtonPr
 
   return (
     <SidebarMenuItem className={cn(collapsed && "flex w-full justify-center")}>
-      <SidebarMenuButton
-        asChild
-        tooltip="Cerrar sesión"
+      <button
+        type="button"
+        disabled={isPending}
+        title="Cerrar sesión"
+        onClick={() => logout()}
         className={cn(
-          "sidebar-menu-link h-auto p-0 hover:bg-transparent data-[active=true]:bg-transparent",
-          collapsed && "sidebar-menu-link--collapsed",
+          "relative flex w-full items-center rounded-lg text-destructive transition-colors duration-300 ease-out",
+          collapsed
+            ? "mx-auto h-9 w-9 shrink-0 justify-center p-0"
+            : "gap-3 px-3 py-2",
+          "hover:bg-red-400 hover:text-white",
+          "disabled:cursor-not-allowed disabled:opacity-60",
         )}
       >
-        <button
-          type="button"
-          disabled={isPending}
-          onClick={() => logout()}
-          className={cn(
-            "group relative flex items-center overflow-visible rounded-lg transition-colors duration-300 ease-out",
-            collapsed
-              ? "mx-auto h-9 w-9 shrink-0 justify-center p-0 hover:bg-transparent"
-              : "w-full gap-2.5 px-2 py-1.5 hover:bg-destructive/[0.06]",
-            "text-destructive/90 hover:text-destructive disabled:opacity-60",
-          )}
-        >
-          <span
-            className={cn(
-              "relative flex shrink-0 items-center justify-center rounded-[10px] transition-[background-color,box-shadow] duration-300 ease-out",
-              collapsed ? "aspect-square h-9 w-9" : "h-8 w-8",
-              "bg-destructive/[0.08] text-destructive/80 group-hover:bg-destructive/12 group-hover:text-destructive",
-            )}
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-            )}
+        {isPending ? (
+          <Loader2
+            className="h-[18px] w-[18px] shrink-0 animate-spin text-current"
+            aria-hidden="true"
+          />
+        ) : (
+          <LogOut
+            className="h-[18px] w-[18px] shrink-0 text-current"
+            aria-hidden="true"
+          />
+        )}
+        {!collapsed && (
+          <span className="truncate text-sm font-medium tracking-tight text-current">
+            {isPending ? "Cerrando sesión..." : "Cerrar sesión"}
           </span>
-          {!collapsed && (
-            <span className="truncate text-sm tracking-tight">
-              {isPending ? "Cerrando sesión..." : "Cerrar sesión"}
-            </span>
-          )}
-        </button>
-      </SidebarMenuButton>
+        )}
+      </button>
     </SidebarMenuItem>
   );
 }

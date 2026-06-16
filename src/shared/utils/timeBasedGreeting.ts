@@ -1,0 +1,73 @@
+import type { LucideIcon } from "lucide-react";
+import { Moon, Sun, Sunset } from "lucide-react";
+
+export type DayPeriod = "morning" | "afternoon" | "night";
+
+export type TimeBasedGreeting = {
+  period: DayPeriod;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  iconContainerClassName: string;
+  iconClassName: string;
+};
+
+const GREETING_BY_PERIOD = {
+  morning: {
+    greeting: "Buenos días",
+    description: "Un buen momento para revisar tus finanzas",
+    icon: Sun,
+    iconContainerClassName:
+      "border border-amber-500/10 bg-amber-500/10",
+    iconClassName: "text-amber-600/65",
+  },
+  afternoon: {
+    greeting: "Buenas tardes",
+    description: "Tu resumen financiero de hoy",
+    icon: Sunset,
+    iconContainerClassName:
+      "border border-orange-500/10 bg-orange-500/10",
+    iconClassName: "text-orange-600/65",
+  },
+  night: {
+    greeting: "Buenas noches",
+    description: "Cierra el día con tus números al día",
+    icon: Moon,
+    iconContainerClassName:
+      "border border-primary/10 bg-primary/10",
+    iconClassName: "text-primary/65",
+  },
+} as const satisfies Record<
+  DayPeriod,
+  Omit<TimeBasedGreeting, "period" | "title">
+>;
+
+export function getDayPeriod(hour: number): DayPeriod {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 19) return "afternoon";
+  return "night";
+}
+
+export function getFirstName(fullName: string): string {
+  const trimmed = fullName.trim();
+  if (!trimmed) return "allí";
+  return trimmed.split(/\s+/)[0] ?? trimmed;
+}
+
+export function getTimeBasedGreeting(
+  date: Date = new Date(),
+  fullName?: string,
+): TimeBasedGreeting {
+  const period = getDayPeriod(date.getHours());
+  const config = GREETING_BY_PERIOD[period];
+  const firstName = fullName ? getFirstName(fullName) : "allí";
+
+  return {
+    period,
+    title: `${config.greeting}, ${firstName}`,
+    description: config.description,
+    icon: config.icon,
+    iconContainerClassName: config.iconContainerClassName,
+    iconClassName: config.iconClassName,
+  };
+}

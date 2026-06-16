@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,7 +49,7 @@ export function LoginForm() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "", rememberMe: false },
+    defaultValues: { username: "", password: "", rememberMe: false },
   });
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function LoginForm() {
 
       if (savedCredentials) {
         form.reset({
-          email: savedCredentials.email,
+          username: savedCredentials.username,
           password: savedCredentials.password,
           rememberMe: true,
         });
@@ -117,7 +117,7 @@ export function LoginForm() {
             Bienvenido de nuevo
           </h2>
           <p className="text-sm text-muted-foreground">
-            Ingresa tus credenciales para acceder a tu cuenta
+            Ingresa tu usuario y contraseña para acceder a tu cuenta
           </p>
         </div>
 
@@ -129,19 +129,18 @@ export function LoginForm() {
           >
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem className="animate-stagger-up stagger-1">
-                  <FormLabel className="text-foreground/80">
-                    Correo electrónico
-                  </FormLabel>
+                  <FormLabel className="text-foreground/80">Usuario</FormLabel>
                   <FormControl>
                     <div className="login-field relative rounded-xl">
-                      <Mail className="field-icon pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <User className="field-icon pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
-                        placeholder="tu@empresa.com"
-                        type="email"
-                        autoComplete="email"
+                        placeholder="Número de documento"
+                        type="text"
+                        inputMode="text"
+                        autoComplete="username"
                         disabled={isPending}
                         className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 transition-all duration-300 focus-visible:ring-primary/30 disabled:opacity-60"
                         {...field}
@@ -234,7 +233,7 @@ export function LoginForm() {
                 role="alert"
                 className="animate-shake rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
               >
-                Credenciales incorrectas. Verifica tu email y contraseña.
+                Credenciales incorrectas. Verifica tu usuario y contraseña.
               </div>
             )}
 

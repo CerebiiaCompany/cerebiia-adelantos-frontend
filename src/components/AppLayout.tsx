@@ -14,8 +14,8 @@ export function AppLayout() {
         <AppSidebar />
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           <AppAnimatedBackground />
-          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary/10 bg-background/75 px-4 backdrop-blur-md">
-            <SidebarTrigger className="rounded-lg text-muted-foreground transition-colors duration-300 hover:bg-primary/5 hover:text-primary" />
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary/10 bg-shell px-4 backdrop-blur-md">
+            <SidebarTrigger />
             <div className="flex items-center gap-3">
               <NotificationPopover />
               <UserProfilePopover />

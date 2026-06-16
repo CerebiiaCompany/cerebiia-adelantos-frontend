@@ -1,5 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { changePasswordSchema, forgotPasswordSchema, updateProfileDataSchema } from "./auth.schema";
+import {
+  changePasswordSchema,
+  forgotPasswordSchema,
+  loginSchema,
+  updateProfileDataSchema,
+} from "./auth.schema";
+
+describe("loginSchema", () => {
+  it("requiere usuario (documento) y contraseña válidos", () => {
+    const empty = loginSchema.safeParse({
+      username: "",
+      password: "",
+      rememberMe: false,
+    });
+    expect(empty.success).toBe(false);
+
+    const shortDocument = loginSchema.safeParse({
+      username: "1234",
+      password: "123456",
+      rememberMe: false,
+    });
+    expect(shortDocument.success).toBe(false);
+
+    const valid = loginSchema.safeParse({
+      username: " 1020304050 ",
+      password: "123456",
+      rememberMe: true,
+    });
+    expect(valid.success).toBe(true);
+    if (valid.success) {
+      expect(valid.data.username).toBe("1020304050");
+    }
+  });
+});
 
 describe("forgotPasswordSchema", () => {
   it("requiere un correo electrónico válido", () => {
