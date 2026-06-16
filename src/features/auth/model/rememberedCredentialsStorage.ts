@@ -1,10 +1,10 @@
 const CREDENTIALS_STORAGE_KEY = "cerebiia_remember_credentials";
 const CRYPTO_KEY_STORAGE = "cerebiia_remember_crypto_key";
-const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 2;
 
 interface StoredRememberedCredentials {
   v: number;
-  email: string;
+  username: string;
   passwordCipher: string;
 }
 
@@ -79,8 +79,12 @@ async function decryptText(payload: string): Promise<string> {
 }
 
 export interface RememberedCredentials {
-  email: string;
+  username: string;
   password: string;
+}
+
+function normalizeUsername(username: string): string {
+  return username.trim();
 }
 
 export const rememberedCredentialsStorage = {
@@ -89,14 +93,14 @@ export const rememberedCredentialsStorage = {
     return Boolean(window.localStorage.getItem(CREDENTIALS_STORAGE_KEY));
   },
 
-  async save(email: string, password: string): Promise<void> {
+  async save(username: string, password: string): Promise<void> {
     if (!isBrowser()) return;
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = normalizeUsername(username);
     const passwordCipher = await encryptText(password);
     const payload: StoredRememberedCredentials = {
       v: STORAGE_VERSION,
-      email: normalizedEmail,
+      username: normalizedUsername,
       passwordCipher,
     };
 
@@ -114,13 +118,17 @@ export const rememberedCredentialsStorage = {
 
     try {
       const parsed = JSON.parse(raw) as StoredRememberedCredentials;
-      if (parsed.v !== STORAGE_VERSION || !parsed.email || !parsed.passwordCipher) {
+      if (
+        parsed.v !== STORAGE_VERSION ||
+        !parsed.username ||
+        !parsed.passwordCipher
+      ) {
         return null;
       }
 
       const password = await decryptText(parsed.passwordCipher);
       return {
-        email: parsed.email,
+        username: parsed.username,
         password,
       };
     } catch {
@@ -134,18 +142,18 @@ export const rememberedCredentialsStorage = {
     window.localStorage.removeItem(CREDENTIALS_STORAGE_KEY);
   },
 
-  /** Actualiza la contraseña guardada si el correo coincide (cambio o restablecimiento). */
+  /** Actualiza la contraseña guardada si el usuario coincide (cambio o restablecimiento). */
   async updatePasswordIfMatches(
-    email: string,
+    username: string,
     newPassword: string,
   ): Promise<boolean> {
     const saved = await this.load();
     if (!saved) return false;
 
-    const normalizedEmail = email.trim().toLowerCase();
-    if (saved.email !== normalizedEmail) return false;
+    const normalizedUsername = normalizeUsername(username);
+    if (saved.username !== normalizedUsername) return false;
 
-    await this.save(normalizedEmail, newPassword);
+    await this.save(normalizedUsername, newPassword);
     return true;
   },
 };

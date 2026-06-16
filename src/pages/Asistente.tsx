@@ -3,6 +3,7 @@ import {
   AnimatedNumber,
   AnimatedProgressBar,
 } from "@/components/ui/animated-number";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const tips = [
   {
@@ -49,19 +50,11 @@ const MAX_SCORE = 100;
 export default function Asistente() {
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-primary">
-          <Brain className="h-6 w-6 text-primary-foreground" />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">
-            Asistente financiero
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Recomendaciones personalizadas
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon={Brain}
+        title="Asistente financiero"
+        description="Recomendaciones personalizadas"
+      />
 
       <div className="glass-card glow-border p-6 text-center">
         <p className="mb-2 text-sm text-muted-foreground">Tu puntaje financiero</p>

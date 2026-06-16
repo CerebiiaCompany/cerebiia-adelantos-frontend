@@ -35,37 +35,38 @@ export function AppAnimatedBackground() {
       className="pointer-events-none absolute inset-0 overflow-hidden"
       aria-hidden="true"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/[0.05]" />
-      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-accent/[0.04] to-primary/[0.07]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/[0.05] to-accent/[0.08]" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-primary/[0.06] via-accent/[0.05] to-primary/[0.07]" />
 
-      <div className="animate-blob absolute -left-24 top-[6%] h-80 w-80 rounded-full bg-primary/[0.14] blur-3xl" />
-      <div className="animate-blob-delayed absolute -right-20 top-[18%] h-96 w-96 rounded-full bg-accent/[0.12] blur-3xl" />
+      <div className="animate-blob absolute -left-24 top-[6%] h-80 w-80 rounded-full bg-primary/[0.13] blur-3xl" />
+      <div className="animate-blob-delayed absolute -right-20 top-[18%] h-96 w-96 rounded-full bg-accent/[0.11] blur-3xl" />
       <div className="animate-blob absolute left-[35%] top-[42%] h-64 w-64 rounded-full bg-primary/[0.09] blur-3xl [animation-delay:2s]" />
-      <div className="animate-blob absolute -bottom-16 right-[28%] h-72 w-72 rounded-full bg-accent/[0.1] blur-3xl [animation-delay:4s]" />
+      <div className="animate-blob absolute -bottom-16 right-[28%] h-72 w-72 rounded-full bg-accent/[0.10] blur-3xl [animation-delay:4s]" />
 
-      <div className="app-panel-dot-grid absolute inset-0 opacity-45" />
+      <div className="app-panel-dot-grid absolute inset-0 opacity-40" />
 
       <div className="absolute inset-x-0 bottom-0 h-[40vh] min-h-[210px]">
         <WaveLayer
-          className="text-primary/[0.2]"
+          className="text-primary/[0.18]"
           animationClass="animate-app-wave-drift-slow"
         />
       </div>
       <div className="absolute inset-x-0 bottom-0 h-[32vh] min-h-[170px]">
         <WaveLayer
-          className="text-accent/[0.16]"
+          className="text-accent/[0.15]"
           animationClass="animate-app-wave-drift-medium"
         />
       </div>
       <div className="absolute inset-x-0 bottom-0 h-[24vh] min-h-[130px]">
         <WaveLayer
-          className="text-primary/[0.12]"
+          className="text-primary/[0.11]"
           animationClass="animate-app-wave-drift-fast"
         />
       </div>
 
+      <div className="absolute inset-0 bg-gradient-to-b from-background/65 via-background/20 to-background/60" />
       <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background/80 via-background/30 to-transparent" />
-      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background/90 to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-background/88 to-transparent" />
     </div>
   );
 }

@@ -4,10 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircle2,
   Circle,
-  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import {
   Form,
   FormControl,
@@ -60,7 +59,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
   const handleSubmit = (values: ChangePasswordFormValues) => {
     changePassword(
       {
-        email: DEMO_EMPLOYEE_PROFILE.email,
+        username: DEMO_EMPLOYEE_PROFILE.documentNumber,
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       },
@@ -202,20 +201,16 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
           )}
         />
 
-        <Button
+        <PrimaryActionButton
           type="submit"
-          disabled={!isValid || isPending}
-          className="h-10 w-full rounded-xl bg-gradient-primary text-sm font-semibold text-primary-foreground shadow-sm"
+          disabled={!isValid}
+          loading={isPending}
+          loadingText="Guardando..."
+          showArrow={false}
+          className="h-10 w-full text-sm"
         >
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Guardando...
-            </span>
-          ) : (
-            "Actualizar contraseña"
-          )}
-        </Button>
+          Actualizar contraseña
+        </PrimaryActionButton>
       </form>
     </Form>
   );

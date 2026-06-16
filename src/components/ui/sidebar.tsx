@@ -165,7 +165,7 @@ const Sidebar = React.forwardRef<
           }
           side={side}
         >
-          <div className="flex h-full w-full flex-col bg-background/75 backdrop-blur-md">
+          <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background/75 backdrop-blur-md">
             {children}
           </div>
         </SheetContent>
@@ -209,7 +209,7 @@ const Sidebar = React.forwardRef<
       >
         <div
           data-sidebar="sidebar"
-          className="flex h-full w-full flex-col bg-background/75 backdrop-blur-md group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+          className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background/75 backdrop-blur-md group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
         >
           {children}
         </div>
@@ -221,15 +221,23 @@ Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
   ({ className, onClick, ...props }, ref) => {
-    const { toggleSidebar } = useSidebar();
+    const { toggleSidebar, state, isMobile, openMobile } = useSidebar();
+    const isSidebarOpen = isMobile ? openMobile : state === "expanded";
 
     return (
       <Button
         ref={ref}
         data-sidebar="trigger"
+        data-sidebar-open={isSidebarOpen}
         variant="ghost"
         size="icon"
-        className={cn("h-7 w-7", className)}
+        className={cn(
+          "h-7 w-7 rounded-lg transition-colors duration-300",
+          isSidebarOpen
+            ? "text-primary hover:bg-primary/10 hover:text-primary"
+            : "text-muted-foreground hover:bg-muted hover:text-muted-foreground",
+          className,
+        )}
         onClick={(event) => {
           onClick?.(event);
           toggleSidebar();
@@ -310,7 +318,14 @@ const SidebarHeader = React.forwardRef<HTMLDivElement, React.ComponentProps<"div
 SidebarHeader.displayName = "SidebarHeader";
 
 const SidebarFooter = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(({ className, ...props }, ref) => {
-  return <div ref={ref} data-sidebar="footer" className={cn("flex flex-col gap-2 p-2", className)} {...props} />;
+  return (
+    <div
+      ref={ref}
+      data-sidebar="footer"
+      className={cn("flex shrink-0 flex-col gap-2 p-2", className)}
+      {...props}
+    />
+  );
 });
 SidebarFooter.displayName = "SidebarFooter";
 

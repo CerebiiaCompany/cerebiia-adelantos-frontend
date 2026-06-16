@@ -1,7 +1,7 @@
 // ⚠️ AGNOSTIC — no react-router-dom, no react-dom, no UI imports
 
 export interface LoginRequest {
-  email: string;
+  documentNumber: string;
   password: string;
 }
 

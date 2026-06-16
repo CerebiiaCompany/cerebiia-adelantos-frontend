@@ -10,7 +10,11 @@ import {
 } from "./register.schema";
 
 export const loginSchema = z.object({
-  email: z.string().email("Email inválido"),
+  username: z
+    .string()
+    .min(1, "Ingresa tu usuario")
+    .transform((value) => value.trim())
+    .refine((value) => value.length >= 5, "Ingresa un número de documento válido"),
   password: z.string().min(6, "Mínimo 6 caracteres"),
   rememberMe: z.boolean().default(false),
 });
