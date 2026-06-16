@@ -32,7 +32,8 @@ export function PageHeader({
           )}
         >
           <Icon
-            className={cn("h-6 w-6", iconClassName ?? "text-primary/65")}
+            className={cn("h-6 w-6", iconClassName ?? "text-primary")}
+            strokeWidth={2.25}
           />
         </div>
         <div className="min-w-0">

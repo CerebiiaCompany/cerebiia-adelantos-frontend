@@ -614,6 +614,359 @@
     }
   }
 
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+
+    #advance-receipt,
+    #advance-receipt * {
+      visibility: visible;
+    }
+
+    #advance-receipt {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      max-width: 100%;
+      border: none !important;
+      box-shadow: none !important;
+      background: white !important;
+    }
+
+    .advance-receipt-perforation {
+      background: white !important;
+    }
+
+    .advance-receipt-actions,
+    .advance-receipt-actions * {
+      display: none !important;
+    }
+  }
+
+  .advance-receipt-invoice {
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+  }
+
+  .advance-receipt-invoice:hover {
+    transform: none;
+  }
+
+  .advance-receipt-stamp {
+    background: hsl(0 0% 100% / 0.92);
+    transform: rotate(-4deg);
+  }
+
+  .advance-receipt-perforation {
+    background-image: radial-gradient(
+      circle at 10px -2px,
+      transparent 6px,
+      hsl(var(--muted) / 0.35) 6px
+    );
+    background-size: 20px 8px;
+    background-repeat: repeat-x;
+    background-position: top center;
+    padding-top: 1.25rem;
+  }
+
+  /* Calendario de nómina — estilo calendario físico de pared */
+  .physical-calendar-shell {
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--card)) 0%,
+      hsl(40 20% 97%) 8%,
+      hsl(40 15% 96%) 100%
+    );
+    border: 1px solid hsl(var(--border) / 0.9);
+    box-shadow:
+      0 1px 0 hsl(var(--border) / 0.5),
+      0 8px 24px -6px hsl(220 20% 20% / 0.12),
+      inset 0 1px 0 hsl(0 0% 100% / 0.8);
+  }
+
+  .physical-calendar-binding {
+    display: flex;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 0.5rem 0 0.35rem;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--muted) / 0.5) 0%,
+      hsl(40 15% 94%) 100%
+    );
+    border-bottom: 1px solid hsl(var(--border) / 0.6);
+  }
+
+  .physical-calendar-ring {
+    display: block;
+    width: 0.55rem;
+    height: 0.85rem;
+    border-radius: 999px 999px 0 0;
+    background: linear-gradient(
+      180deg,
+      hsl(220 10% 72%) 0%,
+      hsl(220 8% 55%) 45%,
+      hsl(220 10% 40%) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.35),
+      0 2px 3px hsl(220 20% 20% / 0.2);
+  }
+
+  .physical-calendar-month-band {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.5rem;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary) / 0.88) 100%
+    );
+    color: hsl(var(--primary-foreground));
+    border-bottom: 3px solid hsl(var(--primary) / 0.65);
+  }
+
+  .physical-calendar-nav-btn {
+    display: flex;
+    height: 1.75rem;
+    width: 1.75rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid hsl(var(--primary-foreground) / 0.25);
+    background: hsl(var(--primary-foreground) / 0.12);
+    color: hsl(var(--primary-foreground));
+    transition: background-color 0.15s ease;
+  }
+
+  .physical-calendar-nav-btn:hover {
+    background: hsl(var(--primary-foreground) / 0.22);
+  }
+
+  .physical-calendar-grid .physical-calendar-day {
+    min-height: 2rem;
+  }
+
+  @media (min-width: 640px) {
+    .physical-calendar-grid .physical-calendar-day {
+      min-height: 2.25rem;
+    }
+  }
+
+  /* Dashboard stat cards — iconos coloridos con movimiento al hover de la card */
+  .stat-card-icon-motion-zap,
+  .stat-card-icon-motion-trend-up,
+  .stat-card-icon-motion-withdraw,
+  .stat-card-icon-motion-calendar {
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .group\/stat-card:hover .stat-card-icon-motion-zap {
+    animation: stat-card-motion-zap 0.55s ease-in-out infinite;
+  }
+
+  .group\/stat-card:hover .stat-card-icon-motion-trend-up {
+    animation: stat-card-motion-trend-up 0.65s ease-in-out infinite;
+  }
+
+  .group\/stat-card:hover .stat-card-icon-motion-withdraw {
+    animation: stat-card-motion-withdraw 0.6s ease-in-out infinite;
+  }
+
+  .group\/stat-card:hover .stat-card-icon-motion-calendar {
+    animation: stat-card-motion-calendar 0.7s ease-in-out infinite;
+  }
+
+  /* Actividad reciente — iconos con movimiento al hover de la fila */
+  .activity-icon-motion-ingreso,
+  .activity-icon-motion-adelanto {
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .group\/activity-item:hover .activity-icon-motion-ingreso {
+    animation: activity-motion-ingreso 0.6s ease-in-out infinite;
+  }
+
+  .group\/activity-item:hover .activity-icon-motion-adelanto {
+    animation: activity-motion-adelanto 0.6s ease-in-out infinite;
+  }
+
+  /* Wallet — iconos con movimiento al hover de la fila */
+  .wallet-icon-motion-heart,
+  .wallet-icon-motion-utensils,
+  .wallet-icon-motion-bag {
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .group\/wallet-ally:hover .wallet-icon-motion-heart {
+    animation: wallet-motion-heart 0.75s ease-in-out infinite;
+  }
+
+  .group\/wallet-ally:hover .wallet-icon-motion-utensils {
+    animation: wallet-motion-utensils 0.65s ease-in-out infinite;
+  }
+
+  .group\/wallet-ally:hover .wallet-icon-motion-bag {
+    animation: wallet-motion-bag 0.7s ease-in-out infinite;
+  }
+
+  .group\/wallet-movement:hover .activity-icon-motion-ingreso {
+    animation: activity-motion-ingreso 0.6s ease-in-out infinite;
+  }
+
+  .group\/wallet-movement:hover .activity-icon-motion-adelanto {
+    animation: activity-motion-adelanto 0.6s ease-in-out infinite;
+  }
+
+  /* Control — iconos con brillo y movimiento */
+  .control-icon-shine {
+    @apply relative overflow-hidden;
+  }
+
+  .control-icon-shine::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      hsl(0 0% 100% / 0.45) 50%,
+      transparent 65%
+    );
+    transform: translateX(-120%);
+    transition: transform 0.65s ease;
+    pointer-events: none;
+  }
+
+  .group\/control-stat:hover .control-icon-shine::before,
+  .group\/control-tip:hover .control-icon-shine::before,
+  .control-icon-shine:hover::before {
+    transform: translateX(120%);
+  }
+
+  .control-icon-motion-pie,
+  .control-icon-motion-sparkles,
+  .control-icon-motion-banknote,
+  .control-icon-motion-tip {
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .group\/control-stat:hover .control-icon-motion-pie {
+    animation: control-motion-pie 0.8s ease-in-out infinite;
+  }
+
+  .group\/control-stat:hover .control-icon-motion-sparkles {
+    animation: control-motion-sparkles 0.75s ease-in-out infinite;
+  }
+
+  .group\/control-stat:hover .control-icon-motion-banknote {
+    animation: control-motion-banknote 0.7s ease-in-out infinite;
+  }
+
+  .group\/control-tip:hover .control-icon-motion-tip {
+    animation: control-motion-tip 1s ease-in-out infinite;
+  }
+
+  /* Adelanto — línea de tiempo de beneficios */
+  .advance-timeline-line-horizontal {
+    transform: scaleX(0);
+    transform-origin: left center;
+    opacity: 0.95;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .advance-timeline-line-vertical {
+    transform: scaleY(0);
+    transform-origin: top center;
+    opacity: 0.95;
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .group\/advance-timeline:hover .advance-timeline-line-horizontal {
+    transform: scaleX(1);
+  }
+
+  .group\/advance-timeline:hover .advance-timeline-line-vertical {
+    transform: scaleY(1);
+  }
+
+  /* Adelanto — flujo del simulador (timeline interactiva) */
+  .advance-flow-line-fill.advance-flow-line-filled-x {
+    transform: scaleX(1);
+  }
+
+  .advance-flow-line-fill.advance-flow-line-filled-y {
+    transform: scaleY(1);
+  }
+
+  .group\/advance-flow:hover
+    .advance-flow-line-fill:not(.advance-flow-line-filled-x):not(
+      .advance-flow-line-filled-y
+    ) {
+    transform: scaleX(1);
+  }
+
+  .group\/advance-flow:hover
+    .advance-timeline-line-vertical.advance-flow-line-fill:not(
+      .advance-flow-line-filled-y
+    ) {
+    transform: scaleY(1);
+  }
+
+  .advance-step-node-active {
+    animation: advance-step-node-pulse 2.4s ease-in-out infinite;
+  }
+
+  .advance-amount-display {
+    display: inline-block;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .group\/advance-flow:has(input:focus) .advance-amount-display,
+  .group\/advance-flow:has(button:focus) .advance-amount-display {
+    transform: scale(1.02);
+  }
+
+  .advance-amount-pop {
+    animation: advance-amount-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .advance-simulation-enter {
+    animation: advance-simulation-enter 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .advance-flow-slider [class*="bg-secondary"] {
+    background-color: transparent !important;
+  }
+
+  .advance-flow-slider [class*="bg-primary"]:not(.advance-flow-slider-progress) {
+    opacity: 0;
+  }
+
+  .advance-flow-slider [class*="border-primary"] {
+    height: 1.5rem;
+    width: 1.5rem;
+    border-width: 2px;
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .advance-flow-slider [class*="border-primary"]:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0.18);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-float,
     .animate-pulse-glow,
@@ -650,6 +1003,27 @@
     .sidebar-icon-motion-trophy,
     .sidebar-icon-motion-bell,
     .sidebar-icon-motion-profile,
+    .group\/stat-card:hover .stat-card-icon-motion-zap,
+    .group\/stat-card:hover .stat-card-icon-motion-trend-up,
+    .group\/stat-card:hover .stat-card-icon-motion-withdraw,
+    .group\/stat-card:hover .stat-card-icon-motion-calendar,
+    .group\/activity-item:hover .activity-icon-motion-ingreso,
+    .group\/activity-item:hover .activity-icon-motion-adelanto,
+    .group\/wallet-ally:hover .wallet-icon-motion-heart,
+    .group\/wallet-ally:hover .wallet-icon-motion-utensils,
+    .group\/wallet-ally:hover .wallet-icon-motion-bag,
+    .group\/wallet-movement:hover .activity-icon-motion-ingreso,
+    .group\/wallet-movement:hover .activity-icon-motion-adelanto,
+    .group\/control-stat:hover .control-icon-motion-pie,
+    .group\/control-stat:hover .control-icon-motion-sparkles,
+    .group\/control-stat:hover .control-icon-motion-banknote,
+    .group\/control-tip:hover .control-icon-motion-tip,
+    .group\/advance-timeline:hover .advance-timeline-line-horizontal,
+    .group\/advance-timeline:hover .advance-timeline-line-vertical,
+    .group\/advance-flow:hover .advance-flow-line-fill,
+    .advance-step-node-active,
+    .advance-amount-pop,
+    .advance-simulation-enter,
     .auth-page-enter,
     .auth-step-enter-forward,
     .auth-step-enter-back,
@@ -976,6 +1350,103 @@
 @keyframes sidebar-motion-profile {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
+}
+
+@keyframes stat-card-motion-zap {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  20% { transform: scale(1.15) rotate(-10deg); }
+  45% { transform: scale(1.1) rotate(8deg); }
+  70% { transform: scale(1.12) rotate(-6deg); }
+}
+
+@keyframes stat-card-motion-trend-up {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.08); }
+}
+
+@keyframes stat-card-motion-withdraw {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(3px, 3px); }
+}
+
+@keyframes stat-card-motion-calendar {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  35% { transform: translateY(-2px) rotate(-5deg); }
+  70% { transform: translateY(0) rotate(4deg); }
+}
+
+@keyframes activity-motion-ingreso {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3px, -3px) scale(1.08); }
+}
+
+@keyframes activity-motion-adelanto {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3px, 3px) scale(1.08); }
+}
+
+@keyframes wallet-motion-heart {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.12); }
+  50% { transform: scale(1.05); }
+  75% { transform: scale(1.1); }
+}
+
+@keyframes wallet-motion-utensils {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(-8deg); }
+  70% { transform: rotate(6deg); }
+}
+
+@keyframes wallet-motion-bag {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes control-motion-pie {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(12deg) scale(1.08); }
+}
+
+@keyframes control-motion-sparkles {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(10deg) scale(1.1); }
+}
+
+@keyframes control-motion-banknote {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-3px) rotate(-4deg); }
+}
+
+@keyframes control-motion-tip {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.15); }
+}
+
+@keyframes advance-step-node-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 14px hsl(var(--primary) / 0.12);
+  }
+  50% {
+    box-shadow: 0 4px 20px hsl(var(--primary) / 0.28);
+  }
+}
+
+@keyframes advance-amount-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes advance-simulation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes auth-page-enter {

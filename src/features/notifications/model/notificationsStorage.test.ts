@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, vi } from "vitest";
 import {
   loadReadNotificationIds,
   saveReadNotificationIds,
+  getInitialReadNotificationIds,
 } from "./notificationsStorage";
 
 describe("notificationsStorage", () => {
@@ -35,5 +36,18 @@ describe("notificationsStorage", () => {
     localStorage.setItem("cerebiia:read-notification-ids", "invalid");
 
     expect(loadReadNotificationIds()).toEqual(new Set());
+  });
+
+  it("combina ids guardados con las notificaciones demo ya leídas", () => {
+    saveReadNotificationIds(new Set(["advance-processed"]));
+
+    expect(getInitialReadNotificationIds()).toEqual(
+      new Set([
+        "advance-processed",
+        "limit-updated",
+        "achievement-unlocked",
+        "budget-reminder",
+      ]),
+    );
   });
 });

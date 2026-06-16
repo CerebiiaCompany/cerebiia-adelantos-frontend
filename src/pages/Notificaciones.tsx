@@ -1,10 +1,21 @@
+import { toast } from "sonner";
 import { NotificationItem } from "@/components/header/NotificationItem";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useNotifications } from "@/features/notifications";
 import { Bell } from "lucide-react";
 
 export default function Notificaciones() {
-  const { notifications, unreadCount, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotifications();
+
+  const handleMarkAllAsRead = () => {
+    if (unreadCount === 0) {
+      return;
+    }
+
+    markAllAsRead();
+    toast.success("Todas las notificaciones fueron marcadas como leídas");
+  };
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
@@ -17,9 +28,9 @@ export default function Notificaciones() {
         actions={
           <button
             type="button"
-            onClick={markAllAsRead}
+            onClick={handleMarkAllAsRead}
             disabled={unreadCount === 0}
-            className="text-xs text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+            className="text-xs font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
           >
             Marcar todo como leído
           </button>
@@ -27,7 +38,15 @@ export default function Notificaciones() {
       />
       <div className="space-y-2">
         {notifications.map((notification) => (
-          <NotificationItem key={notification.id} notification={notification} />
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            onClick={
+              !notification.read
+                ? () => markAsRead(notification.id)
+                : undefined
+            }
+          />
         ))}
       </div>
     </div>

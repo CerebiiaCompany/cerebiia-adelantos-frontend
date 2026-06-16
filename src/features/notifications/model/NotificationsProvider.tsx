@@ -12,7 +12,7 @@ import {
   type DemoNotification,
 } from "@/shared/config/demoNotifications";
 import {
-  loadReadNotificationIds,
+  getInitialReadNotificationIds,
   saveReadNotificationIds,
 } from "./notificationsStorage";
 
@@ -22,7 +22,7 @@ function applyReadState(
 ): DemoNotification[] {
   return notifications.map((notification) => ({
     ...notification,
-    read: notification.read || readIds.has(notification.id),
+    read: readIds.has(notification.id),
   }));
 }
 
@@ -40,7 +40,7 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [readIds, setReadIds] = useState<Set<string>>(() =>
-    loadReadNotificationIds(),
+    getInitialReadNotificationIds(),
   );
 
   const notifications = useMemo(
@@ -67,9 +67,18 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const markAllAsRead = useCallback(() => {
-    const next = new Set(DEMO_NOTIFICATIONS.map((notification) => notification.id));
-    saveReadNotificationIds(next);
-    setReadIds(next);
+    setReadIds((current) => {
+      const allIds = DEMO_NOTIFICATIONS.map((notification) => notification.id);
+      const hasUnread = allIds.some((id) => !current.has(id));
+
+      if (!hasUnread) {
+        return current;
+      }
+
+      const next = new Set(allIds);
+      saveReadNotificationIds(next);
+      return next;
+    });
   }, []);
 
   const value = useMemo(

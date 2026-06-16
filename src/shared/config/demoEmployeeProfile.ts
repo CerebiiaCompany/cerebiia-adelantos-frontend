@@ -3,6 +3,7 @@ export const DEMO_EMPLOYEE_PROFILE = {
   fullName: "Erick Herrera",
   documentNumber: "1020304050",
   roleLabel: "Empleado · Desde Ene 2025",
+  department: "Operaciones · Calidad",
   email: "erick@cerebiia.com",
   phone: "+57 300 123 4567",
   company: "Cerebiia SAS",

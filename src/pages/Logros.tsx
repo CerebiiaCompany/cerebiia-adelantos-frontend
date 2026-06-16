@@ -106,13 +106,13 @@ export default function Logros() {
             className={`glass-card flex items-center gap-4 p-4 ${!a.unlocked ? "opacity-50" : ""}`}
           >
             <div
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
                 a.unlocked
-                  ? "bg-primary/15 text-primary"
-                  : "bg-secondary text-muted-foreground"
+                  ? "bg-primary/15 text-primary ring-4 ring-primary/10"
+                  : "bg-secondary text-muted-foreground ring-4 ring-border/40"
               }`}
             >
-              <a.icon className="h-6 w-6" />
+              <a.icon className="h-6 w-6" strokeWidth={2.25} />
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground">{a.title}</p>
