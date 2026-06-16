@@ -21,7 +21,7 @@ export function SidebarNavLink({ item, collapsed = false }: SidebarNavLinkProps)
         "group relative flex items-center rounded-lg transition-colors duration-300 ease-out",
         collapsed
           ? "mx-auto h-9 w-9 shrink-0 justify-center p-0"
-          : "w-full gap-3 px-3 py-2",
+          : "w-full gap-3.5 px-3.5 py-2.5",
         isActive
           ? "bg-primary/[0.08] font-medium text-primary"
           : "text-muted-foreground hover:bg-primary/[0.06] hover:text-foreground",

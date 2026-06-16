@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Moon, Sun, Sunset } from "lucide-react";
+import { CloudSun, MoonStar, Sunrise } from "lucide-react";
 import {
   getDayPeriod,
   getFirstName,
@@ -36,7 +36,7 @@ describe("getFirstName", () => {
 });
 
 describe("getTimeBasedGreeting", () => {
-  it("genera saludo matutino con icono de sol", () => {
+  it("genera saludo matutino con icono de amanecer", () => {
     const greeting = getTimeBasedGreeting(
       new Date("2026-06-13T09:30:00"),
       "Erick Herrera",
@@ -44,7 +44,7 @@ describe("getTimeBasedGreeting", () => {
 
     expect(greeting.period).toBe("morning");
     expect(greeting.title).toBe("Buenos días, Erick");
-    expect(greeting.icon).toBe(Sun);
+    expect(greeting.icon).toBe(Sunrise);
   });
 
   it("genera saludo vespertino", () => {
@@ -55,10 +55,10 @@ describe("getTimeBasedGreeting", () => {
 
     expect(greeting.period).toBe("afternoon");
     expect(greeting.title).toBe("Buenas tardes, Erick");
-    expect(greeting.icon).toBe(Sunset);
+    expect(greeting.icon).toBe(CloudSun);
   });
 
-  it("genera saludo nocturno con icono de luna", () => {
+  it("genera saludo nocturno con icono de luna y estrella", () => {
     const greeting = getTimeBasedGreeting(
       new Date("2026-06-13T21:00:00"),
       "Erick Herrera",
@@ -66,6 +66,6 @@ describe("getTimeBasedGreeting", () => {
 
     expect(greeting.period).toBe("night");
     expect(greeting.title).toBe("Buenas noches, Erick");
-    expect(greeting.icon).toBe(Moon);
+    expect(greeting.icon).toBe(MoonStar);
   });
 });

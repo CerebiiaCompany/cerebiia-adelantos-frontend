@@ -1,6 +1,14 @@
 import type { DemoNotification } from "@/shared/config/demoNotifications";
 import { cn } from "@/lib/utils";
 
+const NOTIFICATION_ICON_COLORS: Record<string, string> = {
+  "advance-processed": "text-primary",
+  "next-payroll": "text-primary",
+  "limit-updated": "text-[hsl(260_70%_50%)]",
+  "achievement-unlocked": "text-primary",
+  "budget-reminder": "text-primary",
+};
+
 interface NotificationItemProps {
   notification: DemoNotification;
   compact?: boolean;
@@ -17,14 +25,15 @@ export function NotificationItem({
 
   const content = (
     <>
-      <div
+      <span
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary",
-          compact ? "mt-0.5 h-8 w-8" : "mt-0.5 h-9 w-9",
+          "inline-flex shrink-0 items-center justify-center",
+          NOTIFICATION_ICON_COLORS[notification.id] ?? "text-primary",
+          "mt-0.5",
         )}
       >
-        <Icon className="h-4 w-4" />
-      </div>
+        <Icon className={compact ? "h-4 w-4" : "h-5 w-5"} strokeWidth={2.25} />
+      </span>
       <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
           <p

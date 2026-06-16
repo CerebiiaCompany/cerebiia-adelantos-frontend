@@ -29,18 +29,18 @@ export function AppSidebar() {
       collapsible="icon"
       className="border-r border-primary/10"
     >
-      <SidebarHeader className="shrink-0 px-2 pb-2 pt-3">
+      <SidebarHeader className="shrink-0 px-3 pb-2 pt-3">
         <div className="p-2">
           <div
             className={cn(
               "flex items-center",
-              collapsed ? "justify-center" : "gap-3 px-3 py-2",
+              collapsed ? "justify-center" : "gap-3 px-3.5 py-2",
             )}
           >
             <div
               className={cn(
                 "flex shrink-0 items-center justify-center rounded-lg bg-gradient-primary shadow-sm shadow-primary/20 transition-transform duration-300 hover:scale-105",
-                collapsed ? "aspect-square h-9 w-9" : "h-8 w-8",
+                collapsed ? "aspect-square h-9 w-9" : "h-9 w-9",
               )}
             >
               <span className="font-display text-xs font-bold text-primary-foreground">
@@ -63,7 +63,7 @@ export function AppSidebar() {
       <SidebarContent
         className={cn(
           "min-h-0 flex-1",
-          collapsed ? "!overflow-visible px-2" : "px-2",
+          collapsed ? "!overflow-visible px-2.5" : "px-3",
         )}
       >
         <SidebarGroup>
@@ -107,7 +107,7 @@ export function AppSidebar() {
 
       <SidebarFooter
         className={cn(
-          "sticky bottom-0 z-10 border-t border-primary/10 bg-background/95 px-2 pb-3 pt-2 backdrop-blur-md",
+          "sticky bottom-0 z-10 border-t border-primary/10 bg-background/95 px-3 pb-3 pt-2 backdrop-blur-md",
         )}
       >
         <SidebarMenu className={cn("gap-1", collapsed && "items-center")}>
