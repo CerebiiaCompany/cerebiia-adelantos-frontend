@@ -5,17 +5,50 @@ import {
   AnimatedCurrency,
   AnimatedNumber,
 } from "@/components/ui/animated-number";
+import { PrimaryActionButton } from "@/components/ui/primary-action-button";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { cn } from "@/lib/utils";
 
 const COUNT_DURATION = 450;
+const MIN_AMOUNT = 100_000;
+
+function choiceButtonClass(selected: boolean, className?: string) {
+  return cn(
+    "font-medium transition-all duration-200 ease-out",
+    "hover:scale-[1.02] hover:shadow-md active:scale-[0.98]",
+    selected
+      ? "bg-gradient-primary text-primary-foreground shadow-sm shadow-primary/20 hover:brightness-110 hover:shadow-primary/30"
+      : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary hover:ring-1 hover:ring-primary/20",
+    className,
+  );
+}
+
+function secondaryButtonClass(className?: string) {
+  return cn(
+    "font-medium transition-all duration-200 ease-out",
+    "hover:scale-[1.02] hover:shadow-md active:scale-[0.98]",
+    "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary hover:ring-1 hover:ring-primary/20",
+    className,
+  );
+}
+
+function textLinkButtonClass(className?: string) {
+  return cn(
+    "transition-all duration-200 ease-out",
+    "rounded-lg px-3 py-1.5 hover:bg-primary/10 hover:text-primary",
+    className,
+  );
+}
 
 export default function Adelanto() {
-  const [amount, setAmount] = useState(1000000);
+  const [amount, setAmount] = useState(0);
   const [installments, setInstallments] = useState(1);
   const [step, setStep] = useState<"select" | "confirm" | "done">("select");
   const maxAmount = 2400000;
   const fee = Math.round(amount * 0.025);
   const total = amount - fee;
   const installmentValue = Math.round(total / installments);
+  const canRequest = amount >= MIN_AMOUNT;
 
   if (step === "done") {
     return (
@@ -64,8 +97,13 @@ export default function Adelanto() {
           </div>
           <button
             type="button"
-            onClick={() => setStep("select")}
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            onClick={() => {
+              setStep("select");
+              setAmount(0);
+            }}
+            className={textLinkButtonClass(
+              "text-sm text-muted-foreground hover:text-primary",
+            )}
           >
             Volver al inicio
           </button>
@@ -76,14 +114,11 @@ export default function Adelanto() {
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">
-          Solicitar adelanto
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Selecciona el monto y confirma en un clic
-        </p>
-      </div>
+      <PageHeader
+        icon={Zap}
+        title="Solicitar adelanto"
+        description="Selecciona el monto y confirma en un clic"
+      />
 
       <div className="glass-card glow-border p-6">
         <div className="mb-6 text-center">
@@ -107,13 +142,13 @@ export default function Adelanto() {
           <Slider
             value={[amount]}
             onValueChange={(v) => setAmount(v[0])}
-            min={100000}
+            min={0}
             max={maxAmount}
             step={50000}
             className="cursor-pointer"
           />
           <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-            <span>$100.000</span>
+            <span>$0</span>
             <AnimatedCurrency
               value={maxAmount}
               className="inline"
@@ -128,11 +163,10 @@ export default function Adelanto() {
               key={a}
               type="button"
               onClick={() => setAmount(a)}
-              className={`min-w-0 rounded-lg px-2 py-2.5 text-xs font-medium transition-all sm:px-3 sm:text-sm ${
-                amount === a
-                  ? "bg-gradient-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
+              className={choiceButtonClass(
+                amount === a,
+                "min-w-0 rounded-lg px-2 py-2.5 text-xs sm:px-3 sm:text-sm",
+              )}
             >
               <AnimatedCurrency value={a} duration={COUNT_DURATION} />
             </button>
@@ -149,11 +183,10 @@ export default function Adelanto() {
                 key={n}
                 type="button"
                 onClick={() => setInstallments(n)}
-                className={`rounded-lg py-2 text-sm font-medium transition-all ${
-                  installments === n
-                    ? "bg-gradient-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
+                className={choiceButtonClass(
+                  installments === n,
+                  "rounded-lg py-2 text-sm",
+                )}
               >
                 {n} {n === 1 ? "cuota" : "cuotas"}
               </button>
@@ -207,19 +240,28 @@ export default function Adelanto() {
       </div>
 
       {step === "select" ? (
-        <button
+        <PrimaryActionButton
           type="button"
           onClick={() => setStep("confirm")}
-          className="animate-pulse-glow w-full rounded-xl bg-gradient-primary py-4 font-display text-lg font-bold text-primary-foreground transition-opacity hover:opacity-90"
+          disabled={!canRequest}
+          className={cn(
+            "w-full py-4 font-display text-lg font-bold",
+            canRequest && "animate-pulse-glow",
+          )}
         >
-          Solicitar{" "}
-          <AnimatedCurrency
-            value={amount}
-            className="inline"
-            duration={COUNT_DURATION}
-          />{" "}
-          →
-        </button>
+          {canRequest ? (
+            <>
+              Solicitar{" "}
+              <AnimatedCurrency
+                value={amount}
+                className="inline"
+                duration={COUNT_DURATION}
+              />
+            </>
+          ) : (
+            "Selecciona un monto"
+          )}
+        </PrimaryActionButton>
       ) : (
         <div className="glass-card glow-border animate-slide-up p-6 text-center">
           <p className="mb-3 text-sm text-muted-foreground">
@@ -243,17 +285,18 @@ export default function Adelanto() {
             <button
               type="button"
               onClick={() => setStep("select")}
-              className="flex-1 rounded-xl bg-secondary py-3 font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
+              className={secondaryButtonClass("flex-1 rounded-xl py-3")}
             >
               Cancelar
             </button>
-            <button
+            <PrimaryActionButton
               type="button"
+              showArrow={false}
               onClick={() => setStep("done")}
-              className="flex-1 rounded-xl bg-gradient-primary py-3 font-bold text-primary-foreground transition-opacity hover:opacity-90"
+              className="flex-1 py-3 font-bold"
             >
               Confirmar ✓
-            </button>
+            </PrimaryActionButton>
           </div>
         </div>
       )}

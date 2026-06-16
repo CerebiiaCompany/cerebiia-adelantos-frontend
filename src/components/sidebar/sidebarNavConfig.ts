@@ -44,9 +44,6 @@ export const SIDEBAR_MAIN_ITEMS: SidebarNavItemConfig[] = [
     animation: "sparkle",
   },
   { title: "Logros", url: "/logros", icon: Trophy, animation: "trophy" },
-];
-
-export const SIDEBAR_SECONDARY_ITEMS: SidebarNavItemConfig[] = [
   {
     title: "Notificaciones",
     url: "/notificaciones",

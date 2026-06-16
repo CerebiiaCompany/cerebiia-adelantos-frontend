@@ -1,8 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -120,20 +120,16 @@ export function UpdateProfileDataForm({
           Empresa y número de empleado no se pueden modificar desde aquí.
         </p>
 
-        <Button
+        <PrimaryActionButton
           type="submit"
-          disabled={!isValid || isPending}
-          className="h-10 w-full rounded-xl bg-gradient-primary text-sm font-semibold text-primary-foreground shadow-sm"
+          disabled={!isValid}
+          loading={isPending}
+          loadingText="Guardando..."
+          showArrow={false}
+          className="h-10 w-full text-sm"
         >
-          {isPending ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Guardando...
-            </span>
-          ) : (
-            "Guardar cambios"
-          )}
-        </Button>
+          Guardar cambios
+        </PrimaryActionButton>
       </form>
     </Form>
   );

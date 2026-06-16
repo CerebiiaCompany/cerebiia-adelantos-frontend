@@ -13,13 +13,13 @@ describe("rememberedCredentialsStorage", () => {
   });
 
   it("guarda y recupera credenciales cifradas", async () => {
-    await rememberedCredentialsStorage.save("usuario@empresa.com", "MiClave123");
+    await rememberedCredentialsStorage.save("1020304050", "MiClave123");
 
     expect(rememberedCredentialsStorage.hasSaved()).toBe(true);
 
     const loaded = await rememberedCredentialsStorage.load();
     expect(loaded).toEqual({
-      email: "usuario@empresa.com",
+      username: "1020304050",
       password: "MiClave123",
     });
 
@@ -28,26 +28,26 @@ describe("rememberedCredentialsStorage", () => {
     expect(raw).not.toContain("MiClave123");
   });
 
-  it("normaliza el correo al guardar", async () => {
-    await rememberedCredentialsStorage.save("  Usuario@Empresa.COM  ", "clave");
+  it("normaliza el usuario al guardar", async () => {
+    await rememberedCredentialsStorage.save("  1020304050  ", "clave");
 
     const loaded = await rememberedCredentialsStorage.load();
-    expect(loaded?.email).toBe("usuario@empresa.com");
+    expect(loaded?.username).toBe("1020304050");
   });
 
   it("elimina credenciales al limpiar", async () => {
-    await rememberedCredentialsStorage.save("a@b.com", "123456");
+    await rememberedCredentialsStorage.save("1020304050", "123456");
     rememberedCredentialsStorage.clear();
 
     expect(rememberedCredentialsStorage.hasSaved()).toBe(false);
     expect(await rememberedCredentialsStorage.load()).toBeNull();
   });
 
-  it("actualiza la contraseña solo si el correo coincide", async () => {
-    await rememberedCredentialsStorage.save("usuario@empresa.com", "Anterior123");
+  it("actualiza la contraseña solo si el usuario coincide", async () => {
+    await rememberedCredentialsStorage.save("1020304050", "Anterior123");
 
     const updated = await rememberedCredentialsStorage.updatePasswordIfMatches(
-      "usuario@empresa.com",
+      "1020304050",
       "NuevaClave456",
     );
     expect(updated).toBe(true);
@@ -56,7 +56,7 @@ describe("rememberedCredentialsStorage", () => {
     expect(loaded?.password).toBe("NuevaClave456");
 
     const skipped = await rememberedCredentialsStorage.updatePasswordIfMatches(
-      "otro@empresa.com",
+      "9988776655",
       "OtraClave789",
     );
     expect(skipped).toBe(false);

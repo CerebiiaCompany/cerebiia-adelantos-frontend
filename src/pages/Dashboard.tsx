@@ -1,4 +1,11 @@
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { PrimaryActionButton } from "@/components/ui/primary-action-button";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
+import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import { ROUTES } from "@/shared/config/routes";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -52,16 +59,18 @@ const ACTIVITY_COUNT_DURATION_MS = 650;
 const ACTIVITY_COUNT_DELAY_OFFSET_MS = 100;
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const greeting = useTimeBasedGreeting(DEMO_EMPLOYEE_PROFILE.fullName);
+
   return (
     <div className="animate-fade-in space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">
-          Hola, Erick 👋
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Tu resumen financiero de hoy
-        </p>
-      </div>
+      <PageHeader
+        icon={greeting.icon}
+        title={greeting.title}
+        description={greeting.description}
+        iconContainerClassName={greeting.iconContainerClassName}
+        iconClassName={greeting.iconClassName}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -255,7 +264,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="glass-card glow-border flex flex-col items-center justify-between gap-4 p-6 sm:flex-row">
+      <div className="glass-card glow-border shine-hover flex flex-col items-center justify-between gap-4 p-6 sm:flex-row">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 animate-pulse-glow items-center justify-center rounded-xl bg-gradient-primary">
             <Zap className="h-6 w-6 text-primary-foreground" />
@@ -269,12 +278,12 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <a
-          href="/adelanto"
-          className="rounded-xl bg-gradient-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+        <PrimaryActionButton
+          className="shrink-0 px-6 py-3 text-sm"
+          onClick={() => navigate(ROUTES.employee.adelanto)}
         >
-          Solicitar adelanto →
-        </a>
+          Solicitar adelanto
+        </PrimaryActionButton>
       </div>
     </div>
   );
@@ -296,7 +305,7 @@ function StatCard({
   trend?: "up" | "neutral";
 }) {
   return (
-    <div className={`glass-card p-4 ${accent ? "glow-border" : ""}`}>
+    <div className={cn("glass-card p-4", accent && "glow-border")}>
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           {label}

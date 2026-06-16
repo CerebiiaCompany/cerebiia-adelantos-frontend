@@ -3,6 +3,7 @@ import {
   AnimatedNumber,
   AnimatedProgressBar,
 } from "@/components/ui/animated-number";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const achievements = [
   {
@@ -50,13 +51,15 @@ const LEVEL = 3;
 export default function Logros() {
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
-      <h1 className="font-display text-2xl font-bold text-foreground">
-        Logros y puntos
-      </h1>
+      <PageHeader
+        icon={Trophy}
+        title="Logros y puntos"
+        description="Badges, niveles y recompensas"
+      />
 
       <div className="glass-card glow-border p-6 text-center">
-        <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-primary">
-          <Trophy className="h-8 w-8 text-primary-foreground" />
+        <div className="level-badge mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-primary">
+          <Trophy className="level-badge-icon h-8 w-8 text-primary-foreground" />
         </div>
         <p className="text-sm text-muted-foreground">Nivel actual</p>
         <AnimatedNumber

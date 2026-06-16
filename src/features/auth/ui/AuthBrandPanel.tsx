@@ -30,10 +30,10 @@ export interface AuthBrandPanelProps {
 export function AuthBrandPanel({ title, description }: AuthBrandPanelProps) {
   return (
     <section
-      className="relative hidden h-[100dvh] max-h-[100dvh] w-[52%] shrink-0 flex-col overflow-hidden bg-gradient-primary text-primary-foreground lg:flex"
+      className="auth-brand-scroll relative hidden h-[100dvh] max-h-[100dvh] w-[52%] shrink-0 flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain bg-gradient-primary text-primary-foreground lg:flex"
       aria-label="Presentación de AdeCerebiia"
     >
-      <div className="relative flex h-full flex-col overflow-hidden">
+      <div className="relative flex min-h-[100dvh] flex-col">
         <div className="pointer-events-none absolute inset-0" aria-hidden="true">
           <div className="animate-blob absolute -right-20 -top-20 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
           <div className="animate-blob-delayed absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
@@ -41,7 +41,7 @@ export function AuthBrandPanel({ title, description }: AuthBrandPanelProps) {
           <div className="absolute bottom-24 right-1/4 h-24 w-24 animate-float rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm [animation-delay:2s]" />
         </div>
 
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col p-12">
+        <div className="relative z-10 flex min-h-[100dvh] flex-col p-12">
           <div className="animate-fade-in shrink-0">
             <div className="group flex cursor-default items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm ring-1 ring-white/30 transition-all duration-300 group-hover:scale-105 group-hover:bg-white/25 group-hover:shadow-lg">

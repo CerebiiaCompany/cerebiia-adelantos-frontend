@@ -1,23 +1,32 @@
 import { NotificationItem } from "@/components/header/NotificationItem";
-import { DEMO_NOTIFICATIONS } from "@/shared/config/demoNotifications";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { useNotifications } from "@/features/notifications";
+import { Bell } from "lucide-react";
 
 export default function Notificaciones() {
+  const { notifications, unreadCount, markAllAsRead } = useNotifications();
+
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold text-foreground">
-          Notificaciones
-        </h1>
-        <button
-          type="button"
-          className="text-xs text-primary hover:underline"
-        >
-          Marcar todo como leído
-        </button>
-      </div>
-
+      <PageHeader
+        icon={Bell}
+        title="Notificaciones"
+        description={
+          unreadCount > 0 ? `${unreadCount} sin leer` : "Todas al día"
+        }
+        actions={
+          <button
+            type="button"
+            onClick={markAllAsRead}
+            disabled={unreadCount === 0}
+            className="text-xs text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+          >
+            Marcar todo como leído
+          </button>
+        }
+      />
       <div className="space-y-2">
-        {DEMO_NOTIFICATIONS.map((notification) => (
+        {notifications.map((notification) => (
           <NotificationItem key={notification.id} notification={notification} />
         ))}
       </div>

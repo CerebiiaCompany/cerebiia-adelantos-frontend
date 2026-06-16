@@ -11,18 +11,21 @@ import {
   HEADER_POPOVER_COLLISION_PADDING,
   headerPopoverContentClass,
 } from "@/components/header/headerPopoverStyles";
-import {
-  DEMO_NOTIFICATIONS,
-  getUnreadNotifications,
-} from "@/shared/config/demoNotifications";
+import { useNotifications } from "@/features/notifications";
 import { ROUTES } from "@/shared/config/routes";
 
 export function NotificationPopover() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const unreadCount = getUnreadNotifications(DEMO_NOTIFICATIONS).length;
+  const { unreadNotifications, unreadCount, markAsRead } = useNotifications();
 
   const handleViewAll = () => {
+    setOpen(false);
+    navigate(ROUTES.employee.notificaciones);
+  };
+
+  const handleNotificationClick = (id: string) => {
+    markAsRead(id);
     setOpen(false);
     navigate(ROUTES.employee.notificaciones);
   };
@@ -54,7 +57,11 @@ export function NotificationPopover() {
         collisionPadding={HEADER_POPOVER_COLLISION_PADDING}
         className={headerPopoverContentClass()}
       >
-        <NotificationPanel onViewAll={handleViewAll} />
+        <NotificationPanel
+          unreadNotifications={unreadNotifications}
+          onNotificationClick={handleNotificationClick}
+          onViewAll={handleViewAll}
+        />
       </PopoverContent>
     </Popover>
   );

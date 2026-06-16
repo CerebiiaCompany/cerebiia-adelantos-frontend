@@ -7,11 +7,12 @@ import {
   Tooltip,
   Cell,
 } from "recharts";
-import { AlertTriangle, TrendingDown, ShieldCheck } from "lucide-react";
+import { AlertTriangle, LineChart, TrendingDown, ShieldCheck } from "lucide-react";
 import {
   AnimatedCurrency,
   AnimatedPercent,
 } from "@/components/ui/animated-number";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 
 const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
@@ -33,14 +34,11 @@ export default function Control() {
 
   return (
     <div className="mx-auto max-w-3xl animate-fade-in space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">
-          Control de uso
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Monitorea tus adelantos y límites
-        </p>
-      </div>
+      <PageHeader
+        icon={LineChart}
+        title="Control de uso"
+        description="Monitorea tus adelantos y límites"
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="glass-card flex flex-col items-center p-5 text-center">
