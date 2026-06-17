@@ -24,7 +24,12 @@ export function PageHeader({
   iconAnimationClassName,
 }: PageHeaderProps) {
   return (
-    <div className={cn("flex items-start justify-between gap-4", className)}>
+    <div
+      className={cn(
+        "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4",
+        className,
+      )}
+    >
       <div className="flex min-w-0 items-center gap-3">
         <div
           className={cn(
@@ -42,8 +47,8 @@ export function PageHeader({
             strokeWidth={2.25}
           />
         </div>
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-bold text-foreground">
+        <div className="min-w-0 flex-1">
+          <h1 className="font-display text-2xl font-bold leading-tight text-foreground">
             {title}
           </h1>
           {description ? (
@@ -51,7 +56,11 @@ export function PageHeader({
           ) : null}
         </div>
       </div>
-      {actions ? <div className="shrink-0">{actions}</div> : null}
+      {actions ? (
+        <div className="w-full sm:w-auto sm:shrink-0 sm:self-center">
+          {actions}
+        </div>
+      ) : null}
     </div>
   );
 }
