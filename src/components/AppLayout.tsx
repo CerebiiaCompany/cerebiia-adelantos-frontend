@@ -1,4 +1,4 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AppAnimatedBackground } from "@/components/AppAnimatedBackground";
 import { NotificationPopover } from "@/components/header/NotificationPopover";
@@ -10,25 +10,23 @@ export function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="relative flex min-h-screen w-full bg-background">
-        <AppSidebar />
-        <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-          <AppAnimatedBackground />
-          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary/10 bg-shell px-4 backdrop-blur-md">
-            <SidebarTrigger />
-            <div className="flex items-center gap-3">
-              <NotificationPopover />
-              <UserProfilePopover />
-            </div>
-          </header>
-          <main
-            key={location.pathname}
-            className="animate-app-page-enter relative z-10 flex-1 overflow-auto p-4 md:p-6"
-          >
-            <Outlet />
-          </main>
+      <AppSidebar />
+      <SidebarInset className="relative min-w-0 overflow-hidden bg-background">
+        <AppAnimatedBackground />
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-primary/10 bg-shell/95 px-4 backdrop-blur-md">
+          <SidebarTrigger />
+          <div className="flex items-center gap-3">
+            <NotificationPopover />
+            <UserProfilePopover />
+          </div>
+        </header>
+        <div
+          key={location.pathname}
+          className="animate-app-page-enter relative z-10 flex-1 overflow-auto p-4 md:p-6"
+        >
+          <Outlet />
         </div>
-      </div>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

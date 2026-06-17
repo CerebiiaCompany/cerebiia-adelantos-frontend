@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { addMonths, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
-import { Ban, ChevronLeft, ChevronRight, CircleDollarSign } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleCheck, CircleX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,13 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
+  getAdvanceAvailabilityInfo,
+  getCalendarDayStart,
   getNextPaymentDate,
+  isAdvanceAvailableDay,
   isAdvanceBlockedDay,
   isPaymentDay,
+  isTodayCalendarDay,
 } from "@/shared/config/payrollCalendar";
 import { cn } from "@/lib/utils";
 
@@ -26,25 +30,39 @@ export function PayrollCalendarDialog({
   onOpenChange,
 }: PayrollCalendarDialogProps) {
   const nextPayment = useMemo(() => getNextPaymentDate(), []);
-  const [month, setMonth] = useState<Date>(nextPayment);
+  const [today, setToday] = useState(() => getCalendarDayStart());
+  const [month, setMonth] = useState<Date>(() => getCalendarDayStart());
 
   useEffect(() => {
     if (open) {
-      setMonth(nextPayment);
+      const currentDay = getCalendarDayStart();
+      setToday(currentDay);
+      setMonth(currentDay);
     }
-  }, [open, nextPayment]);
+  }, [open]);
 
   const monthLabel = month.toLocaleDateString("es-CO", {
     month: "long",
     year: "numeric",
   });
 
+  const todayLabel = today.toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  const advanceAvailability = useMemo(
+    () => getAdvanceAvailabilityInfo(today),
+    [today],
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[min(calc(100vw-1.5rem),22rem)] gap-0 overflow-hidden border-border bg-background p-0 shadow-xl sm:max-w-sm sm:rounded-2xl [&>button]:right-3 [&>button]:top-3 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
         <DialogTitle className="sr-only">Calendario de nómina</DialogTitle>
         <DialogDescription className="sr-only">
-          Fechas de pago y días sin solicitud de adelanto en cada mes.
+          Fechas de pago y ventanas para solicitar adelanto en cada mes.
         </DialogDescription>
 
         <div className="physical-calendar-shell mx-2 mb-2 mt-3 overflow-hidden rounded-xl sm:mx-3 sm:mb-3">
@@ -109,26 +127,39 @@ export function PayrollCalendarDialog({
                   "hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
                 ),
                 day_outside: "opacity-40",
-                day_today: "ring-2 ring-inset ring-primary/35",
-                day_selected: "ring-2 ring-inset ring-primary/50",
+                day_today: "physical-calendar-day-today",
+                day_selected:
+                  "physical-calendar-day-today ring-2 ring-inset ring-amber-500/80 bg-amber-50/90 font-extrabold text-amber-950",
               }}
               modifiers={{
+                today: (date) => isTodayCalendarDay(date, today),
                 payment: isPaymentDay,
+                available: (date) =>
+                  !isPaymentDay(date) && isAdvanceAvailableDay(date),
                 blocked: (date) =>
                   !isPaymentDay(date) && isAdvanceBlockedDay(date),
               }}
               modifiersClassNames={{
+                today: "physical-calendar-day-today z-[1] font-extrabold",
                 payment:
                   "!bg-primary !text-primary-foreground hover:!bg-primary font-bold shadow-inner",
+                available:
+                  "!bg-primary/10 !text-primary hover:!bg-primary/15 font-semibold",
                 blocked:
-                  "!bg-red-50 !text-destructive line-through decoration-destructive/70 hover:!bg-red-100",
+                  "!bg-red-50/80 !text-destructive/80 line-through decoration-destructive/60 hover:!bg-red-50",
               }}
-              selected={nextPayment}
+              selected={today}
             />
           </div>
 
           {/* Pie tipo bloc de notas */}
-          <div className="border-t border-dashed border-border bg-muted px-3 py-2 text-center">
+          <div className="space-y-1 border-t border-dashed border-border bg-muted px-3 py-2 text-center">
+            <p className="text-[10px] text-muted-foreground">
+              Hoy ·{" "}
+              <span className="font-semibold capitalize text-amber-800">
+                {todayLabel}
+              </span>
+            </p>
             <p className="text-[10px] text-muted-foreground">
               Próximo pago ·{" "}
               <span className="font-semibold text-foreground">
@@ -148,35 +179,89 @@ export function PayrollCalendarDialog({
           <div className="grid gap-2 sm:grid-cols-2">
             <LegendItem
               icon={
+                <span className="relative flex h-7 w-7 items-center justify-center border-2 border-amber-500 bg-amber-50 text-[10px] font-extrabold text-amber-900">
+                  {today.getDate()}
+                  <span
+                    className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-amber-500 ring-1 ring-background"
+                    aria-hidden
+                  />
+                </span>
+              }
+              label="Hoy (día actual)"
+            />
+            <LegendItem
+              icon={
                 <span className="flex h-7 w-7 items-center justify-center border border-border bg-primary text-[10px] font-bold text-primary-foreground">
                   15
                 </span>
               }
-              label="Pago de nómina"
+              label="Pago de nómina (1 y 15)"
             />
             <LegendItem
               icon={
-                <span className="flex h-7 w-7 items-center justify-center border border-destructive/30 bg-red-50 text-[10px] font-bold text-destructive line-through">
-                  14
+                <span className="flex h-7 w-7 items-center justify-center border border-primary/20 bg-primary/10 text-[10px] font-bold text-primary">
+                  8
+                </span>
+              }
+              label="Adelanto disponible"
+            />
+            <LegendItem
+              icon={
+                <span className="flex h-7 w-7 items-center justify-center border border-destructive/25 bg-red-50/80 text-[10px] font-bold text-destructive/80 line-through">
+                  12
                 </span>
               }
               label="Sin adelanto"
             />
-            <LegendItem
-              icon={<CircleDollarSign className="h-4 w-4 text-primary" />}
-              label="Día de dispersión"
-              className="sm:col-span-2"
-            />
-            <LegendItem
-              icon={<Ban className="h-3.5 w-3.5 text-foreground/55" />}
-              label="Corte previo al pago quincenal"
-              muted
-              className="sm:col-span-2"
-            />
           </div>
+
+          <AdvanceAvailabilityNotice info={advanceAvailability} />
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AdvanceAvailabilityNotice({
+  info,
+}: {
+  info: ReturnType<typeof getAdvanceAvailabilityInfo>;
+}) {
+  const Icon = info.canRequestAdvance ? CircleCheck : CircleX;
+
+  return (
+    <div
+      className={cn(
+        "mt-3 flex items-start gap-2.5 rounded-lg border px-3 py-2.5",
+        info.canRequestAdvance
+          ? "border-primary/20 bg-primary/5"
+          : "border-destructive/20 bg-red-50/70",
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      <Icon
+        className={cn(
+          "mt-0.5 h-4 w-4 shrink-0",
+          info.canRequestAdvance ? "text-primary" : "text-destructive",
+        )}
+        strokeWidth={2.25}
+        aria-hidden
+      />
+      <div className="min-w-0 space-y-0.5">
+        <p
+          className={cn(
+            "text-xs font-semibold leading-snug",
+            info.canRequestAdvance ? "text-primary" : "text-destructive",
+          )}
+        >
+          {info.headline}
+        </p>
+        <p className="text-[11px] leading-snug text-foreground/75">
+          {info.detail}
+        </p>
+      </div>
+    </div>
   );
 }
 

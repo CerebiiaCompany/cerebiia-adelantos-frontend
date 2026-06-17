@@ -18,11 +18,10 @@ export function SidebarLogoutButton({ collapsed = false }: SidebarLogoutButtonPr
         title="Cerrar sesión"
         onClick={() => logout()}
         className={cn(
-          "relative flex w-full items-center rounded-lg text-destructive transition-colors duration-300 ease-out",
+          "app-sidebar-logout relative flex w-full items-center rounded-lg",
           collapsed
-            ? "mx-auto h-9 w-9 shrink-0 justify-center p-0"
-            : "gap-3 px-3 py-2",
-          "hover:bg-red-400 hover:text-white",
+            ? "mx-auto h-10 w-10 shrink-0 justify-center p-0"
+            : "gap-3 px-3 py-2.5",
           "disabled:cursor-not-allowed disabled:opacity-60",
         )}
       >
@@ -34,11 +33,12 @@ export function SidebarLogoutButton({ collapsed = false }: SidebarLogoutButtonPr
         ) : (
           <LogOut
             className="h-[18px] w-[18px] shrink-0 text-current"
+            strokeWidth={2}
             aria-hidden="true"
           />
         )}
         {!collapsed && (
-          <span className="truncate text-sm font-medium tracking-tight text-current">
+          <span className="truncate text-[0.8125rem] font-medium tracking-tight text-current">
             {isPending ? "Cerrando sesión..." : "Cerrar sesión"}
           </span>
         )}

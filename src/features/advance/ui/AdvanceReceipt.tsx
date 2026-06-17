@@ -3,28 +3,20 @@ import { Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import {
+  calculateAdvanceTransactionFee,
+  formatAdvanceTransactionFeeRate,
+} from "@/shared/config/advanceFees";
 import { amountInWordsSpanish } from "@/shared/utils/amountInWords";
+import {
+  buildAdvanceReceiptFolio,
+  getPayrollPeriodLabel,
+} from "@/shared/utils/payrollPeriod";
 import { cn } from "@/lib/utils";
+import { ADVANCE_RECEIPT_STATUS_CONFIG } from "@/shared/config/advanceStatusStyles";
+import type { AdvanceReceiptStatus } from "@/shared/config/advanceHistory.types";
 
-export type AdvanceReceiptStatus = "pendiente" | "aprobado" | "transferido";
-
-const STATUS_CONFIG: Record<
-  AdvanceReceiptStatus,
-  { label: string; className: string }
-> = {
-  pendiente: {
-    label: "Pendiente",
-    className: "border-amber-600/40 text-amber-700",
-  },
-  aprobado: {
-    label: "Aprobado",
-    className: "border-primary/50 text-primary",
-  },
-  transferido: {
-    label: "Transferido",
-    className: "border-emerald-600/40 text-emerald-700",
-  },
-};
+export type { AdvanceReceiptStatus } from "@/shared/config/advanceHistory.types";
 
 function formatReceiptDate(date: Date): string {
   return date.toLocaleString("es-CO", {
@@ -44,49 +36,69 @@ function formatDisbursementDate(date: Date): string {
   });
 }
 
-function getPayrollPeriodLabel(date: Date): string {
-  const month = date.toLocaleDateString("es-CO", { month: "long" });
-  const year = date.getFullYear();
-  const quincena = date.getDate() <= 15 ? "1.ª quincena" : "2.ª quincena";
-  return `${month} ${year} · ${quincena}`;
-}
-
-function buildReceiptFolio(date: Date): string {
-  const stamp = date.toISOString().slice(0, 10).replace(/-/g, "");
-  const suffix = String(date.getTime()).slice(-5);
-  return `ADV-${stamp}-${suffix}`;
-}
-
 type AdvanceReceiptProps = {
   amount: number;
   status?: AdvanceReceiptStatus;
+  transactionFeeAmount?: number;
   paymentMethod?: string;
+  issuedAt?: Date;
+  folio?: string;
   onBack?: () => void;
+  backLabel?: string;
   className?: string;
 };
 
 export function AdvanceReceipt({
   amount,
-  status = "transferido",
+  status = "en_curso",
+  transactionFeeAmount,
   paymentMethod = "Transferencia bancaria",
+  issuedAt: issuedAtProp,
+  folio: folioProp,
   onBack,
+  backLabel = "Volver a solicitar adelanto",
   className,
 }: AdvanceReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const profile = DEMO_EMPLOYEE_PROFILE;
 
-  const issuedAt = useMemo(() => new Date(), []);
+  const issuedAt = useMemo(
+    () => issuedAtProp ?? new Date(),
+    [issuedAtProp],
+  );
   const disbursementAt = useMemo(() => {
-    const date = new Date();
+    const date = new Date(issuedAt);
     date.setMinutes(date.getMinutes() + 15);
     return date;
-  }, []);
+  }, [issuedAt]);
 
-  const folio = useMemo(() => buildReceiptFolio(issuedAt), [issuedAt]);
-  const amountWords = useMemo(() => amountInWordsSpanish(amount), [amount]);
-  const periodLabel = useMemo(() => getPayrollPeriodLabel(issuedAt), [issuedAt]);
-  const statusConfig = STATUS_CONFIG[status];
+  const folio = useMemo(
+    () => folioProp ?? buildAdvanceReceiptFolio(issuedAt),
+    [folioProp, issuedAt],
+  );
+  const transactionFee = useMemo(
+    () => transactionFeeAmount ?? calculateAdvanceTransactionFee(amount),
+    [transactionFeeAmount, amount],
+  );
+  const netAmount = useMemo(
+    () => amount - transactionFee,
+    [amount, transactionFee],
+  );
+  const amountWords = useMemo(
+    () => amountInWordsSpanish(netAmount),
+    [netAmount],
+  );
+  const periodLabel = useMemo(
+    () => getPayrollPeriodLabel(issuedAt),
+    [issuedAt],
+  );
+  const statusConfig = ADVANCE_RECEIPT_STATUS_CONFIG[status];
   const concept = `Adelanto de nómina correspondiente al periodo ${periodLabel}`;
+  const transactionFeeConcept = `Costo de transacción (${formatAdvanceTransactionFeeRate()})`;
+  const disbursementLabel =
+    status === "en_curso"
+      ? "Pendiente de aprobación"
+      : formatDisbursementDate(disbursementAt);
 
   return (
     <div className={cn("mx-auto w-full max-w-xl animate-fade-in", className)}>
@@ -113,7 +125,7 @@ export function AdvanceReceipt({
             </div>
             <div
               className={cn(
-                "advance-receipt-stamp shrink-0 rounded border-2 border-dashed px-2.5 py-1 text-center text-[10px] font-bold uppercase tracking-widest",
+                "advance-receipt-stamp shrink-0 rounded-none border-2 border-dashed px-2.5 py-1 text-center text-[10px] font-bold uppercase tracking-widest",
                 statusConfig.className,
               )}
             >
@@ -178,13 +190,26 @@ export function AdvanceReceipt({
                     <AnimatedCurrency value={amount} duration={600} />
                   </td>
                 </tr>
+                <tr className="border-b border-dashed border-border/80">
+                  <td className="px-4 py-3 align-top leading-snug text-muted-foreground">
+                    {transactionFeeConcept}
+                  </td>
+                  <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-[hsl(260_70%_50%)]">
+                    −
+                    <AnimatedCurrency
+                      value={transactionFee}
+                      className="inline"
+                      duration={600}
+                    />
+                  </td>
+                </tr>
                 <tr className="bg-primary/[0.04]">
                   <td className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-muted-foreground">
                     Total a dispersar
                   </td>
                   <td className="px-4 py-3 text-right">
                     <AnimatedCurrency
-                      value={amount}
+                      value={netAmount}
                       className="font-display text-xl font-bold text-primary tabular-nums"
                       duration={700}
                     />
@@ -209,7 +234,7 @@ export function AdvanceReceipt({
             <MetaCell label="Vía de pago" value={paymentMethod} />
             <MetaCell
               label="Fecha de dispersión"
-              value={formatDisbursementDate(disbursementAt)}
+              value={disbursementLabel}
             />
           </div>
         </div>
@@ -253,7 +278,7 @@ export function AdvanceReceipt({
             onClick={onBack}
             className="text-sm text-muted-foreground transition-colors hover:text-primary"
           >
-            Volver a solicitar adelanto
+            {backLabel}
           </button>
         </div>
       ) : null}

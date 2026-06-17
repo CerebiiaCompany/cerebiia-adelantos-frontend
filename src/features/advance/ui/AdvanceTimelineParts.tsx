@@ -129,3 +129,26 @@ export function AdvanceTimelineTrack({
     </div>
   );
 }
+
+/** Línea continua que atraviesa el centro de nodos circulares h-10 w-10. */
+type AdvanceTimelineCenterLineProps = {
+  filled?: boolean;
+  className?: string;
+};
+
+export function AdvanceTimelineCenterLine({
+  filled = false,
+  className,
+}: AdvanceTimelineCenterLineProps) {
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute left-5 right-5 top-5 z-0 h-0.5 -translate-y-1/2",
+        className,
+      )}
+      aria-hidden
+    >
+      <AdvanceTimelineTrack filled={filled} className="h-full w-full" />
+    </div>
+  );
+}

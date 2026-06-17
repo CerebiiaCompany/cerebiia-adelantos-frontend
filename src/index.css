@@ -106,6 +106,182 @@
     background-image: var(--gradient-primary);
   }
 
+  .app-sidebar-shell {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--shell-surface) / 0.72) 0%,
+      hsl(var(--background) / 0.94) 22%,
+      hsl(0 0% 100% / 0.9) 100%
+    );
+    backdrop-filter: blur(18px);
+    box-shadow: inset -1px 0 0 hsl(0 0% 100% / 0.75);
+  }
+
+  .app-sidebar-shell::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.14) 38%,
+      hsl(var(--accent) / 0.12) 62%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  .app-sidebar-header-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.18) 45%,
+      hsl(var(--accent) / 0.12) 55%,
+      transparent
+    );
+  }
+
+  .app-sidebar-section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: hsl(var(--primary) / 0.72);
+  }
+
+  .app-sidebar-section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary) / 0.22),
+      transparent
+    );
+  }
+
+  .app-sidebar-nav-link {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.625rem;
+    transition:
+      color 0.25s ease,
+      background-color 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  .app-sidebar-nav-link::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 3px;
+    height: 58%;
+    border-radius: 0 3px 3px 0;
+    background-image: var(--gradient-primary);
+    opacity: 0;
+    transform: translateY(-50%) scaleY(0.35);
+    transition:
+      opacity 0.25s ease,
+      transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+
+  .app-sidebar-nav-link:hover {
+    background: hsl(var(--primary) / 0.045);
+    color: hsl(var(--foreground));
+  }
+
+  .app-sidebar-nav-link--active {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--primary) / 0.11) 0%,
+      hsl(var(--primary) / 0.04) 55%,
+      transparent 100%
+    );
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+
+  .app-sidebar-nav-link--active::before {
+    opacity: 1;
+    transform: translateY(-50%) scaleY(1);
+    animation: sidebar-nav-indicator 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .app-sidebar-nav-link--collapsed.app-sidebar-nav-link--active::before {
+    height: 42%;
+  }
+
+  .app-sidebar-nav-link--collapsed:hover {
+    transform: translateX(1px);
+  }
+
+  .app-sidebar-brand-title {
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+  }
+
+  .app-sidebar-brand-mark {
+    display: flex;
+    height: 2.25rem;
+    width: 2.25rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    background-image: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    box-shadow:
+      0 6px 18px hsl(var(--primary) / 0.28),
+      inset 0 1px 0 hsl(0 0% 100% / 0.22);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .app-sidebar-brand-mark:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 8px 22px hsl(var(--primary) / 0.32),
+      inset 0 1px 0 hsl(0 0% 100% / 0.25);
+  }
+
+  .app-sidebar-footer {
+    border-top: 1px solid hsl(var(--primary) / 0.08);
+    background: linear-gradient(
+      180deg,
+      hsl(0 0% 100% / 0.55) 0%,
+      hsl(var(--shell-surface) / 0.45) 100%
+    );
+    backdrop-filter: blur(14px);
+  }
+
+  .app-sidebar-logout {
+    color: hsl(var(--destructive) / 0.88);
+    transition:
+      color 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+  .app-sidebar-logout:hover:not(:disabled) {
+    background: hsl(var(--destructive) / 0.08);
+    color: hsl(var(--destructive));
+  }
+
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
@@ -226,6 +402,11 @@
     transform-origin: center;
   }
 
+  .sidebar-icon-motion-history {
+    animation: sidebar-motion-history 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
   .sidebar-icon-motion-wallet {
     animation: sidebar-motion-wallet 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
     transform-origin: center;
@@ -253,6 +434,21 @@
 
   .sidebar-icon-motion-profile {
     animation: sidebar-motion-profile 2.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center;
+  }
+
+  .greeting-icon-sun-glow {
+    animation: greeting-icon-sun-glow 2.8s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .greeting-icon-sunset-hide {
+    animation: greeting-icon-sunset-hide 3.2s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .greeting-icon-moon-float {
+    animation: greeting-icon-moon-float 3.4s ease-in-out infinite;
     transform-origin: center;
   }
 
@@ -758,6 +954,27 @@
     }
   }
 
+  .physical-calendar-grid .physical-calendar-day-today {
+    position: relative;
+    z-index: 1;
+    box-shadow:
+      inset 0 0 0 2px hsl(38 92% 50% / 0.95),
+      inset 0 0 0 3px hsl(var(--background)) !important;
+  }
+
+  .physical-calendar-grid .physical-calendar-day-today::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: hsl(38 92% 50%);
+    box-shadow: 0 0 0 1px hsl(var(--background));
+    pointer-events: none;
+  }
+
   /* Dashboard stat cards — iconos coloridos con movimiento al hover de la card */
   .stat-card-icon-motion-zap,
   .stat-card-icon-motion-trend-up,
@@ -780,6 +997,11 @@
   }
 
   .group\/stat-card:hover .stat-card-icon-motion-calendar {
+    animation: stat-card-motion-calendar 0.7s ease-in-out infinite;
+  }
+
+  .group\/payroll-fab .stat-card-icon-motion-calendar,
+  .stat-card-icon-motion-always.stat-card-icon-motion-calendar {
     animation: stat-card-motion-calendar 0.7s ease-in-out infinite;
   }
 
@@ -997,16 +1219,22 @@
     .animate-sidebar-icon-glow,
     .sidebar-icon-motion-dashboard,
     .sidebar-icon-motion-zap,
+    .sidebar-icon-motion-history,
     .sidebar-icon-motion-wallet,
     .sidebar-icon-motion-chart,
     .sidebar-icon-motion-sparkle,
     .sidebar-icon-motion-trophy,
     .sidebar-icon-motion-bell,
     .sidebar-icon-motion-profile,
+    .greeting-icon-sun-glow,
+    .greeting-icon-sunset-hide,
+    .greeting-icon-moon-float,
     .group\/stat-card:hover .stat-card-icon-motion-zap,
     .group\/stat-card:hover .stat-card-icon-motion-trend-up,
     .group\/stat-card:hover .stat-card-icon-motion-withdraw,
     .group\/stat-card:hover .stat-card-icon-motion-calendar,
+    .group\/payroll-fab .stat-card-icon-motion-calendar,
+    .stat-card-icon-motion-always.stat-card-icon-motion-calendar,
     .group\/activity-item:hover .activity-icon-motion-ingreso,
     .group\/activity-item:hover .activity-icon-motion-adelanto,
     .group\/wallet-ally:hover .wallet-icon-motion-heart,
@@ -1318,6 +1546,11 @@
   70% { transform: scale(1.05) rotate(4deg); }
 }
 
+@keyframes sidebar-motion-history {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-1.5px); }
+}
+
 @keyframes sidebar-motion-wallet {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-1.5px); }
@@ -1350,6 +1583,45 @@
 @keyframes sidebar-motion-profile {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
+}
+
+@keyframes greeting-icon-sun-glow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 1px hsl(220 90% 55% / 0.35));
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    filter:
+      drop-shadow(0 0 4px hsl(220 90% 55% / 0.55))
+      drop-shadow(0 0 10px hsl(45 95% 58% / 0.35));
+    opacity: 1;
+  }
+}
+
+@keyframes greeting-icon-sunset-hide {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 0.92;
+    transform: translateY(0);
+  }
+  55% {
+    opacity: 0.38;
+    transform: translateY(1.5px);
+  }
+  70% {
+    opacity: 0.72;
+    transform: translateY(0.5px);
+  }
+}
+
+@keyframes greeting-icon-moon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 @keyframes stat-card-motion-zap {
