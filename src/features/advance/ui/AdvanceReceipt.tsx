@@ -109,12 +109,12 @@ export function AdvanceReceipt({
       >
         {/* Banda superior */}
         <div className="border-b-2 border-primary bg-gradient-primary px-6 py-4 text-primary-foreground">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-white/30 bg-white/15 font-display text-lg font-bold">
                 A
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-display text-base font-bold leading-tight sm:text-lg">
                   {profile.company}
                 </p>
@@ -123,14 +123,14 @@ export function AdvanceReceipt({
                 </p>
               </div>
             </div>
-            <div
+            <span
               className={cn(
-                "advance-receipt-stamp shrink-0 rounded-none border-2 border-dashed px-2.5 py-1 text-center text-[10px] font-bold uppercase tracking-widest",
+                "advance-receipt-status-badge inline-flex shrink-0 items-center rounded-md border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide",
                 statusConfig.className,
               )}
             >
               {statusConfig.label}
-            </div>
+            </span>
           </div>
         </div>
 

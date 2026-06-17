@@ -15,25 +15,25 @@ export const ADVANCE_STATUS_STYLES = {
     label: "En curso",
     badgeClassName:
       "rounded-none border-amber-100/90 bg-amber-50/70 px-2.5 py-1 font-medium text-amber-700/70 hover:bg-amber-50/70",
-    stampClassName: "border-amber-200/80 text-amber-700/75",
+    stampClassName: "border-amber-300/90 text-amber-700",
   },
   aprobado: {
     label: "Aprobado",
     badgeClassName:
       "rounded-none border-emerald-100/90 bg-emerald-50/70 px-2.5 py-1 font-medium text-emerald-700/75 hover:bg-emerald-50/70",
-    stampClassName: "border-emerald-200/80 text-emerald-700/80",
+    stampClassName: "border-emerald-300/90 text-emerald-700",
   },
   transferido: {
     label: "Transferido",
     badgeClassName:
       "rounded-none border-emerald-100/90 bg-emerald-50/70 px-2.5 py-1 font-medium text-emerald-700/75 hover:bg-emerald-50/70",
-    stampClassName: "border-emerald-200/80 text-emerald-700/80",
+    stampClassName: "border-emerald-300/90 text-emerald-700",
   },
   no_aprobado: {
     label: "No aprobado",
     badgeClassName:
       "rounded-none border-red-100/90 bg-red-50/70 px-2.5 py-1 font-medium text-red-600/70 hover:bg-red-50/70",
-    stampClassName: "border-red-200/80 text-red-600/75",
+    stampClassName: "border-red-300/90 text-red-600",
   },
 } as const satisfies Record<
   AdvanceHistoryStatus | AdvanceReceiptStatus,

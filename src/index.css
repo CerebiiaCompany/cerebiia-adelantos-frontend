@@ -206,6 +206,28 @@
     pointer-events: none;
   }
 
+  .app-tooltip-content {
+    background: linear-gradient(160deg, #334155 0%, #2d3748 48%, #1e293b 100%);
+    box-shadow:
+      0 12px 28px rgb(15 23 42 / 0.28),
+      inset 0 1px 0 rgb(255 255 255 / 0.08);
+  }
+
+  .app-tooltip-content::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: radial-gradient(rgb(255 255 255 / 0.06) 0.5px, transparent 0.5px);
+    background-size: 3px 3px;
+    pointer-events: none;
+    opacity: 0.35;
+  }
+
+  .app-tooltip-arrow {
+    fill: #2d3748;
+  }
+
   .app-sidebar-header-divider {
     height: 1px;
     background: linear-gradient(
@@ -922,9 +944,9 @@
     transform: none;
   }
 
-  .advance-receipt-stamp {
-    background: hsl(0 0% 100% / 0.92);
-    transform: rotate(-4deg);
+  .advance-receipt-status-badge {
+    background: hsl(0 0% 100% / 0.97);
+    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.06);
   }
 
   .advance-receipt-perforation {
@@ -1221,13 +1243,16 @@
   }
 
   .advance-amount-display {
-    display: inline-block;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    transition: opacity 0.25s ease;
   }
 
   .group\/advance-flow:has(input:focus) .advance-amount-display,
   .group\/advance-flow:has(button:focus) .advance-amount-display {
-    transform: scale(1.02);
+    opacity: 0.92;
   }
 
   .advance-amount-pop {
@@ -1257,6 +1282,90 @@
   }
 
   .advance-flow-slider [class*="border-primary"]:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0.18);
+  }
+
+  .advance-amount-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 1.5rem;
+    background: transparent;
+  }
+
+  .advance-amount-range:focus {
+    outline: none;
+  }
+
+  .advance-amount-range:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.2);
+  }
+
+  .advance-amount-range:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.2);
+  }
+
+  .advance-amount-range::-webkit-slider-runnable-track {
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) var(--range-progress, 0%),
+      hsl(var(--primary) / 0.1) var(--range-progress, 0%),
+      hsl(var(--primary) / 0.1) 100%
+    );
+  }
+
+  .advance-amount-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: -0.6875rem;
+    border-radius: 9999px;
+    border: 2px solid hsl(var(--primary));
+    background-color: hsl(var(--background));
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .advance-amount-range::-webkit-slider-thumb:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px hsl(var(--primary) / 0.18);
+  }
+
+  .advance-amount-range::-moz-range-track {
+    height: 2px;
+    border-radius: 9999px;
+    background: hsl(var(--primary) / 0.1);
+  }
+
+  .advance-amount-range::-moz-range-progress {
+    height: 2px;
+    border-radius: 9999px;
+    background: linear-gradient(
+      to right,
+      hsl(var(--primary)),
+      hsl(var(--accent))
+    );
+  }
+
+  .advance-amount-range::-moz-range-thumb {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border: 2px solid hsl(var(--primary));
+    background-color: hsl(var(--background));
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12);
+    transition:
+      transform 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .advance-amount-range::-moz-range-thumb:hover {
     transform: scale(1.08);
     box-shadow: 0 0 0 6px hsl(var(--primary) / 0.18);
   }
