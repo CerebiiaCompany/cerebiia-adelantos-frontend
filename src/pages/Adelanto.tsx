@@ -44,7 +44,7 @@ export default function Adelanto() {
       <div className="mx-auto max-w-2xl py-2">
         <AdvanceReceipt
           amount={amount}
-          status="transferido"
+          transactionFeeAmount={fee}
           onBack={() => {
             setShowReceipt(false);
             setAmount(0);

@@ -10,6 +10,7 @@ export type TimeBasedGreeting = {
   icon: LucideIcon;
   iconContainerClassName: string;
   iconClassName: string;
+  iconAnimationClassName: string;
 };
 
 const GREETING_BY_PERIOD = {
@@ -20,6 +21,7 @@ const GREETING_BY_PERIOD = {
     iconContainerClassName:
       "rounded-full bg-primary/15 ring-4 ring-primary/10",
     iconClassName: "text-primary",
+    iconAnimationClassName: "greeting-icon-sun-glow",
   },
   afternoon: {
     greeting: "Buenas tardes",
@@ -28,6 +30,7 @@ const GREETING_BY_PERIOD = {
     iconContainerClassName:
       "rounded-full bg-[hsl(260_70%_55%_/_0.12)] ring-4 ring-[hsl(260_70%_55%_/_0.1)]",
     iconClassName: "text-[hsl(260_70%_50%)]",
+    iconAnimationClassName: "greeting-icon-sunset-hide",
   },
   night: {
     greeting: "Buenas noches",
@@ -36,6 +39,7 @@ const GREETING_BY_PERIOD = {
     iconContainerClassName:
       "rounded-full bg-primary/15 ring-4 ring-primary/10",
     iconClassName: "text-primary",
+    iconAnimationClassName: "greeting-icon-moon-float",
   },
 } as const satisfies Record<
   DayPeriod,
@@ -69,5 +73,6 @@ export function getTimeBasedGreeting(
     icon: config.icon,
     iconContainerClassName: config.iconContainerClassName,
     iconClassName: config.iconClassName,
+    iconAnimationClassName: config.iconAnimationClassName,
   };
 }

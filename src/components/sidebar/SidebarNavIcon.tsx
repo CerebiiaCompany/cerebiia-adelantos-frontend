@@ -16,12 +16,13 @@ export function SidebarNavIcon({
   return (
     <Icon
       className={cn(
-        "relative shrink-0 h-[18px] w-[18px] will-change-transform transition-colors duration-300",
+        "relative shrink-0 will-change-transform transition-all duration-300",
+        isActive ? "h-[19px] w-[19px]" : "h-[18px] w-[18px]",
         isActive
           ? cn("text-primary", `sidebar-icon-motion-${animation}`)
-          : "text-muted-foreground group-hover:text-primary",
+          : "text-muted-foreground/90 group-hover:text-primary",
       )}
-      strokeWidth={isActive ? 2.25 : 2}
+      strokeWidth={isActive ? 2.35 : 2}
       aria-hidden="true"
     />
   );

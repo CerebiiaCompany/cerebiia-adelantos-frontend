@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PayrollCalendarDialog } from "@/features/dashboard/ui/PayrollCalendarDialog";
+import { PayrollCalendarFab } from "@/features/dashboard/ui/PayrollCalendarFab";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
 import {
@@ -93,6 +94,17 @@ export default function Dashboard() {
         description={greeting.description}
         iconContainerClassName={greeting.iconContainerClassName}
         iconClassName={greeting.iconClassName}
+        iconAnimationClassName={greeting.iconAnimationClassName}
+      />
+
+      <PayrollCalendarFab
+        onClick={() => setPayrollCalendarOpen(true)}
+        daysUntilPayment={daysUntilPayment}
+      />
+
+      <PayrollCalendarDialog
+        open={payrollCalendarOpen}
+        onOpenChange={setPayrollCalendarOpen}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -168,16 +180,10 @@ export default function Dashboard() {
             </>
           }
           icon={<Calendar className="h-5 w-5" strokeWidth={2.25} />}
-          onIconClick={() => setPayrollCalendarOpen(true)}
-          iconAriaLabel="Ver calendario de nómina"
           iconMotion="calendar"
+          iconMotionAlways
         />
       </div>
-
-      <PayrollCalendarDialog
-        open={payrollCalendarOpen}
-        onOpenChange={setPayrollCalendarOpen}
-      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="glass-card p-5 lg:col-span-2">
@@ -322,7 +328,7 @@ export default function Dashboard() {
 
       <div className="glass-card glow-border shine-hover flex flex-col items-center justify-between gap-4 p-6 sm:flex-row">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 animate-pulse-glow items-center justify-center rounded-xl bg-gradient-primary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-primary">
             <Zap className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
@@ -374,6 +380,7 @@ function StatCard({
   onIconClick,
   iconAriaLabel,
   iconMotion,
+  iconMotionAlways,
 }: {
   label: string;
   value: ReactNode;
@@ -384,6 +391,7 @@ function StatCard({
   onIconClick?: () => void;
   iconAriaLabel?: string;
   iconMotion?: "zap" | "trend-up" | "withdraw" | "calendar";
+  iconMotionAlways?: boolean;
 }) {
   const motionStyles: Record<
     NonNullable<typeof iconMotion>,
@@ -422,6 +430,7 @@ function StatCard({
       className={cn(
         "inline-flex items-center justify-center",
         motionConfig?.icon,
+        iconMotionAlways && motionConfig && "stat-card-icon-motion-always",
       )}
     >
       {icon}

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
+import { PanelLeft, PanelLeftClose } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,15 @@ const SIDEBAR_WIDTH = "17.5rem";
 const SIDEBAR_WIDTH_MOBILE = "19.5rem";
 const SIDEBAR_WIDTH_ICON = "4.25rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
+
+function readSidebarCookie(defaultOpen: boolean): boolean {
+  if (typeof document === "undefined") return defaultOpen;
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${SIDEBAR_COOKIE_NAME}=([^;]*)`),
+  );
+  if (!match?.[1]) return defaultOpen;
+  return match[1] === "true";
+}
 
 type SidebarContext = {
   state: "expanded" | "collapsed";
@@ -53,7 +62,7 @@ const SidebarProvider = React.forwardRef<
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [_open, _setOpen] = React.useState(() => readSidebarCookie(defaultOpen));
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
@@ -157,7 +166,7 @@ const Sidebar = React.forwardRef<
           data-sidebar="sidebar"
           data-mobile="true"
           overlayClassName="bg-background/40 backdrop-blur-[2px]"
-          className="h-full w-[--sidebar-width] gap-0 border-r border-primary/10 !bg-background/75 p-0 text-sidebar-foreground shadow-none backdrop-blur-md sm:max-w-none [&>button]:hidden"
+          className="app-sidebar-shell h-full w-[--sidebar-width] gap-0 border-r border-primary/10 !bg-transparent p-0 text-sidebar-foreground shadow-none backdrop-blur-none sm:max-w-none [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -165,7 +174,7 @@ const Sidebar = React.forwardRef<
           }
           side={side}
         >
-          <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background/75 backdrop-blur-md">
+          <div className="app-sidebar-shell flex h-full min-h-0 w-full flex-col overflow-hidden">
             {children}
           </div>
         </SheetContent>
@@ -209,7 +218,7 @@ const Sidebar = React.forwardRef<
       >
         <div
           data-sidebar="sidebar"
-          className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background/75 backdrop-blur-md group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+          className="app-sidebar-shell flex h-full min-h-0 w-full flex-col overflow-hidden group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
         >
           {children}
         </div>
@@ -227,15 +236,18 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
     return (
       <Button
         ref={ref}
+        type="button"
         data-sidebar="trigger"
         data-sidebar-open={isSidebarOpen}
         variant="ghost"
         size="icon"
+        aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
+        aria-expanded={isSidebarOpen}
         className={cn(
-          "h-7 w-7 rounded-lg transition-colors duration-300",
+          "relative z-30 h-9 w-9 shrink-0 rounded-lg border border-transparent transition-colors duration-200",
           isSidebarOpen
-            ? "text-primary hover:bg-primary/10 hover:text-primary"
-            : "text-muted-foreground hover:bg-muted hover:text-muted-foreground",
+            ? "border-primary/15 bg-primary/10 text-primary hover:border-primary/25 hover:bg-primary/15 hover:text-primary"
+            : "text-foreground/70 hover:border-primary/10 hover:bg-primary/5 hover:text-primary",
           className,
         )}
         onClick={(event) => {
@@ -244,8 +256,14 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         }}
         {...props}
       >
-        <PanelLeft />
-        <span className="sr-only">Toggle Sidebar</span>
+        {isSidebarOpen ? (
+          <PanelLeftClose className="h-5 w-5" strokeWidth={2.25} />
+        ) : (
+          <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
+        )}
+        <span className="sr-only">
+          {isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
+        </span>
       </Button>
     );
   },
