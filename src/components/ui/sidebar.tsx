@@ -1,21 +1,21 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
 import { PanelLeft, PanelLeftClose } from "lucide-react";
 
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile, isMobileViewport } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "17.5rem";
-const SIDEBAR_WIDTH_MOBILE = "19.5rem";
+const SIDEBAR_WIDTH = "19rem";
+const SIDEBAR_WIDTH_MOBILE = "19rem";
 const SIDEBAR_WIDTH_ICON = "4.25rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
@@ -38,7 +38,10 @@ type SidebarContext = {
   toggleSidebar: () => void;
 };
 
+type SidebarLayout = "drawer" | "panel";
+
 const SidebarContext = React.createContext<SidebarContext | null>(null);
+const SidebarLayoutContext = React.createContext<SidebarLayout>("panel");
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);
@@ -47,6 +50,93 @@ function useSidebar() {
   }
 
   return context;
+}
+
+function useSidebarLayout() {
+  return React.useContext(SidebarLayoutContext);
+}
+
+function MobileSidebarDrawer({
+  open,
+  onOpenChange,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+}) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onOpenChange(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
+
+  if (!mounted) {
+    return null;
+  }
+
+  return createPortal(
+    <div className="contents md:hidden">
+      <div
+        aria-hidden={!open}
+        className={cn(
+          "app-sidebar-mobile-overlay bg-black/50 backdrop-blur-[2px] transition-opacity duration-300",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={() => onOpenChange(false)}
+      />
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú de navegación"
+        aria-hidden={!open}
+        data-sidebar="sidebar"
+        data-mobile="true"
+        data-state={open ? "open" : "closed"}
+        className="app-sidebar-mobile-drawer app-sidebar-shell flex flex-col gap-0 overflow-hidden border-r border-primary/10 bg-background p-0 text-sidebar-foreground shadow-2xl"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "min(var(--sidebar-width-mobile), 88vw)",
+          maxWidth: "88vw",
+          height: "100dvh",
+          maxHeight: "100dvh",
+          zIndex: 210,
+          transform: open ? "translate3d(0, 0, 0)" : "translate3d(-100%, 0, 0)",
+        }}
+      >
+        <SidebarLayoutContext.Provider value="drawer">
+          <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">{children}</div>
+        </SidebarLayoutContext.Provider>
+      </aside>
+    </div>,
+    document.body,
+  );
 }
 
 const SidebarProvider = React.forwardRef<
@@ -81,8 +171,33 @@ const SidebarProvider = React.forwardRef<
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-  }, [isMobile, setOpen, setOpenMobile]);
+    if (isMobileViewport()) {
+      setOpenMobile((current) => !current);
+      return;
+    }
+
+    setOpen((current) => !current);
+  }, [setOpen, setOpenMobile]);
+
+  React.useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--sidebar-width", SIDEBAR_WIDTH);
+    root.style.setProperty("--sidebar-width-mobile", SIDEBAR_WIDTH_MOBILE);
+    root.style.setProperty("--sidebar-width-icon", SIDEBAR_WIDTH_ICON);
+  }, []);
+
+  React.useEffect(() => {
+    const mediaQueryList = window.matchMedia("(max-width: 767px)");
+
+    const handleViewportChange = () => {
+      if (!mediaQueryList.matches) {
+        setOpenMobile(false);
+      }
+    };
+
+    mediaQueryList.addEventListener("change", handleViewportChange);
+    return () => mediaQueryList.removeEventListener("change", handleViewportChange);
+  }, []);
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
@@ -121,6 +236,7 @@ const SidebarProvider = React.forwardRef<
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width-mobile": SIDEBAR_WIDTH_MOBILE,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
             } as React.CSSProperties
@@ -159,59 +275,39 @@ const Sidebar = React.forwardRef<
     );
   }
 
-  if (isMobile) {
-    return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
-          data-sidebar="sidebar"
-          data-mobile="true"
-          overlayClassName="bg-background/40 backdrop-blur-[2px]"
-          className="app-sidebar-shell h-full w-[--sidebar-width] gap-0 border-r border-primary/10 !bg-transparent p-0 text-sidebar-foreground shadow-none backdrop-blur-none sm:max-w-none [&>button]:hidden"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-          side={side}
-        >
-          <div className="app-sidebar-shell flex h-full min-h-0 w-full flex-col overflow-hidden">
-            {children}
-          </div>
-        </SheetContent>
-      </Sheet>
-    );
-  }
+  const shouldRenderMobileDrawer = isMobile || openMobile;
 
   return (
-    <div
-      ref={ref}
-      className="group peer hidden text-sidebar-foreground md:block"
-      data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
-      data-variant={variant}
-      data-side={side}
-    >
-      {/* This is what handles the sidebar gap on desktop */}
+    <>
+      {shouldRenderMobileDrawer ? (
+        <MobileSidebarDrawer open={openMobile} onOpenChange={setOpenMobile}>
+          {children}
+        </MobileSidebarDrawer>
+      ) : null}
+      <div
+        ref={ref}
+        className="group peer hidden text-sidebar-foreground md:block"
+        data-state={state}
+        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-variant={variant}
+        data-side={side}
+      >
       <div
         className={cn(
-          "relative h-svh w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
-          "group-data-[collapsible=offcanvas]:w-0",
+          "app-sidebar-desktop-gap relative h-svh bg-transparent transition-[width] duration-200 ease-linear",
           "group-data-[side=right]:rotate-180",
           variant === "floating" || variant === "inset"
             ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-            : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
+            : undefined,
         )}
       />
       <div
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
-          side === "left"
-            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-            : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-          // Adjust the padding for floating and inset variants.
+          "app-sidebar-desktop-panel fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] duration-200 ease-linear md:flex",
+          side === "left" ? "left-0" : "right-0",
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-            : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            : "group-data-[side=left]:border-r group-data-[side=right]:border-l",
           className,
         )}
         {...props}
@@ -220,18 +316,24 @@ const Sidebar = React.forwardRef<
           data-sidebar="sidebar"
           className="app-sidebar-shell flex h-full min-h-0 w-full flex-col overflow-hidden group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
         >
-          {children}
+          <SidebarLayoutContext.Provider value="panel">{children}</SidebarLayoutContext.Provider>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 });
 Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.ComponentProps<typeof Button>>(
   ({ className, onClick, ...props }, ref) => {
-    const { toggleSidebar, state, isMobile, openMobile } = useSidebar();
+    const { toggleSidebar, openMobile, state, isMobile } = useSidebar();
     const isSidebarOpen = isMobile ? openMobile : state === "expanded";
+
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event);
+      toggleSidebar();
+    };
 
     return (
       <Button
@@ -244,22 +346,23 @@ const SidebarTrigger = React.forwardRef<React.ElementRef<typeof Button>, React.C
         aria-label={isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
         aria-expanded={isSidebarOpen}
         className={cn(
-          "relative z-30 h-9 w-9 shrink-0 rounded-lg border border-transparent transition-colors duration-200",
+          "relative z-30 h-9 w-9 shrink-0 rounded-lg border transition-colors duration-200",
+          isMobile
+            ? "border-primary/20 bg-background text-primary shadow-sm hover:border-primary/30 hover:bg-primary/5"
+            : "border-transparent",
           isSidebarOpen
             ? "border-primary/15 bg-primary/10 text-primary hover:border-primary/25 hover:bg-primary/15 hover:text-primary"
-            : "text-foreground/70 hover:border-primary/10 hover:bg-primary/5 hover:text-primary",
+            : !isMobile && "text-foreground/70 hover:border-primary/10 hover:bg-primary/5 hover:text-primary",
+          isMobile && !isSidebarOpen && "text-primary",
           className,
         )}
-        onClick={(event) => {
-          onClick?.(event);
-          toggleSidebar();
-        }}
+        onClick={handleClick}
         {...props}
       >
-        {isSidebarOpen ? (
-          <PanelLeftClose className="h-5 w-5" strokeWidth={2.25} />
-        ) : (
+        {isMobile || !isSidebarOpen ? (
           <PanelLeft className="h-5 w-5" strokeWidth={2.25} />
+        ) : (
+          <PanelLeftClose className="h-5 w-5" strokeWidth={2.25} />
         )}
         <span className="sr-only">
           {isSidebarOpen ? "Cerrar menú" : "Abrir menú"}
@@ -670,4 +773,5 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
+  useSidebarLayout,
 };

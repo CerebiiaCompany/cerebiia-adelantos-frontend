@@ -45,6 +45,10 @@
     --sidebar-border: 220 14% 92%;
     --sidebar-ring: 220 90% 55%;
 
+    --sidebar-width: 19rem;
+    --sidebar-width-mobile: 19rem;
+    --sidebar-width-icon: 4.25rem;
+
     --shell-surface: 220 72% 95%;
     --shell-border: 220 32% 91%;
 
@@ -117,6 +121,74 @@
     );
     backdrop-filter: blur(18px);
     box-shadow: inset -1px 0 0 hsl(0 0% 100% / 0.75);
+  }
+
+  .app-sidebar-desktop-gap,
+  .app-sidebar-desktop-panel {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    flex-shrink: 0;
+  }
+
+  .group[data-collapsible="icon"] > .app-sidebar-desktop-gap,
+  .group[data-collapsible="icon"] > .app-sidebar-desktop-panel {
+    width: var(--sidebar-width-icon);
+    min-width: var(--sidebar-width-icon);
+    max-width: var(--sidebar-width-icon);
+  }
+
+  .group[data-collapsible="offcanvas"] > .app-sidebar-desktop-gap {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+  }
+
+  .group[data-collapsible="offcanvas"] > .app-sidebar-desktop-panel {
+    left: calc(var(--sidebar-width) * -1);
+  }
+
+  .group[data-side="right"][data-collapsible="offcanvas"] > .app-sidebar-desktop-panel {
+    left: auto;
+    right: calc(var(--sidebar-width) * -1);
+  }
+
+  [data-mobile="true"][data-sidebar="sidebar"].app-sidebar-shell,
+  .app-sidebar-mobile-drawer {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(var(--sidebar-width-mobile), 88vw);
+    max-width: 88vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    z-index: 210;
+    background: hsl(var(--background));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    opacity: 1;
+    visibility: visible;
+    transition: transform 300ms ease-out;
+    will-change: transform;
+  }
+
+  .app-sidebar-mobile-drawer[data-state="open"],
+  [data-mobile="true"][data-sidebar="sidebar"].app-sidebar-shell[data-state="open"] {
+    transform: translate3d(0, 0, 0);
+    pointer-events: auto;
+  }
+
+  .app-sidebar-mobile-drawer[data-state="closed"],
+  [data-mobile="true"][data-sidebar="sidebar"].app-sidebar-shell[data-state="closed"] {
+    transform: translate3d(-100%, 0, 0);
+    pointer-events: none;
+  }
+
+  .app-sidebar-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
   }
 
   .app-sidebar-shell::after {
