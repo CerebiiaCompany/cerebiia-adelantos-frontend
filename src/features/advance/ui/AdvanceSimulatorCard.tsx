@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import { Calculator, Coins, Layers3 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -7,8 +6,8 @@ import {
 } from "@/components/ui/animated-number";
 import { cn } from "@/lib/utils";
 import {
+  AdvanceTimelineCenterLine,
   AdvanceTimelineShell,
-  AdvanceTimelineTrack,
 } from "./AdvanceTimelineParts";
 
 const COUNT_DURATION = 450;
@@ -124,16 +123,19 @@ export function AdvanceSimulatorCard({
 
           <div
             className={cn(
-              "relative mx-auto flex max-w-sm items-center justify-between gap-0 px-2 transition-opacity duration-300",
+              "relative mx-auto max-w-sm px-2 transition-opacity duration-300",
               !hasAmount && "pointer-events-none opacity-45",
             )}
           >
-            {INSTALLMENT_OPTIONS.map((option, index) => {
-              const selected = installments === option;
+            <AdvanceTimelineCenterLine filled={hasAmount} />
 
-              return (
-                <Fragment key={option}>
+            <div className="relative flex justify-between">
+              {INSTALLMENT_OPTIONS.map((option) => {
+                const selected = installments === option;
+
+                return (
                   <button
+                    key={option}
                     type="button"
                     disabled={!hasAmount}
                     onClick={() => onInstallmentsChange(option)}
@@ -159,16 +161,9 @@ export function AdvanceSimulatorCard({
                       {option === 1 ? "cuota" : "cuotas"}
                     </span>
                   </button>
-
-                  {index < INSTALLMENT_OPTIONS.length - 1 ? (
-                    <AdvanceTimelineTrack
-                      filled={hasAmount}
-                      className="min-w-[1.5rem] flex-[2] self-center"
-                    />
-                  ) : null}
-                </Fragment>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </section>
 

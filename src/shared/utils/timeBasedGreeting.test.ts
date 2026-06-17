@@ -45,6 +45,7 @@ describe("getTimeBasedGreeting", () => {
     expect(greeting.period).toBe("morning");
     expect(greeting.title).toBe("Buenos días, Erick");
     expect(greeting.icon).toBe(Sunrise);
+    expect(greeting.iconAnimationClassName).toBe("greeting-icon-sun-glow");
   });
 
   it("genera saludo vespertino", () => {
@@ -56,6 +57,7 @@ describe("getTimeBasedGreeting", () => {
     expect(greeting.period).toBe("afternoon");
     expect(greeting.title).toBe("Buenas tardes, Erick");
     expect(greeting.icon).toBe(CloudSun);
+    expect(greeting.iconAnimationClassName).toBe("greeting-icon-sunset-hide");
   });
 
   it("genera saludo nocturno con icono de luna y estrella", () => {
@@ -67,5 +69,6 @@ describe("getTimeBasedGreeting", () => {
     expect(greeting.period).toBe("night");
     expect(greeting.title).toBe("Buenas noches, Erick");
     expect(greeting.icon).toBe(MoonStar);
+    expect(greeting.iconAnimationClassName).toBe("greeting-icon-moon-float");
   });
 });

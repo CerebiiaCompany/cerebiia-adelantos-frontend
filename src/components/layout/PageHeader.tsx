@@ -10,6 +10,7 @@ type PageHeaderProps = {
   actions?: ReactNode;
   iconContainerClassName?: string;
   iconClassName?: string;
+  iconAnimationClassName?: string;
 };
 
 export function PageHeader({
@@ -20,19 +21,24 @@ export function PageHeader({
   actions,
   iconContainerClassName,
   iconClassName,
+  iconAnimationClassName,
 }: PageHeaderProps) {
   return (
     <div className={cn("flex items-start justify-between gap-4", className)}>
       <div className="flex min-w-0 items-center gap-3">
         <div
           className={cn(
-            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-full",
             iconContainerClassName ??
               "border border-primary/10 bg-primary/10",
           )}
         >
           <Icon
-            className={cn("h-6 w-6", iconClassName ?? "text-primary")}
+            className={cn(
+              "h-6 w-6 will-change-transform",
+              iconAnimationClassName,
+              iconClassName ?? "text-primary",
+            )}
             strokeWidth={2.25}
           />
         </div>

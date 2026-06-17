@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Adelanto from "@/pages/Adelanto";
+import MisAdelantos from "@/pages/MisAdelantos";
 import WalletPage from "@/pages/WalletPage";
 import Control from "@/pages/Control";
 import Asistente from "@/pages/Asistente";
@@ -36,6 +37,7 @@ export function AppRouter() {
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/adelanto" element={<Adelanto />} />
+            <Route path="/mis-adelantos" element={<MisAdelantos />} />
             <Route path="/wallet" element={<WalletPage />} />
             <Route path="/control" element={<Control />} />
             <Route path="/asistente" element={<Asistente />} />

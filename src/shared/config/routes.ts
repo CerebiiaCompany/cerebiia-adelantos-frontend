@@ -7,6 +7,7 @@ export const ROUTES = {
   employee: {
     dashboard: "/",
     adelanto: "/adelanto",
+    misAdelantos: "/mis-adelantos",
     wallet: "/wallet",
     control: "/control",
     asistente: "/asistente",

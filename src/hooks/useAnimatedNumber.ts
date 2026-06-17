@@ -5,6 +5,8 @@ export interface UseAnimatedNumberOptions {
   enabled?: boolean;
   decimals?: number;
   delay?: number;
+  /** Al cambiar, reinicia la animación desde 0 hasta el target. */
+  restartKey?: number;
 }
 
 function easeOutQuart(t: number): number {
@@ -18,6 +20,7 @@ export function useAnimatedNumber(
     enabled = true,
     decimals = 0,
     delay = 0,
+    restartKey,
   }: UseAnimatedNumberOptions = {},
 ) {
   const [displayValue, setDisplayValue] = useState(enabled ? 0 : target);
@@ -34,7 +37,8 @@ export function useAnimatedNumber(
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const startAnimation = () => {
-      const from = displayRef.current;
+      const from =
+        restartKey != null && restartKey > 0 ? 0 : displayRef.current;
       const start = performance.now();
 
       const tick = (now: number) => {
@@ -64,7 +68,7 @@ export function useAnimatedNumber(
       clearTimeout(timeoutId);
       cancelAnimationFrame(frameId);
     };
-  }, [target, duration, enabled, decimals, delay]);
+  }, [target, duration, enabled, decimals, delay, restartKey]);
 
   return displayValue;
 }

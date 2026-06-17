@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
+  History,
   LayoutDashboard,
   LineChart,
   Sparkles,
@@ -12,6 +13,7 @@ import {
 export type SidebarIconAnimation =
   | "dashboard"
   | "zap"
+  | "history"
   | "wallet"
   | "chart"
   | "sparkle"
@@ -35,6 +37,12 @@ export const SIDEBAR_MAIN_ITEMS: SidebarNavItemConfig[] = [
     end: true,
   },
   { title: "Adelanto", url: "/adelanto", icon: Zap, animation: "zap" },
+  {
+    title: "Mis adelantos",
+    url: "/mis-adelantos",
+    icon: History,
+    animation: "history",
+  },
   { title: "Wallet", url: "/wallet", icon: Wallet, animation: "wallet" },
   { title: "Control", url: "/control", icon: LineChart, animation: "chart" },
   {
