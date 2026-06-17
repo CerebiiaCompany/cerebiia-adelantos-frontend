@@ -26,6 +26,7 @@ export interface SidebarNavItemConfig {
   icon: LucideIcon;
   animation: SidebarIconAnimation;
   end?: boolean;
+  tooltip?: string;
 }
 
 export const SIDEBAR_MAIN_ITEMS: SidebarNavItemConfig[] = [
@@ -51,7 +52,7 @@ export const SIDEBAR_MAIN_ITEMS: SidebarNavItemConfig[] = [
     icon: Sparkles,
     animation: "sparkle",
   },
-  { title: "Logros", url: "/logros", icon: Trophy, animation: "trophy" },
+  { title: "Logros", url: "/logros", icon: Trophy, animation: "trophy", tooltip: "Nuevos retos y misiones semanales para impulsar tu progreso." },
   {
     title: "Notificaciones",
     url: "/notificaciones",

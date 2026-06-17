@@ -6,6 +6,7 @@ import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { PayrollCalendarDialog } from "@/features/dashboard/ui/PayrollCalendarDialog";
 import { PayrollCalendarFab } from "@/features/dashboard/ui/PayrollCalendarFab";
+import { RequestShortcutsBar } from "@/features/dashboard/ui/RequestShortcutsBar";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
 import {
@@ -95,6 +96,8 @@ export default function Dashboard() {
         iconContainerClassName={greeting.iconContainerClassName}
         iconClassName={greeting.iconClassName}
         iconAnimationClassName={greeting.iconAnimationClassName}
+        className="lg:items-center"
+        actions={<RequestShortcutsBar />}
       />
 
       <PayrollCalendarFab

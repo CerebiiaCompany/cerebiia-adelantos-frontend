@@ -57,7 +57,7 @@ export function PageHeader({
         </div>
       </div>
       {actions ? (
-        <div className="w-full sm:w-auto sm:shrink-0 sm:self-center">
+        <div className="w-full min-w-0 sm:w-auto sm:max-w-full sm:shrink-0 sm:self-center lg:shrink-0">
           {actions}
         </div>
       ) : null}

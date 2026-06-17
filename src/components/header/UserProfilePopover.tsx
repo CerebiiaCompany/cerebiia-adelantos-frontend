@@ -5,14 +5,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { UserProfilePanel } from "@/components/header/UserProfilePanel";
+import { UserProfileAccountPanel } from "@/components/header/profile/UserProfileAccountPanel";
 import { UserProfileSettingsPanel } from "@/components/header/profile/UserProfileSettingsPanel";
 import {
   HEADER_POPOVER_COLLISION_PADDING,
   headerPopoverContentClass,
 } from "@/components/header/headerPopoverStyles";
 import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import { cn } from "@/lib/utils";
 
-type ProfileView = "profile" | "settings";
+type ProfileView = "profile" | "account" | "settings";
 
 export function UserProfilePopover() {
   const [popoverOpen, setPopoverOpen] = useState(false);
@@ -43,10 +45,18 @@ export function UserProfilePopover() {
         side="bottom"
         sideOffset={10}
         collisionPadding={HEADER_POPOVER_COLLISION_PADDING}
-        className={headerPopoverContentClass(view === "settings")}
+        className={cn(
+          headerPopoverContentClass(view === "settings"),
+          "rounded-2xl border-slate-100 bg-white",
+        )}
       >
         {view === "profile" ? (
-          <UserProfilePanel onOpenSettings={() => setView("settings")} />
+          <UserProfilePanel
+            onOpenAccount={() => setView("account")}
+            onOpenSettings={() => setView("settings")}
+          />
+        ) : view === "account" ? (
+          <UserProfileAccountPanel onBack={() => setView("profile")} />
         ) : (
           <UserProfileSettingsPanel onBack={() => setView("profile")} />
         )}

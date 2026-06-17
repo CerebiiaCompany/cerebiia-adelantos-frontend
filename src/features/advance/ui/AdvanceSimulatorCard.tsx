@@ -1,17 +1,16 @@
 import { Calculator, Coins, Layers3 } from "lucide-react";
-import { Slider } from "@/components/ui/slider";
 import {
   AnimatedCurrency,
   AnimatedNumber,
 } from "@/components/ui/animated-number";
 import { cn } from "@/lib/utils";
+import { AdvanceAmountSelector } from "./AdvanceAmountSelector";
 import {
   AdvanceTimelineCenterLine,
   AdvanceTimelineShell,
 } from "./AdvanceTimelineParts";
 
 const COUNT_DURATION = 450;
-const PRESET_AMOUNTS = [500_000, 1_000_000, 1_500_000, 2_000_000] as const;
 const INSTALLMENT_OPTIONS = [1, 2, 3] as const;
 
 type AdvanceSimulatorCardProps = {
@@ -38,81 +37,15 @@ export function AdvanceSimulatorCard({
   installmentValue,
 }: AdvanceSimulatorCardProps) {
   const hasAmount = amount >= minAmount;
-  const amountProgress = maxAmount > 0 ? amount / maxAmount : 0;
 
   return (
     <AdvanceTimelineShell groupClass="group/advance-flow" glow>
       <div className="space-y-8">
-        <section className="space-y-4">
-          <h3 className="text-center font-display text-base font-semibold text-foreground">
-            Monto del adelanto
-          </h3>
-
-          <div className="flex flex-col items-center text-center">
-            <AnimatedCurrency
-              value={amount}
-              className="advance-amount-display font-display text-4xl font-bold text-gradient sm:text-5xl"
-              duration={COUNT_DURATION}
-            />
-            <p className="mt-2 text-xs text-muted-foreground">
-              Disponible:{" "}
-              <AnimatedCurrency
-                value={maxAmount}
-                className="inline font-medium text-foreground"
-                duration={800}
-              />
-            </p>
-          </div>
-
-          <div className="px-1">
-            <div className="relative">
-              <div
-                className="pointer-events-none absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-primary/10"
-                aria-hidden
-              />
-              <div
-                className="advance-flow-slider-progress pointer-events-none absolute left-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-gradient-to-r from-primary via-accent to-primary transition-all duration-500 ease-out"
-                style={{ width: `${amountProgress * 100}%` }}
-                aria-hidden
-              />
-              <Slider
-                value={[amount]}
-                onValueChange={(value) => onAmountChange(value[0])}
-                min={0}
-                max={maxAmount}
-                step={50_000}
-                className="advance-flow-slider relative z-10 cursor-pointer"
-              />
-            </div>
-            <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>$0</span>
-              <AnimatedCurrency
-                value={maxAmount}
-                className="inline"
-                duration={COUNT_DURATION}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {PRESET_AMOUNTS.map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => onAmountChange(preset)}
-                className={cn(
-                  "rounded-xl px-2 py-2.5 text-xs font-medium transition-all duration-300 sm:px-3 sm:text-sm",
-                  "hover:scale-[1.02] hover:shadow-md active:scale-[0.98]",
-                  amount === preset
-                    ? "bg-gradient-primary text-primary-foreground shadow-sm shadow-primary/20"
-                    : "border border-primary/10 bg-background/80 text-foreground hover:border-primary/25 hover:bg-primary/5",
-                )}
-              >
-                <AnimatedCurrency value={preset} duration={COUNT_DURATION} />
-              </button>
-            ))}
-          </div>
-        </section>
+        <AdvanceAmountSelector
+          amount={amount}
+          onAmountChange={onAmountChange}
+          maxAmount={maxAmount}
+        />
 
         <div className="border-t border-border/60" aria-hidden />
 

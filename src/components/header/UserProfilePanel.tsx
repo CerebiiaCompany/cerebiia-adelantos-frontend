@@ -1,38 +1,34 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  Building2,
-  ChevronRight,
-  Mail,
-  Phone,
-  Shield,
-  User,
-} from "lucide-react";
+import { ChevronRight, Shield } from "lucide-react";
 import { DEMO_EMPLOYEE_PROFILE, PROFILE_MENU_ITEMS } from "@/shared/config/demoEmployeeProfile";
 import { ProfileLogoutButton } from "@/components/header/profile/ProfileLogoutButton";
 
 interface UserProfilePanelProps {
+  onOpenAccount?: () => void;
   onOpenSettings?: () => void;
 }
 
-export function UserProfilePanel({ onOpenSettings }: UserProfilePanelProps) {
+export function UserProfilePanel({
+  onOpenAccount,
+  onOpenSettings,
+}: UserProfilePanelProps) {
   const profile = DEMO_EMPLOYEE_PROFILE;
 
   return (
     <div className="min-w-0 overflow-hidden">
-      <div className="border-b border-border/60 bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] p-3 sm:p-4">
+      <div className="border-b border-slate-100 bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-primary shadow-sm shadow-primary/20 ring-2 ring-primary/15">
             <span className="font-display text-base font-bold text-primary-foreground">
               {profile.initials}
             </span>
           </div>
-          <div className="min-w-0">
-            <p className="truncate font-display text-base font-bold text-foreground">
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-display text-base font-bold text-slate-900">
               {profile.fullName}
             </p>
-            <p className="text-xs text-muted-foreground">{profile.roleLabel}</p>
+            <p className="text-xs text-slate-500">{profile.roleLabel}</p>
             <div className="mt-1 flex items-center gap-1">
-              <Shield className="h-3 w-3 text-primary" />
+              <Shield className="h-3 w-3 text-primary" aria-hidden />
               <span className="text-xs font-medium text-primary">
                 Cuenta verificada
               </span>
@@ -41,36 +37,11 @@ export function UserProfilePanel({ onOpenSettings }: UserProfilePanelProps) {
         </div>
       </div>
 
-      <div className="divide-y divide-border/60">
-        <ProfileRow icon={Mail} label="Correo" value={profile.email} />
-        <ProfileRow icon={Phone} label="Teléfono" value={profile.phone} />
-        <ProfileRow icon={Building2} label="Empresa" value={profile.company} />
-        <ProfileRow
-          icon={User}
-          label="Número de empleado"
-          value={profile.employeeNumber}
-        />
-      </div>
-
-      <div className="divide-y divide-border/60 border-t border-border/60">
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          className="flex w-full min-w-0 items-center justify-between px-3 py-3 text-left text-sm text-foreground transition-colors hover:bg-secondary/50 sm:px-4"
-        >
-          <span>Configuración</span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </button>
-
+      <div className="divide-y divide-slate-100 border-b border-slate-100">
+        <ProfileMenuItem label="Ver mi cuenta" onClick={onOpenAccount} />
+        <ProfileMenuItem label="Configuración" onClick={onOpenSettings} />
         {PROFILE_MENU_ITEMS.map((item) => (
-          <button
-            key={item}
-            type="button"
-            className="flex w-full min-w-0 items-center justify-between px-3 py-3 text-left text-sm text-foreground transition-colors hover:bg-secondary/50 sm:px-4"
-          >
-            <span>{item}</span>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
+          <ProfileMenuItem key={item} label={item} />
         ))}
       </div>
 
@@ -79,22 +50,21 @@ export function UserProfilePanel({ onOpenSettings }: UserProfilePanelProps) {
   );
 }
 
-function ProfileRow({
-  icon: Icon,
+function ProfileMenuItem({
   label,
-  value,
+  onClick,
 }: {
-  icon: LucideIcon;
   label: string;
-  value: string;
+  onClick?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 px-3 py-3 sm:px-4">
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="truncate text-sm font-medium text-foreground">{value}</p>
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full min-w-0 items-center justify-between px-4 py-3 text-left text-sm text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+    >
+      <span>{label}</span>
+      <ChevronRight className="h-4 w-4 text-slate-400" aria-hidden />
+    </button>
   );
 }
