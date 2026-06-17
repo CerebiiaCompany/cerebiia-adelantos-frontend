@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { addMonths, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
-import { Ban, ChevronLeft, ChevronRight, CircleDollarSign } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleCheck, CircleX } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
+  getAdvanceAvailabilityInfo,
   getCalendarDayStart,
   getNextPaymentDate,
   isAdvanceAvailableDay,
@@ -50,6 +51,11 @@ export function PayrollCalendarDialog({
     day: "numeric",
     month: "long",
   });
+
+  const advanceAvailability = useMemo(
+    () => getAdvanceAvailabilityInfo(today),
+    [today],
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,20 +213,55 @@ export function PayrollCalendarDialog({
               }
               label="Sin adelanto"
             />
-            <LegendItem
-              icon={<CircleDollarSign className="h-4 w-4 text-primary" />}
-              label="1.ª quincena: hasta el día 10"
-            />
-            <LegendItem
-              icon={<Ban className="h-3.5 w-3.5 text-foreground/55" />}
-              label="2.ª quincena: del 15 al 20"
-              muted
-              className="sm:col-span-2"
-            />
           </div>
+
+          <AdvanceAvailabilityNotice info={advanceAvailability} />
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AdvanceAvailabilityNotice({
+  info,
+}: {
+  info: ReturnType<typeof getAdvanceAvailabilityInfo>;
+}) {
+  const Icon = info.canRequestAdvance ? CircleCheck : CircleX;
+
+  return (
+    <div
+      className={cn(
+        "mt-3 flex items-start gap-2.5 rounded-lg border px-3 py-2.5",
+        info.canRequestAdvance
+          ? "border-primary/20 bg-primary/5"
+          : "border-destructive/20 bg-red-50/70",
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      <Icon
+        className={cn(
+          "mt-0.5 h-4 w-4 shrink-0",
+          info.canRequestAdvance ? "text-primary" : "text-destructive",
+        )}
+        strokeWidth={2.25}
+        aria-hidden
+      />
+      <div className="min-w-0 space-y-0.5">
+        <p
+          className={cn(
+            "text-xs font-semibold leading-snug",
+            info.canRequestAdvance ? "text-primary" : "text-destructive",
+          )}
+        >
+          {info.headline}
+        </p>
+        <p className="text-[11px] leading-snug text-foreground/75">
+          {info.detail}
+        </p>
+      </div>
+    </div>
   );
 }
 

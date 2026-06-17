@@ -89,3 +89,78 @@ export function getDaysUntilPayment(from: Date = new Date()): number {
   const diffMs = startOfDay(next).getTime() - start.getTime();
   return Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
 }
+
+export function canRequestAdvanceOnDate(date: Date): boolean {
+  return isAdvanceAvailableDay(date);
+}
+
+export function getNextAdvanceAvailableDate(from: Date = new Date()): Date {
+  const start = startOfDay(from);
+
+  for (let offset = 0; offset < 62; offset += 1) {
+    const candidate = new Date(start);
+    candidate.setDate(start.getDate() + offset);
+
+    if (isAdvanceAvailableDay(candidate)) {
+      return candidate;
+    }
+  }
+
+  return start;
+}
+
+export type AdvanceAvailabilityInfo = {
+  canRequestAdvance: boolean;
+  headline: string;
+  detail: string;
+};
+
+export function getAdvanceAvailabilityInfo(
+  date: Date = new Date(),
+): AdvanceAvailabilityInfo {
+  const dayStart = startOfDay(date);
+
+  if (canRequestAdvanceOnDate(dayStart)) {
+    const quincenaLabel = isFirstQuincenaAdvanceDay(dayStart.getDate())
+      ? "1.ª quincena"
+      : "2.ª quincena";
+
+    return {
+      canRequestAdvance: true,
+      headline: "Hoy puedes solicitar adelanto",
+      detail: isPaymentDay(dayStart)
+        ? "Es día de pago de nómina y la ventana de adelanto está abierta."
+        : `La ventana de la ${quincenaLabel} está activa.`,
+    };
+  }
+
+  const nextDate = getNextAdvanceAvailableDate(dayStart);
+  const daysUntil = Math.max(
+    0,
+    Math.round(
+      (startOfDay(nextDate).getTime() - dayStart.getTime()) /
+        (1000 * 60 * 60 * 24),
+    ),
+  );
+
+  const nextDateLabel = nextDate.toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  let detail: string;
+  if (daysUntil <= 0) {
+    detail = "La ventana de adelanto se abre hoy.";
+  } else if (daysUntil === 1) {
+    detail = "La próxima ventana abre mañana.";
+  } else {
+    detail = `La próxima ventana abre el ${nextDateLabel} (en ${daysUntil} días).`;
+  }
+
+  return {
+    canRequestAdvance: false,
+    headline: "Hoy no puedes solicitar adelanto",
+    detail,
+  };
+}

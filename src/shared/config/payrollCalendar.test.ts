@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  getAdvanceAvailabilityInfo,
   getDaysUntilPayment,
+  getNextAdvanceAvailableDate,
   getNextPaymentDate,
   getPayrollDayType,
   isAdvanceAvailableDay,
@@ -51,5 +53,29 @@ describe("payrollCalendar", () => {
     expect(isTodayCalendarDay(new Date(2026, 5, 13, 23, 59, 59), reference)).toBe(
       true,
     );
+  });
+
+  it("informa si hoy se puede solicitar adelanto", () => {
+    expect(getAdvanceAvailabilityInfo(new Date(2026, 5, 8)).canRequestAdvance).toBe(
+      true,
+    );
+    expect(getAdvanceAvailabilityInfo(new Date(2026, 5, 8)).headline).toContain(
+      "puedes solicitar",
+    );
+
+    const blocked = getAdvanceAvailabilityInfo(new Date(2026, 5, 12));
+    expect(blocked.canRequestAdvance).toBe(false);
+    expect(blocked.headline).toContain("no puedes solicitar");
+    expect(blocked.detail).toContain("próxima ventana");
+
+    const availableSecondWindow = getAdvanceAvailabilityInfo(new Date(2026, 5, 16));
+    expect(availableSecondWindow.canRequestAdvance).toBe(true);
+    expect(availableSecondWindow.detail).toContain("2.ª quincena");
+  });
+
+  it("calcula la próxima fecha con adelanto disponible", () => {
+    expect(getNextAdvanceAvailableDate(new Date(2026, 5, 12)).getDate()).toBe(15);
+    expect(getNextAdvanceAvailableDate(new Date(2026, 5, 25)).getMonth()).toBe(6);
+    expect(getNextAdvanceAvailableDate(new Date(2026, 5, 25)).getDate()).toBe(1);
   });
 });
