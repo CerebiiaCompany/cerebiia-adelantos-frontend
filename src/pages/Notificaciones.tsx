@@ -30,7 +30,7 @@ export default function Notificaciones() {
             type="button"
             onClick={handleMarkAllAsRead}
             disabled={unreadCount === 0}
-            className="text-xs font-medium text-primary hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline"
+            className="inline-flex w-full items-center justify-center rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground sm:w-auto sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:text-xs sm:hover:bg-transparent sm:hover:underline disabled:sm:no-underline"
           >
             Marcar todo como leído
           </button>

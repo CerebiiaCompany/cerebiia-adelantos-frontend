@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
+  useSidebarLayout,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,26 +22,36 @@ import { SidebarLogoutButton } from "@/components/sidebar/SidebarLogoutButton";
 import { SIDEBAR_MAIN_ITEMS } from "@/components/sidebar/sidebarNavConfig";
 
 export function AppSidebar() {
-  const { state, isMobile, setOpenMobile } = useSidebar();
-  const collapsed = !isMobile && state === "collapsed";
+  return (
+    <Sidebar collapsible="icon" className="app-sidebar border-r-0">
+      <AppSidebarContent />
+    </Sidebar>
+  );
+}
+
+function AppSidebarContent() {
+  const { state, setOpenMobile } = useSidebar();
+  const layout = useSidebarLayout();
+  const isDrawer = layout === "drawer";
+  const collapsed = layout === "panel" && state === "collapsed";
   const location = useLocation();
 
   return (
-    <Sidebar collapsible="icon" className="app-sidebar border-r-0">
-      <SidebarRail />
+    <>
+      {layout === "panel" && <SidebarRail />}
       <SidebarHeader className="shrink-0 px-3 pb-0 pt-4">
         <div
           className={cn(
             "flex items-center",
-            collapsed && !isMobile ? "justify-center px-0" : "gap-3 px-1.5",
-            isMobile && "justify-between",
+            collapsed ? "justify-center px-0" : "gap-3 px-1.5",
+            isDrawer && "justify-between",
           )}
         >
           <div className="flex min-w-0 items-center gap-3">
             <div className="app-sidebar-brand-mark">
               <span>A</span>
             </div>
-            {(!collapsed || isMobile) && (
+            {(!collapsed || isDrawer) && (
               <div className="min-w-0 animate-fade-in">
                 <p className="app-sidebar-brand-title text-gradient">
                   AdeCerebiia
@@ -51,7 +62,7 @@ export function AppSidebar() {
               </div>
             )}
           </div>
-          {isMobile && (
+          {isDrawer && (
             <Button
               type="button"
               variant="ghost"
@@ -121,7 +132,7 @@ export function AppSidebar() {
           <SidebarLogoutButton collapsed={collapsed} />
         </SidebarMenu>
       </SidebarFooter>
-    </Sidebar>
+    </>
   );
 }
 
