@@ -1,4 +1,5 @@
 export { AuthProvider, useAuth } from "./model/AuthProvider";
+export { useAuthAccess } from "./model/useAuthAccess";
 export { LoginForm } from "./ui/LoginForm";
 export { RegisterForm } from "./ui/RegisterForm";
 export { useLogin } from "./model/useLogin";
@@ -6,6 +7,7 @@ export { useVerifyDocument } from "./model/useVerifyDocument";
 export { useCompanies } from "./model/useCompanies";
 export { useRegisterUser } from "./model/useRegisterUser";
 export { useLogout } from "./model/useLogout";
+export { useProfileView } from "./model/useProfileView";
 export {
   useChangePassword,
   syncRememberedCredentialsAfterPasswordReset,

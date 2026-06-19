@@ -16,6 +16,7 @@ export const ROUTES = {
   },
   employer: {
     panel: "/empleador/panel",
+    misEmpleados: "/empleador/mis-empleados",
   },
   admin: {
     panel: "/admin/panel",

@@ -2,7 +2,7 @@ import { useMemo, useRef, type ReactNode } from "react";
 import { Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
-import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import { useProfileView } from "@/features/auth";
 import {
   calculateAdvanceTransactionFee,
   formatAdvanceTransactionFeeRate,
@@ -60,7 +60,7 @@ export function AdvanceReceipt({
   className,
 }: AdvanceReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
-  const profile = DEMO_EMPLOYEE_PROFILE;
+  const profile = useProfileView();
 
   const issuedAt = useMemo(
     () => issuedAtProp ?? new Date(),
@@ -100,6 +100,11 @@ export function AdvanceReceipt({
       ? "Pendiente de aprobación"
       : formatDisbursementDate(disbursementAt);
 
+  if (!profile) return null;
+
+  const companyLabel = profile.company ?? "Empresa vinculada";
+  const departmentLabel = "—";
+
   return (
     <div className={cn("mx-auto w-full max-w-xl animate-fade-in", className)}>
       <div
@@ -116,7 +121,7 @@ export function AdvanceReceipt({
               </div>
               <div className="min-w-0">
                 <p className="font-display text-base font-bold leading-tight sm:text-lg">
-                  {profile.company}
+                  {companyLabel}
                 </p>
                 <p className="text-[11px] text-primary-foreground/80">
                   Plataforma de adelantos de nómina · AdeCerebiia
@@ -162,9 +167,16 @@ export function AdvanceReceipt({
             </PartyBlock>
             <PartyBlock title="Beneficiario">
               <PartyLine label="Nombre" value={profile.fullName} />
-              <PartyLine label="Identificación" value={profile.documentNumber} />
-              <PartyLine label="Departamento" value={profile.department} />
-              <PartyLine label="No. empleado" value={profile.employeeNumber} mono />
+              <PartyLine
+                label="Identificación"
+                value={profile.documentNumber ?? "—"}
+              />
+              <PartyLine label="Departamento" value={departmentLabel} />
+              <PartyLine
+                label="No. empleado"
+                value={profile.employeeNumber ?? "—"}
+                mono
+              />
             </PartyBlock>
           </div>
 

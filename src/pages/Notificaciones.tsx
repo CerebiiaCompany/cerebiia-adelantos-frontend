@@ -37,17 +37,28 @@ export default function Notificaciones() {
         }
       />
       <div className="space-y-2">
-        {notifications.map((notification) => (
-          <NotificationItem
-            key={notification.id}
-            notification={notification}
-            onClick={
-              !notification.read
-                ? () => markAsRead(notification.id)
-                : undefined
-            }
-          />
-        ))}
+        {notifications.length === 0 ? (
+          <div className="glass-card glow-border rounded-xl px-4 py-10 text-center">
+            <Bell className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+            <p className="font-medium text-foreground">Sin notificaciones</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cuando tengas novedades sobre tus adelantos o nómina, aparecerán
+              aquí.
+            </p>
+          </div>
+        ) : (
+          notifications.map((notification) => (
+            <NotificationItem
+              key={notification.id}
+              notification={notification}
+              onClick={
+                !notification.read
+                  ? () => markAsRead(notification.id)
+                  : undefined
+              }
+            />
+          ))
+        )}
       </div>
     </div>
   );

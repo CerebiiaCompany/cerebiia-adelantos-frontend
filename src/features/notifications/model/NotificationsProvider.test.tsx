@@ -32,17 +32,15 @@ describe("NotificationsProvider", () => {
     });
   });
 
-  it("inicia con las notificaciones demo no leídas", () => {
+  it("inicia sin notificaciones para cuentas nuevas", () => {
     const { result } = renderNotificationsHook();
 
-    expect(result.current.unreadCount).toBe(2);
-    expect(result.current.unreadNotifications.map((item) => item.id)).toEqual([
-      "advance-processed",
-      "next-payroll",
-    ]);
+    expect(result.current.notifications).toEqual([]);
+    expect(result.current.unreadCount).toBe(0);
+    expect(result.current.unreadNotifications).toEqual([]);
   });
 
-  it("marca todas las notificaciones como leídas", () => {
+  it("markAllAsRead no falla cuando no hay notificaciones", () => {
     const { result } = renderNotificationsHook();
 
     act(() => {
@@ -50,23 +48,19 @@ describe("NotificationsProvider", () => {
     });
 
     expect(result.current.unreadCount).toBe(0);
-    expect(result.current.notifications.every((item) => item.read)).toBe(true);
-    expect(localStorage.getItem("cerebiia:read-notification-ids")).toContain(
-      "advance-processed",
-    );
+    expect(result.current.notifications).toEqual([]);
   });
 
-  it("marca una notificación individual como leída", () => {
+  it("persiste ids leídos aunque aún no haya notificaciones", () => {
     const { result } = renderNotificationsHook();
 
     act(() => {
-      result.current.markAsRead("advance-processed");
+      result.current.markAsRead("future-notification");
     });
 
-    expect(result.current.unreadCount).toBe(1);
-    expect(
-      result.current.notifications.find((item) => item.id === "advance-processed")
-        ?.read,
-    ).toBe(true);
+    expect(result.current.unreadCount).toBe(0);
+    expect(localStorage.getItem("cerebiia:read-notification-ids")).toContain(
+      "future-notification",
+    );
   });
 });

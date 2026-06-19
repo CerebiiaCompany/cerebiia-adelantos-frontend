@@ -39,29 +39,15 @@ const allies = [
   },
 ];
 
-const movements = [
-  { type: "in", desc: "Nómina abril", amount: 4800000, date: "1 Abr 2026" },
-  {
-    type: "out",
-    desc: "Plan de Salud Premium",
-    amount: -350000,
-    date: "5 Abr 2026",
-  },
-  {
-    type: "out",
-    desc: "Restaurante El Cielo",
-    amount: -85000,
-    date: "3 Abr 2026",
-  },
-  { type: "in", desc: "Nómina marzo", amount: 4500000, date: "1 Mar 2026" },
-  { type: "out", desc: "Adelanto parcial", amount: -300000, date: "28 Mar 2026" },
-  { type: "in", desc: "Bono productividad", amount: 600000, date: "15 Mar 2026" },
-];
-
-const BALANCE = 4100000;
-
 export default function WalletPage() {
   const [showBalance, setShowBalance] = useState(true);
+  const balance = 0;
+  const movements: Array<{
+    type: "in" | "out";
+    desc: string;
+    amount: number;
+    date: string;
+  }> = [];
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
@@ -90,7 +76,7 @@ export default function WalletPage() {
           </div>
           <p className="mb-4 font-display text-4xl font-bold text-gradient">
             {showBalance ? (
-              <AnimatedCurrency value={BALANCE} duration={900} />
+              <AnimatedCurrency value={balance} duration={900} />
             ) : (
               "••••••"
             )}
@@ -137,44 +123,50 @@ export default function WalletPage() {
         <h3 className="mb-4 font-display font-semibold text-foreground">
           Movimientos
         </h3>
-        <div className="space-y-1">
-          {movements.map((m, i) => (
-            <div
-              key={m.desc + m.date}
-              className="group/wallet-movement flex items-center gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-secondary/30 last:border-0"
-            >
-              <span
-                className={cn(
-                  "inline-flex shrink-0 items-center justify-center",
-                  m.type === "in"
-                    ? "text-primary activity-icon-motion-ingreso"
-                    : "text-[hsl(260_70%_50%)] activity-icon-motion-adelanto",
-                )}
+        {movements.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border/80 px-4 py-8 text-center text-sm text-muted-foreground">
+            Aún no tienes movimientos en tu wallet.
+          </p>
+        ) : (
+          <div className="space-y-1">
+            {movements.map((m, i) => (
+              <div
+                key={m.desc + m.date}
+                className="group/wallet-movement flex items-center gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-secondary/30 last:border-0"
               >
-                {m.type === "in" ? (
-                  <ArrowUpRight className="h-5 w-5" strokeWidth={2.25} />
-                ) : (
-                  <ArrowDownRight className="h-5 w-5" strokeWidth={2.25} />
-                )}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {m.desc}
-                </p>
-                <p className="text-xs text-muted-foreground">{m.date}</p>
+                <span
+                  className={cn(
+                    "inline-flex shrink-0 items-center justify-center",
+                    m.type === "in"
+                      ? "text-primary activity-icon-motion-ingreso"
+                      : "text-[hsl(260_70%_50%)] activity-icon-motion-adelanto",
+                  )}
+                >
+                  {m.type === "in" ? (
+                    <ArrowUpRight className="h-5 w-5" strokeWidth={2.25} />
+                  ) : (
+                    <ArrowDownRight className="h-5 w-5" strokeWidth={2.25} />
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {m.desc}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{m.date}</p>
+                </div>
+                <AnimatedCurrency
+                  value={Math.abs(m.amount)}
+                  sign={m.amount > 0 ? "+" : "-"}
+                  className={`text-sm font-semibold ${
+                    m.amount > 0 ? "text-primary" : "text-foreground"
+                  }`}
+                  duration={650}
+                  delay={i * 90 + 80}
+                />
               </div>
-              <AnimatedCurrency
-                value={Math.abs(m.amount)}
-                sign={m.amount > 0 ? "+" : "-"}
-                className={`text-sm font-semibold ${
-                  m.amount > 0 ? "text-primary" : "text-foreground"
-                }`}
-                duration={650}
-                delay={i * 90 + 80}
-              />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

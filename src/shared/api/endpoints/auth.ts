@@ -1,31 +1,36 @@
 // ⚠️ AGNOSTIC — no react-router-dom, no react-dom, no UI imports
 import { http } from "../client";
 import type {
-  LoginRequest,
-  AuthResponse,
-  ForgotPasswordRequest,
-  ForgotPasswordResponse,
+  AuthUser,
   ChangePasswordRequest,
   ChangePasswordResponse,
-  ResetPasswordRequest,
-  VerifyDocumentRequest,
-  VerifyDocumentResponse,
+  ForgotPasswordRequest,
+  ForgotPasswordResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
   RegisterUserRequest,
   RegisterUserResponse,
+  ResetPasswordRequest,
+  SystemUserLoginRequest,
+  SystemUserLoginResponse,
+  VerifyDocumentRequest,
+  VerifyDocumentResponse,
 } from "../types";
 
 export const authEndpoints = {
-  login: (data: LoginRequest) => http.post<AuthResponse>("/auth/login", data),
-  logout: () => http.post<void>("/auth/logout", {}),
-  me: () => http.get<AuthResponse>("/auth/me"),
+  login: (data: SystemUserLoginRequest) =>
+    http.post<SystemUserLoginResponse>("/auth/login/", data),
+  refresh: (data: RefreshTokenRequest) =>
+    http.post<RefreshTokenResponse>("/auth/refresh/", data),
+  me: () => http.get<AuthUser>("/auth/me/"),
   forgotPassword: (data: ForgotPasswordRequest) =>
-    http.post<ForgotPasswordResponse>("/auth/password/forgot", data),
+    http.post<ForgotPasswordResponse>("/auth/password/forgot/", data),
   changePassword: (data: ChangePasswordRequest) =>
-    http.post<ChangePasswordResponse>("/auth/password/change", data),
+    http.post<ChangePasswordResponse>("/auth/password/change/", data),
   resetPassword: (data: ResetPasswordRequest) =>
-    http.post<void>("/auth/password/reset", data),
+    http.post<void>("/auth/password/reset/", data),
   verifyDocument: (data: VerifyDocumentRequest) =>
-    http.post<VerifyDocumentResponse>("/auth/register/verify", data),
+    http.post<VerifyDocumentResponse>("/auth/register/verify/", data),
   register: (data: RegisterUserRequest) =>
-    http.post<RegisterUserResponse>("/auth/register", data),
+    http.post<RegisterUserResponse>("/auth/register/", data),
 };

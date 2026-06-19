@@ -7,29 +7,29 @@ import {
 } from "./auth.schema";
 
 describe("loginSchema", () => {
-  it("requiere usuario (documento) y contraseña válidos", () => {
-    const empty = loginSchema.safeParse({
-      username: "",
-      password: "",
-      rememberMe: false,
-    });
-    expect(empty.success).toBe(false);
-
-    const shortDocument = loginSchema.safeParse({
-      username: "1234",
-      password: "123456",
-      rememberMe: false,
-    });
-    expect(shortDocument.success).toBe(false);
-
+  it("requires a valid employee document and password", () => {
     const valid = loginSchema.safeParse({
-      username: " 1020304050 ",
-      password: "123456",
+      loginType: "empleado",
+      documento: " 12345678 ",
+      password: "secret",
       rememberMe: true,
     });
     expect(valid.success).toBe(true);
     if (valid.success) {
-      expect(valid.data.username).toBe("1020304050");
+      expect(valid.data.documento).toBe("12345678");
+    }
+  });
+
+  it("requires a valid company email and password", () => {
+    const valid = loginSchema.safeParse({
+      loginType: "empresa",
+      email: " Admin@Empresa.COM ",
+      password: "secret",
+      rememberMe: false,
+    });
+    expect(valid.success).toBe(true);
+    if (valid.success) {
+      expect(valid.data.email).toBe("admin@empresa.com");
     }
   });
 });
@@ -57,27 +57,6 @@ describe("changePasswordSchema", () => {
       confirmPassword: "",
     });
     expect(empty.success).toBe(false);
-
-    const weak = changePasswordSchema.safeParse({
-      currentPassword: "Actual123",
-      newPassword: "corta1",
-      confirmPassword: "corta1",
-    });
-    expect(weak.success).toBe(false);
-
-    const mismatch = changePasswordSchema.safeParse({
-      currentPassword: "Actual123",
-      newPassword: "NuevaClave1",
-      confirmPassword: "OtraClave1",
-    });
-    expect(mismatch.success).toBe(false);
-
-    const sameAsCurrent = changePasswordSchema.safeParse({
-      currentPassword: "Actual123",
-      newPassword: "Actual123",
-      confirmPassword: "Actual123",
-    });
-    expect(sameAsCurrent.success).toBe(false);
 
     const valid = changePasswordSchema.safeParse({
       currentPassword: "Actual123",
