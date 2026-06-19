@@ -1,5 +1,5 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { AppLayout } from "@/components/AppLayout";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";import { AppLayout } from "@/components/AppLayout";
+import { EmployerLayout } from "@/components/EmployerLayout";
 import Dashboard from "@/pages/Dashboard";
 import Adelanto from "@/pages/Adelanto";
 import MisAdelantos from "@/pages/MisAdelantos";
@@ -8,6 +8,8 @@ import Control from "@/pages/Control";
 import Asistente from "@/pages/Asistente";
 import Logros from "@/pages/Logros";
 import Notificaciones from "@/pages/Notificaciones";
+import EmployerPanelPage from "@/pages/employer/EmployerPanelPage";
+import EmployerMisEmpleadosPage from "@/pages/employer/EmployerMisEmpleadosPage";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
@@ -15,36 +17,118 @@ import RegisterValidationPendingPage from "@/pages/public/RegisterValidationPend
 import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage";
 import { AuthGuard } from "@/app/router/guards/AuthGuard";
 import { GuestGuard } from "@/app/router/guards/GuestGuard";
+import { ModuleGuard } from "@/app/router/guards/ModuleGuard";
+import { RoleGuard } from "@/app/router/guards/RoleGuard";
+import { ROUTES } from "@/shared/config/routes";
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<GuestGuard />}>
-          <Route path="/login" element={<LoginPage />} />
+          <Route path={ROUTES.login} element={<LoginPage />} />
           <Route
-            path="/recuperar-contrasena"
+            path={ROUTES.forgotPassword}
             element={<ForgotPasswordPage />}
           />
-          <Route path="/registro" element={<RegisterPage />} />
+          <Route path={ROUTES.register} element={<RegisterPage />} />
           <Route
-            path="/registro/validacion"
+            path={ROUTES.registerValidation}
             element={<RegisterValidationPendingPage />}
           />
         </Route>
 
         <Route element={<AuthGuard />}>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/adelanto" element={<Adelanto />} />
-            <Route path="/mis-adelantos" element={<MisAdelantos />} />
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="/control" element={<Control />} />
-            <Route path="/asistente" element={<Asistente />} />
-            <Route path="/logros" element={<Logros />} />
-            <Route path="/notificaciones" element={<Notificaciones />} />
+          <Route element={<RoleGuard allowed={["employee"]} />}>
+            <Route element={<AppLayout />}>
+              <Route
+                path={ROUTES.employee.dashboard}
+                element={
+                  <ModuleGuard moduleId="employee.dashboard">
+                    <Dashboard />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.adelanto}
+                element={
+                  <ModuleGuard moduleId="employee.adelanto">
+                    <Adelanto />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.misAdelantos}
+                element={
+                  <ModuleGuard moduleId="employee.misAdelantos">
+                    <MisAdelantos />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.wallet}
+                element={
+                  <ModuleGuard moduleId="employee.wallet">
+                    <WalletPage />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.control}
+                element={
+                  <ModuleGuard moduleId="employee.control">
+                    <Control />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.asistente}
+                element={
+                  <ModuleGuard moduleId="employee.asistente">
+                    <Asistente />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.logros}
+                element={
+                  <ModuleGuard moduleId="employee.logros">
+                    <Logros />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.notificaciones}
+                element={
+                  <ModuleGuard moduleId="employee.notificaciones">
+                    <Notificaciones />
+                  </ModuleGuard>
+                }
+              />
+            </Route>
           </Route>
-        </Route>
+
+          <Route element={<RoleGuard allowed={["employer"]} />}>
+            <Route path="/empleador" element={<EmployerLayout />}>
+              <Route index element={<Navigate to="panel" replace />} />
+              <Route
+                path="panel"
+                element={
+                  <ModuleGuard moduleId="employer.dashboard">
+                    <EmployerPanelPage />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path="mis-empleados"
+                element={
+                  <ModuleGuard moduleId="employer.misEmpleados">
+                    <EmployerMisEmpleadosPage />
+                  </ModuleGuard>
+                }
+              />
+            </Route>
+          </Route>        </Route>
 
         <Route path="*" element={<NotFound />} />
       </Routes>

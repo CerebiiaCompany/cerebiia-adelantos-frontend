@@ -1,8 +1,17 @@
 const CREDENTIALS_STORAGE_KEY = "cerebiia_remember_credentials";
 const CRYPTO_KEY_STORAGE = "cerebiia_remember_crypto_key";
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 
-interface StoredRememberedCredentials {
+export type RememberedLoginType = "empleado" | "empresa";
+
+interface StoredRememberedCredentialsV3 {
+  v: number;
+  loginType: RememberedLoginType;
+  identifier: string;
+  passwordCipher: string;
+}
+
+interface StoredRememberedCredentialsLegacy {
   v: number;
   username: string;
   passwordCipher: string;
@@ -79,12 +88,17 @@ async function decryptText(payload: string): Promise<string> {
 }
 
 export interface RememberedCredentials {
-  username: string;
+  loginType: RememberedLoginType;
+  identifier: string;
   password: string;
 }
 
-function normalizeUsername(username: string): string {
-  return username.trim();
+function normalizeIdentifier(
+  loginType: RememberedLoginType,
+  identifier: string,
+): string {
+  const trimmed = identifier.trim();
+  return loginType === "empresa" ? trimmed.toLowerCase() : trimmed;
 }
 
 export const rememberedCredentialsStorage = {
@@ -93,14 +107,19 @@ export const rememberedCredentialsStorage = {
     return Boolean(window.localStorage.getItem(CREDENTIALS_STORAGE_KEY));
   },
 
-  async save(username: string, password: string): Promise<void> {
+  async save(
+    loginType: RememberedLoginType,
+    identifier: string,
+    password: string,
+  ): Promise<void> {
     if (!isBrowser()) return;
 
-    const normalizedUsername = normalizeUsername(username);
+    const normalizedIdentifier = normalizeIdentifier(loginType, identifier);
     const passwordCipher = await encryptText(password);
-    const payload: StoredRememberedCredentials = {
+    const payload: StoredRememberedCredentialsV3 = {
       v: STORAGE_VERSION,
-      username: normalizedUsername,
+      loginType,
+      identifier: normalizedIdentifier,
       passwordCipher,
     };
 
@@ -117,20 +136,30 @@ export const rememberedCredentialsStorage = {
     if (!raw) return null;
 
     try {
-      const parsed = JSON.parse(raw) as StoredRememberedCredentials;
-      if (
-        parsed.v !== STORAGE_VERSION ||
-        !parsed.username ||
-        !parsed.passwordCipher
-      ) {
-        return null;
+      const parsed = JSON.parse(raw) as
+        | StoredRememberedCredentialsV3
+        | StoredRememberedCredentialsLegacy;
+
+      if (parsed.v === STORAGE_VERSION && "loginType" in parsed) {
+        if (!parsed.identifier || !parsed.passwordCipher) return null;
+        const password = await decryptText(parsed.passwordCipher);
+        return {
+          loginType: parsed.loginType,
+          identifier: parsed.identifier,
+          password,
+        };
       }
 
-      const password = await decryptText(parsed.passwordCipher);
-      return {
-        username: parsed.username,
-        password,
-      };
+      if (parsed.v === 2 && "username" in parsed && parsed.username && parsed.passwordCipher) {
+        const password = await decryptText(parsed.passwordCipher);
+        return {
+          loginType: "empleado",
+          identifier: parsed.username,
+          password,
+        };
+      }
+
+      return null;
     } catch {
       this.clear();
       return null;
@@ -142,18 +171,23 @@ export const rememberedCredentialsStorage = {
     window.localStorage.removeItem(CREDENTIALS_STORAGE_KEY);
   },
 
-  /** Actualiza la contraseña guardada si el usuario coincide (cambio o restablecimiento). */
   async updatePasswordIfMatches(
-    username: string,
+    loginType: RememberedLoginType,
+    identifier: string,
     newPassword: string,
   ): Promise<boolean> {
     const saved = await this.load();
     if (!saved) return false;
 
-    const normalizedUsername = normalizeUsername(username);
-    if (saved.username !== normalizedUsername) return false;
+    const normalizedIdentifier = normalizeIdentifier(loginType, identifier);
+    if (
+      saved.loginType !== loginType ||
+      saved.identifier !== normalizedIdentifier
+    ) {
+      return false;
+    }
 
-    await this.save(normalizedUsername, newPassword);
+    await this.save(loginType, normalizedIdentifier, newPassword);
     return true;
   },
 };

@@ -7,14 +7,17 @@ import {
   type ReactNode,
 } from "react";
 import {
-  DEMO_NOTIFICATIONS,
-  getUnreadNotifications,
-  type DemoNotification,
-} from "@/shared/config/demoNotifications";
-import {
   getInitialReadNotificationIds,
   saveReadNotificationIds,
 } from "./notificationsStorage";
+
+import type { DemoNotification } from "@/shared/config/demoNotifications";
+
+function getUnreadNotifications(
+  notifications: DemoNotification[],
+): DemoNotification[] {
+  return notifications.filter((notification) => !notification.read);
+}
 
 function applyReadState(
   notifications: DemoNotification[],
@@ -44,7 +47,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   );
 
   const notifications = useMemo(
-    () => applyReadState(DEMO_NOTIFICATIONS, readIds),
+    () => applyReadState([], readIds),
     [readIds],
   );
 
@@ -68,7 +71,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const markAllAsRead = useCallback(() => {
     setReadIds((current) => {
-      const allIds = DEMO_NOTIFICATIONS.map((notification) => notification.id);
+      const allIds = notifications.map((notification) => notification.id);
       const hasUnread = allIds.some((id) => !current.has(id));
 
       if (!hasUnread) {
@@ -79,7 +82,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       saveReadNotificationIds(next);
       return next;
     });
-  }, []);
+  }, [notifications]);
 
   const value = useMemo(
     () => ({

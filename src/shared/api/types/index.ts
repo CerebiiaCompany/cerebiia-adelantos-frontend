@@ -1,9 +1,35 @@
 // ⚠️ AGNOSTIC — no react-router-dom, no react-dom, no UI imports
 
-export interface LoginRequest {
-  documentNumber: string;
-  password: string;
-}
+export type {
+  AppUserRole,
+  AuthActorType,
+  AuthSession,
+  AuthTokens,
+  AuthUser,
+  BackendUserRole,
+  EmpleadoLoginRequest,
+  EmpleadoLoginResponse,
+  EmpleadoProfile,
+  EmpleadoSession,
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+  SystemUserLoginRequest,
+  SystemUserLoginResponse,
+  SystemUserSession,
+} from "./auth";
+
+export type {
+  ActivarEmpleadoRequest,
+  ActivarEmpleadoResponse,
+  CreateEmpleadoRequest,
+  CreateEmpleadoResponse,
+  EmpleadoDTO,
+  EmpleadoEstado,
+  VerificarPreRegistroRequest,
+  VerificarPreRegistroResponse,
+} from "./empleado";
 
 export interface ForgotPasswordRequest {
   email: string;
@@ -28,22 +54,12 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
-export interface AuthResponse {
-  token: string;
-  role: "employee" | "employer" | "admin";
-}
-
 export interface AdvanceDTO {
   id: string;
   amount: number;
   status: "pending" | "approved" | "rejected" | "disbursed";
   requestedAt: string;
   employeeId: string;
-}
-
-export interface ApiError {
-  message: string;
-  code: string;
 }
 
 export type {

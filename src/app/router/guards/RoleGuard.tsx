@@ -1,17 +1,28 @@
 import { Navigate, Outlet } from "react-router-dom";
-
-type Role = "employee" | "employer" | "admin";
+import { useAuthAccess } from "@/features/auth";
+import type { AppUserRole } from "@/shared/api/types/auth";
+import { getHomeRouteForAppRole } from "@/shared/config/roleRoutes";
+import { ROUTES } from "@/shared/config/routes";
+import { AuthLoadingFallback } from "@/app/router/components/AuthLoadingFallback";
 
 interface RoleGuardProps {
-  allowed: Role[];
+  allowed: AppUserRole[];
 }
 
-// Placeholder — replace with real auth state from features/auth
 export function RoleGuard({ allowed }: RoleGuardProps) {
-  const currentRole: Role | null = null; // TODO: get from auth store
+  const { appRole, isAuthenticated, isInitializing } = useAuthAccess();
 
-  if (!currentRole || !allowed.includes(currentRole)) {
-    return <Navigate to="/login" replace />;
+  if (isInitializing) {
+    return <AuthLoadingFallback />;
   }
+
+  if (!isAuthenticated || !appRole) {
+    return <Navigate to={ROUTES.login} replace />;
+  }
+
+  if (!allowed.includes(appRole)) {
+    return <Navigate to={getHomeRouteForAppRole(appRole)} replace />;
+  }
+
   return <Outlet />;
 }

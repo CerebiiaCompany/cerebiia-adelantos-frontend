@@ -7,8 +7,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { PayrollCalendarDialog } from "@/features/dashboard/ui/PayrollCalendarDialog";
 import { PayrollCalendarFab } from "@/features/dashboard/ui/PayrollCalendarFab";
 import { RequestShortcutsBar } from "@/features/dashboard/ui/RequestShortcutsBar";
+import { useEmployeeDashboard } from "@/features/dashboard";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
-import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
 import {
   getDaysUntilPayment,
   getNextPaymentDate,
@@ -39,32 +39,6 @@ const CHART_COLORS = {
   adelantos: "hsl(260, 70%, 55%)",
 } as const;
 
-const chartData = [
-  { name: "Ene", ingresos: 4200000, adelantos: 800000 },
-  { name: "Feb", ingresos: 4200000, adelantos: 1200000 },
-  { name: "Mar", ingresos: 4500000, adelantos: 600000 },
-  { name: "Abr", ingresos: 4500000, adelantos: 900000 },
-  { name: "May", ingresos: 4800000, adelantos: 400000 },
-  { name: "Jun", ingresos: 4800000, adelantos: 700000 },
-];
-
-const recentActivity = [
-  {
-    type: "adelanto",
-    amount: -500000,
-    date: "Hoy, 14:30",
-    desc: "Adelanto rápido",
-  },
-  { type: "ingreso", amount: 4800000, date: "1 Abr", desc: "Nómina mensual" },
-  {
-    type: "adelanto",
-    amount: -300000,
-    date: "28 Mar",
-    desc: "Adelanto parcial",
-  },
-  { type: "ingreso", amount: 4500000, date: "1 Mar", desc: "Nómina mensual" },
-];
-
 const formatCOP = (v: number) => `$${v.toLocaleString("es-CO")}`;
 
 const ACTIVITY_STAGGER_MS = 120;
@@ -73,7 +47,8 @@ const ACTIVITY_COUNT_DELAY_OFFSET_MS = 100;
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const greeting = useTimeBasedGreeting(DEMO_EMPLOYEE_PROFILE.fullName);
+  const dashboard = useEmployeeDashboard();
+  const greeting = useTimeBasedGreeting(dashboard?.displayName ?? "Empleado");
   const [payrollCalendarOpen, setPayrollCalendarOpen] = useState(false);
 
   const nextPayment = useMemo(() => getNextPaymentDate(), []);
@@ -86,6 +61,18 @@ export default function Dashboard() {
       }),
     [nextPayment],
   );
+
+  if (!dashboard) return null;
+
+  const {
+    salary,
+    availableAdvance,
+    accumulatedIncome,
+    incomeToday,
+    totalAdvancedThisMonth,
+    chartData,
+    recentActivity,
+  } = dashboard;
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -115,7 +102,7 @@ export default function Dashboard() {
           label="Disponible para adelanto"
           value={
             <AnimatedCurrency
-              value={2400000}
+              value={availableAdvance}
               className="font-display text-2xl font-bold text-gradient"
             />
           }
@@ -123,7 +110,7 @@ export default function Dashboard() {
             <>
               de{" "}
               <AnimatedCurrency
-                value={4800000}
+                value={salary}
                 className="inline font-medium text-foreground"
                 duration={700}
               />
@@ -137,20 +124,24 @@ export default function Dashboard() {
           label="Ingresos acumulados"
           value={
             <AnimatedCurrency
-              value={3200000}
+              value={accumulatedIncome}
               className="font-display text-2xl font-bold text-foreground"
             />
           }
           sub={
-            <>
-              +
-              <AnimatedCurrency
-                value={160000}
-                className="inline font-medium text-primary"
-                duration={700}
-              />{" "}
-              hoy
-            </>
+            incomeToday > 0 ? (
+              <>
+                +
+                <AnimatedCurrency
+                  value={incomeToday}
+                  className="inline font-medium text-primary"
+                  duration={700}
+                />{" "}
+                hoy
+              </>
+            ) : (
+              "Sin ingresos registrados"
+            )
           }
           icon={<TrendingUp className="h-5 w-5" strokeWidth={2.25} />}
           iconMotion="trend-up"
@@ -160,7 +151,7 @@ export default function Dashboard() {
           label="Total adelantado"
           value={
             <AnimatedCurrency
-              value={500000}
+              value={totalAdvancedThisMonth}
               className="font-display text-2xl font-bold text-foreground"
             />
           }
@@ -288,7 +279,13 @@ export default function Dashboard() {
             Actividad reciente
           </h3>
           <div className="space-y-3">
-            {recentActivity.map((item, i) => (
+            {recentActivity.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border/80 px-4 py-6 text-center text-sm text-muted-foreground">
+                Aún no tienes movimientos. Cuando solicites un adelanto, verás
+                tu actividad aquí.
+              </p>
+            ) : (
+              recentActivity.map((item, i) => (
               <div
                 key={item.desc + item.date}
                 className="group/activity-item animate-activity-item-enter flex items-center gap-3 rounded-lg px-1 py-0.5 transition-colors hover:bg-secondary/30"
@@ -324,7 +321,8 @@ export default function Dashboard() {
                   delay={i * ACTIVITY_STAGGER_MS + ACTIVITY_COUNT_DELAY_OFFSET_MS}
                 />
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

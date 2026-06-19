@@ -4,33 +4,8 @@ import {
   AnimatedProgressBar,
 } from "@/components/ui/animated-number";
 import { PageHeader } from "@/components/layout/PageHeader";
-
-const tips = [
-  {
-    icon: TrendingUp,
-    title: "Buen momento para ahorrar",
-    desc: "Tu nivel de adelantos es bajo. Considera guardar un fondo de emergencia equivalente a 1 mes de gastos.",
-    type: "success" as const,
-  },
-  {
-    icon: AlertTriangle,
-    title: "Evita adelantos consecutivos",
-    desc: "Solicitar adelantos en semanas consecutivas puede reducir tu límite dinámico en un 10%.",
-    type: "warning" as const,
-  },
-  {
-    icon: Lightbulb,
-    title: "Cuánto solicitar",
-    desc: "Basado en tus gastos recurrentes, te recomendamos no adelantar más de $1.200.000 este mes para mantener un balance saludable.",
-    type: "info" as const,
-  },
-  {
-    icon: Shield,
-    title: "Protección financiera",
-    desc: "Tu puntaje financiero es 85/100. Mantenerlo por encima de 80 te da acceso a mejores condiciones.",
-    type: "success" as const,
-  },
-];
+import { useEmployeeDashboard } from "@/features/dashboard";
+import { formatCOP } from "@/shared/lib";
 
 const typeStyles = {
   success: "border-primary/20 bg-primary/5",
@@ -44,10 +19,46 @@ const iconColors = {
   info: "text-primary",
 };
 
-const FINANCIAL_SCORE = 85;
+const FINANCIAL_SCORE = 0;
 const MAX_SCORE = 100;
 
 export default function Asistente() {
+  const dashboard = useEmployeeDashboard();
+
+  if (!dashboard) return null;
+
+  const { availableAdvance, totalAdvancedThisMonth } = dashboard;
+
+  const tips = [
+    {
+      icon: TrendingUp,
+      title: "Buen momento para ahorrar",
+      desc:
+        totalAdvancedThisMonth === 0
+          ? "Aún no tienes adelantos activos. Es un buen momento para planificar un fondo de emergencia."
+          : "Tu nivel de adelantos es bajo. Considera guardar un fondo de emergencia equivalente a 1 mes de gastos.",
+      type: "success" as const,
+    },
+    {
+      icon: AlertTriangle,
+      title: "Evita adelantos consecutivos",
+      desc: "Solicitar adelantos en semanas consecutivas puede reducir tu límite dinámico en un 10%.",
+      type: "warning" as const,
+    },
+    {
+      icon: Lightbulb,
+      title: "Cuánto solicitar",
+      desc: `Tu cupo disponible este mes es de ${formatCOP(availableAdvance)} (30% de tu salario). Solicita solo lo que necesites.`,
+      type: "info" as const,
+    },
+    {
+      icon: Shield,
+      title: "Protección financiera",
+      desc: "Tu puntaje financiero se calcula con el uso de adelantos. Al inicio es 0/100 y mejorará con un uso responsable.",
+      type: "success" as const,
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
       <PageHeader
@@ -66,7 +77,7 @@ export default function Asistente() {
         <p className="mt-2 text-sm text-muted-foreground">
           de{" "}
           <AnimatedNumber value={MAX_SCORE} className="inline font-medium" /> ·{" "}
-          <span className="text-primary">Excelente</span>
+          <span className="text-muted-foreground">Sin historial aún</span>
         </p>
         <AnimatedProgressBar
           value={FINANCIAL_SCORE}
@@ -78,7 +89,7 @@ export default function Asistente() {
       <div className="space-y-3">
         {tips.map((tip, i) => (
           <div
-            key={i}
+            key={tip.title}
             className={`glass-card animate-slide-up border p-4 ${typeStyles[tip.type]}`}
             style={{ animationDelay: `${i * 100}ms` }}
           >

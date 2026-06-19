@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Zap } from "lucide-react";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
@@ -6,7 +6,12 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceSimulatorCard } from "@/features/advance/ui/AdvanceSimulatorCard";
 import { AdvanceFeaturesTimeline } from "@/features/advance/ui/AdvanceFeaturesTimeline";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
-import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import {
+  useEmployeeDashboard,
+  useRecordEmployeeAdvance,
+} from "@/features/dashboard";
+import { calculateMaxAdvanceLimit } from "@/entities/employee-dashboard";
+import { useProfileView } from "@/features/auth";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +38,14 @@ export default function Adelanto() {
   const [installments, setInstallments] = useState(1);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
-  const maxAmount = 2400000;
+  const dashboard = useEmployeeDashboard();
+  const profile = useProfileView();
+  const recordAdvance = useRecordEmployeeAdvance();
+
+  const maxAmount = useMemo(
+    () => calculateMaxAdvanceLimit(dashboard?.salary ?? 0),
+    [dashboard?.salary],
+  );
   const fee = Math.round(amount * 0.025);
   const total = amount - fee;
   const installmentValue = Math.round(total / installments);
@@ -111,14 +123,14 @@ export default function Adelanto() {
             <div className="mb-5 rounded-xl border border-primary/10 bg-primary/[0.04] p-4 text-left">
               <div className="mb-3 flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-primary text-sm font-bold text-primary-foreground shadow-sm">
-                  {DEMO_EMPLOYEE_PROFILE.initials}
+                  {profile?.initials ?? "?"}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate font-display font-semibold text-foreground">
-                    {DEMO_EMPLOYEE_PROFILE.fullName}
+                    {profile?.fullName ?? "Empleado"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {DEMO_EMPLOYEE_PROFILE.company}
+                    {profile?.company ?? "Empresa vinculada"}
                   </p>
                 </div>
               </div>
@@ -126,19 +138,19 @@ export default function Adelanto() {
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">Identificación</dt>
                   <dd className="font-medium text-foreground">
-                    {DEMO_EMPLOYEE_PROFILE.documentNumber}
+                    {profile?.documentNumber ?? "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt className="text-muted-foreground">Departamento</dt>
+                  <dt className="text-muted-foreground">Banco</dt>
                   <dd className="text-right font-medium text-foreground">
-                    {DEMO_EMPLOYEE_PROFILE.department}
+                    {profile?.bank ?? "—"}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">No. empleado</dt>
                   <dd className="font-mono text-xs font-medium text-foreground">
-                    {DEMO_EMPLOYEE_PROFILE.employeeNumber}
+                    {profile?.employeeNumber ?? "—"}
                   </dd>
                 </div>
               </dl>
@@ -175,6 +187,7 @@ export default function Adelanto() {
                 type="button"
                 showArrow={false}
                 onClick={() => {
+                  recordAdvance(amount);
                   setConfirmOpen(false);
                   setShowReceipt(true);
                 }}

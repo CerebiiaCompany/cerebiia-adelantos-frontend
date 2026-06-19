@@ -18,12 +18,13 @@ import {
 import { cn } from "@/lib/utils";
 import { ProfilePasswordInput } from "@/components/header/profile/ProfilePasswordInput";
 import { useChangePassword } from "@/features/auth/model/useChangePassword";
+import { useAuth } from "@/features/auth";
+import { isEmpleadoSession, isSystemUserSession } from "@/shared/api";
 import {
   changePasswordSchema,
   type ChangePasswordFormValues,
 } from "@/shared/validations/auth.schema";
 import { getPasswordRequirementChecks } from "@/shared/validations/register.schema";
-import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
 
 const PASSWORD_REQUIREMENTS = [
   { id: "hasUppercase", label: "1 Mayúscula" },
@@ -37,6 +38,7 @@ interface ChangePasswordFormProps {
 }
 
 export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
+  const { session } = useAuth();
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -57,9 +59,20 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
   const requirementChecks = getPasswordRequirementChecks(newPasswordValue ?? "");
 
   const handleSubmit = (values: ChangePasswordFormValues) => {
+    const identifier =
+      session && isSystemUserSession(session)
+        ? session.user.email
+        : session && isEmpleadoSession(session)
+          ? session.empleado.documento
+          : "";
+
+    const loginType =
+      session && isSystemUserSession(session) ? "empresa" : "empleado";
+
     changePassword(
       {
-        username: DEMO_EMPLOYEE_PROFILE.documentNumber,
+        loginType,
+        identifier,
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       },
