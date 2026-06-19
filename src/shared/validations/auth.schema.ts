@@ -9,15 +9,28 @@ import {
   contactPhoneSchema,
 } from "./register.schema";
 
-export const loginSchema = z.object({
-  username: z
-    .string()
-    .min(1, "Ingresa tu usuario")
-    .transform((value) => value.trim())
-    .refine((value) => value.length >= 5, "Ingresa un número de documento válido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
-  rememberMe: z.boolean().default(false),
-});
+export const loginSchema = z.discriminatedUnion("loginType", [
+  z.object({
+    loginType: z.literal("empleado"),
+    documento: z
+      .string()
+      .min(1, "Ingresa tu número de documento")
+      .max(20, "Máximo 20 caracteres")
+      .transform((value) => value.trim()),
+    password: z.string().min(1, "Ingresa tu contraseña"),
+    rememberMe: z.boolean().default(false),
+  }),
+  z.object({
+    loginType: z.literal("empresa"),
+    email: z
+      .string()
+      .min(1, "Ingresa tu correo electrónico")
+      .transform((value) => value.trim().toLowerCase())
+      .refine(isValidEmail, "Ingresa un correo electrónico válido"),
+    password: z.string().min(1, "Ingresa tu contraseña"),
+    rememberMe: z.boolean().default(false),
+  }),
+]);
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 

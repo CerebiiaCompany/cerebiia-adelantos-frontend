@@ -1,46 +1,83 @@
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
-import { authEndpoints } from "@/shared/api/endpoints";
-import type { LoginRequest } from "@/shared/api/types";
+import { flushSync } from "react-dom";
+import { useNavigate } from "react-router-dom";import {
+  ApiError,
+  authEndpoints,
+  buildDemoEmpleadoSession,
+  empleadosEndpoints,
+  mapEmpleadoLoginResponseToSession,
+  mapSystemLoginResponseToSession,
+  resolveAppRole,
+} from "@/shared/api";
 import type { LoginFormValues } from "@/shared/validations/auth.schema";
 import { env } from "@/shared/config/env";
-import { ROUTES } from "@/shared/config/routes";
+import { getHomeRouteForAppRole } from "@/shared/config/roleRoutes";
 import { useAuth } from "./AuthProvider";
 import { rememberedCredentialsStorage } from "./rememberedCredentialsStorage";
+
+function getRememberedIdentifier(values: LoginFormValues): string {
+  return values.loginType === "empleado" ? values.documento : values.email;
+}
+
+async function authenticate(values: LoginFormValues) {
+  if (!env.isApiConfigured) {
+    if (values.loginType === "empresa") {
+      throw new ApiError(403, "/auth/login/", {
+        detail:
+          "El acceso de empresa requiere conexión con el servidor. Configura VITE_API_URL.",
+      });
+    }
+    return buildDemoEmpleadoSession();
+  }
+
+  const session =
+    values.loginType === "empleado"
+      ? mapEmpleadoLoginResponseToSession(
+          await empleadosEndpoints.login({
+            documento: values.documento,
+            password: values.password,
+          }),
+        )
+      : mapSystemLoginResponseToSession(
+          await authEndpoints.login({
+            email: values.email,
+            password: values.password,
+          }),
+        );
+
+  const appRole = resolveAppRole(session);
+  if (!appRole) {
+    throw new ApiError(403, "/login", {
+      detail: "No tienes permisos para acceder a esta aplicación.",
+    });
+  }
+
+  return session;
+}
 
 export function useLogin() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: async ({ rememberMe: _rememberMe, username, password }: LoginFormValues) => {
-      const credentials: LoginRequest = {
-        documentNumber: username,
-        password,
-      };
+    mutationFn: authenticate,
+    onSuccess: async (session, variables) => {
+      const appRole = resolveAppRole(session);
+      if (!appRole) return;
 
-      if (env.apiUrl) {
-        return authEndpoints.login(credentials);
-      }
-
-      // Modo demo local cuando no hay backend configurado.
-      return {
-        token: "demo-token",
-        role: "employee" as const,
-      };
-    },
-    onSuccess: async (_data, variables) => {
       if (variables.rememberMe) {
         await rememberedCredentialsStorage.save(
-          variables.username,
+          variables.loginType,
+          getRememberedIdentifier(variables),
           variables.password,
         );
       } else {
         rememberedCredentialsStorage.clear();
       }
 
-      login(_data);
-      navigate(ROUTES.employee.dashboard, { replace: true });
-    },
+      flushSync(() => {
+        login(session);
+      });
+      navigate(getHomeRouteForAppRole(appRole), { replace: true });    },
   });
 }

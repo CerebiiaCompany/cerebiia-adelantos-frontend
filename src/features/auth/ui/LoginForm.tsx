@@ -2,7 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,8 +31,11 @@ import {
   type LoginFormValues,
 } from "@/shared/validations/auth.schema";
 import { ROUTES } from "@/shared/config/routes";
+import { ApiError } from "@/shared/api";
 
 const LOGIN_BOOTSTRAP_MS = 450;
+
+type LoginType = LoginFormValues["loginType"];
 
 function LoginSkeleton() {
   return (
@@ -42,14 +54,33 @@ function LoginSkeleton() {
   );
 }
 
+function getDefaultValues(loginType: LoginType): LoginFormValues {
+  if (loginType === "empresa") {
+    return {
+      loginType: "empresa",
+      email: "",
+      password: "",
+      rememberMe: false,
+    };
+  }
+
+  return {
+    loginType: "empleado",
+    documento: "",
+    password: "",
+    rememberMe: false,
+  };
+}
+
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const { mutate: login, isPending, isError } = useLogin();
+  const [loginType, setLoginType] = useState<LoginType>("empleado");
+  const { mutate: login, isPending, error } = useLogin();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: "", password: "", rememberMe: false },
+    defaultValues: getDefaultValues("empleado"),
   });
 
   useEffect(() => {
@@ -66,11 +97,22 @@ export function LoginForm() {
       if (cancelled) return;
 
       if (savedCredentials) {
-        form.reset({
-          username: savedCredentials.username,
-          password: savedCredentials.password,
-          rememberMe: true,
-        });
+        setLoginType(savedCredentials.loginType);
+        if (savedCredentials.loginType === "empresa") {
+          form.reset({
+            loginType: "empresa",
+            email: savedCredentials.identifier,
+            password: savedCredentials.password,
+            rememberMe: true,
+          });
+        } else {
+          form.reset({
+            loginType: "empleado",
+            documento: savedCredentials.identifier,
+            password: savedCredentials.password,
+            rememberMe: true,
+          });
+        }
       }
 
       setIsReady(true);
@@ -83,8 +125,17 @@ export function LoginForm() {
     };
   }, [form]);
 
+  function handleLoginTypeChange(nextType: LoginType) {
+    setLoginType(nextType);
+    form.reset(getDefaultValues(nextType));
+    form.setValue("loginType", nextType, { shouldValidate: true });
+  }
+
   function onSubmit(values: LoginFormValues) {
-    login(values);
+    login({
+      ...values,
+      loginType,
+    });
   }
 
   if (!isReady) {
@@ -112,13 +163,44 @@ export function LoginForm() {
           </div>
         )}
 
-        <div className="animate-stagger-up mb-8 space-y-2 text-left">
+        <div className="animate-stagger-up mb-6 space-y-2 text-left">
           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
             Bienvenido de nuevo
           </h2>
           <p className="text-sm text-muted-foreground">
-            Ingresa tu usuario y contraseña para acceder a tu cuenta
+            {loginType === "empleado"
+              ? "Ingresa con tu documento y contraseña"
+              : "Ingresa con el correo de tu empresa"}
           </p>
+        </div>
+
+        <div className="animate-stagger-up mb-6 grid grid-cols-2 gap-2 rounded-xl border border-border/80 bg-muted/30 p-1">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => handleLoginTypeChange("empleado")}
+            className={cn(
+              "rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              loginType === "empleado"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Soy empleado
+          </button>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => handleLoginTypeChange("empresa")}
+            className={cn(
+              "rounded-lg px-3 py-2 text-sm font-medium transition-all",
+              loginType === "empresa"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Soy empresa
+          </button>
         </div>
 
         <Form {...form}>
@@ -129,28 +211,67 @@ export function LoginForm() {
           >
             <FormField
               control={form.control}
-              name="username"
+              name="loginType"
               render={({ field }) => (
-                <FormItem className="animate-stagger-up stagger-1">
-                  <FormLabel className="text-foreground/80">Usuario</FormLabel>
-                  <FormControl>
-                    <div className="login-field relative rounded-xl">
-                      <User className="field-icon pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Número de documento"
-                        type="text"
-                        inputMode="text"
-                        autoComplete="username"
-                        disabled={isPending}
-                        className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 transition-all duration-300 focus-visible:ring-primary/30 disabled:opacity-60"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <input type="hidden" {...field} value={loginType} />
               )}
             />
+
+            {loginType === "empleado" ? (
+              <FormField
+                control={form.control}
+                name="documento"
+                render={({ field }) => (
+                  <FormItem className="animate-stagger-up stagger-1">
+                    <FormLabel className="text-foreground/80">
+                      Número de documento
+                    </FormLabel>
+                    <FormControl>
+                      <div className="login-field relative rounded-xl">
+                        <User className="field-icon pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="12345678"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="username"
+                          disabled={isPending}
+                          className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 transition-all duration-300 focus-visible:ring-primary/30 disabled:opacity-60"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="animate-stagger-up stagger-1">
+                    <FormLabel className="text-foreground/80">
+                      Correo electrónico
+                    </FormLabel>
+                    <FormControl>
+                      <div className="login-field relative rounded-xl">
+                        <Mail className="field-icon pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="correo@empresa.com"
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          disabled={isPending}
+                          className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 transition-all duration-300 focus-visible:ring-primary/30 disabled:opacity-60"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -161,12 +282,14 @@ export function LoginForm() {
                     <FormLabel className="text-foreground/80">
                       Contraseña
                     </FormLabel>
-                    <Link
-                      to={ROUTES.forgotPassword}
-                      className="link-hover text-xs font-medium text-primary hover:text-primary/80"
-                    >
-                      ¿Olvidaste tu contraseña?
-                    </Link>
+                    {loginType === "empresa" ? (
+                      <Link
+                        to={ROUTES.forgotPassword}
+                        className="link-hover text-xs font-medium text-primary hover:text-primary/80"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </Link>
+                    ) : null}
                   </div>
                   <FormControl>
                     <div className="login-field relative rounded-xl">
@@ -228,12 +351,14 @@ export function LoginForm() {
               )}
             />
 
-            {isError && (
+            {error && (
               <div
                 role="alert"
                 className="animate-shake rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
               >
-                Credenciales incorrectas. Verifica tu usuario y contraseña.
+                {error instanceof ApiError
+                  ? error.message
+                  : "Credenciales incorrectas. Verifica tus datos e intenta de nuevo."}
               </div>
             )}
 
@@ -260,17 +385,24 @@ export function LoginForm() {
           </form>
         </Form>
 
-        <div className="animate-stagger-up stagger-5 mt-8 flex flex-col items-center gap-3 text-center">
-          <p className="text-sm text-muted-foreground">¿Necesitas acceso?</p>
-          <Button
-            variant="outline"
-            asChild
-            disabled={isPending}
-            className="auth-outline-btn h-9 rounded-xl px-6 font-medium transition-all duration-300"
-          >
-            <Link to={ROUTES.register}>Regístrate</Link>
-          </Button>
-        </div>
+        {loginType === "empleado" ? (
+          <div className="animate-stagger-up stagger-5 mt-8 flex flex-col items-center gap-3 text-center">
+            <p className="text-sm text-muted-foreground">¿Primera vez aquí?</p>
+            <Button
+              variant="outline"
+              asChild
+              disabled={isPending}
+              className="auth-outline-btn h-9 rounded-xl px-6 font-medium transition-all duration-300"
+            >
+              <Link to={ROUTES.register}>Activa tu cuenta</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="animate-stagger-up stagger-5 mt-8 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+            <Building2 className="h-4 w-4 text-primary" />
+            Acceso exclusivo para cuentas de empresa
+          </div>
+        )}
 
         {isPending && (
           <div

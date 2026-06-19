@@ -1,6 +1,23 @@
-// ⚠️ AGNOSTIC — no react-router-dom, no react-dom, no UI imports
-// import.meta.env is replaced at build time by Vite; Expo equivalent is process.env.
+// ⚠️ AGNOSTIC — import.meta.env is replaced at build time by Vite.
+
+export function resolveApiUrl(): string {
+  const raw = import.meta.env.VITE_API_URL as string | undefined;
+  const trimmed = raw?.trim();
+
+  if (trimmed) {
+    return trimmed.replace(/\/$/, "");
+  }
+
+  // Dev fallback: Vite proxy forwards /api → backend (evita CORS en :8080/:8081).
+  if (import.meta.env.DEV) {
+    return "/api/v1";
+  }
+
+  return "";
+}
+
 export const env = {
-  apiUrl: (import.meta as any).env?.VITE_API_URL as string | undefined,
-  appEnv: ((import.meta as any).env?.VITE_APP_ENV as string) ?? "development",
+  apiUrl: resolveApiUrl(),
+  appEnv: (import.meta.env.VITE_APP_ENV as string | undefined) ?? "development",
+  isApiConfigured: Boolean(resolveApiUrl()),
 } as const;

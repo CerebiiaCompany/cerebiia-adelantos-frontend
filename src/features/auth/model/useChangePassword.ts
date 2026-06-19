@@ -5,32 +5,38 @@ import { env } from "@/shared/config/env";
 import { rememberedCredentialsStorage } from "./rememberedCredentialsStorage";
 
 interface ChangePasswordInput extends ChangePasswordRequest {
-  username: string;
+  loginType: "empresa";
+  identifier: string;
 }
 
 export function useChangePassword() {
   return useMutation({
     mutationFn: async (data: ChangePasswordInput) => {
-      const { username, ...payload } = data;
+      const { loginType, identifier, ...payload } = data;
 
       if (env.apiUrl) {
         await authEndpoints.changePassword(payload);
       }
 
       await rememberedCredentialsStorage.updatePasswordIfMatches(
-        username,
+        loginType,
+        identifier,
         payload.newPassword,
       );
 
-      return { username };
+      return { identifier };
     },
   });
 }
 
 /** Sincroniza credenciales recordadas tras restablecer contraseña (p. ej. enlace por correo). */
 export async function syncRememberedCredentialsAfterPasswordReset(
-  username: string,
+  email: string,
   newPassword: string,
 ): Promise<void> {
-  await rememberedCredentialsStorage.updatePasswordIfMatches(username, newPassword);
+  await rememberedCredentialsStorage.updatePasswordIfMatches(
+    "empresa",
+    email,
+    newPassword,
+  );
 }

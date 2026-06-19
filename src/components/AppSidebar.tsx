@@ -1,5 +1,8 @@
 import { PanelLeftClose } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useMemo } from "react";
+import { useAuthAccess } from "@/features/auth";
+import { canAccessModule } from "@/shared/config/moduleAccess";
 import {
   Sidebar,
   SidebarContent,
@@ -20,22 +23,49 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SidebarNavLink } from "@/components/sidebar/SidebarNavLink";
 import { SidebarLogoutButton } from "@/components/sidebar/SidebarLogoutButton";
-import { SIDEBAR_MAIN_ITEMS } from "@/components/sidebar/sidebarNavConfig";
+import { EMPLOYEE_SIDEBAR_ITEMS, type SidebarNavItemConfig } from "@/components/sidebar/sidebarNavConfig";
 
-export function AppSidebar() {
+type AppSidebarProps = {
+  brandSubtitle?: string;
+  navItems?: SidebarNavItemConfig[];
+  sectionLabel?: string;
+};
+
+export function AppSidebar({
+  brandSubtitle = "Panel empleado",
+  navItems = EMPLOYEE_SIDEBAR_ITEMS,
+  sectionLabel = "Principal",
+}: AppSidebarProps = {}) {
   return (
     <Sidebar collapsible="icon" className="app-sidebar border-r-0">
-      <AppSidebarContent />
+      <AppSidebarContent
+        brandSubtitle={brandSubtitle}
+        navItems={navItems}
+        sectionLabel={sectionLabel}
+      />
     </Sidebar>
   );
 }
 
-function AppSidebarContent() {
+function AppSidebarContent({
+  brandSubtitle,
+  navItems,
+  sectionLabel,
+}: Required<AppSidebarProps>) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const layout = useSidebarLayout();
+  const { appRole } = useAuthAccess();
   const isDrawer = layout === "drawer";
   const collapsed = layout === "panel" && state === "collapsed";
   const location = useLocation();
+
+  const visibleNavItems = useMemo(
+    () =>
+      navItems.filter(
+        (item) => appRole && canAccessModule(appRole, item.moduleId),
+      ),
+    [appRole, navItems],
+  );
 
   return (
     <>
@@ -58,7 +88,7 @@ function AppSidebarContent() {
                   AdeCerebiia
                 </p>
                 <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/90">
-                  Panel empleado
+                  {brandSubtitle}
                 </p>
               </div>
             )}
@@ -88,16 +118,15 @@ function AppSidebarContent() {
         <SidebarGroup className="gap-2">
           {!collapsed && (
             <SidebarGroupLabel className="app-sidebar-section-label mb-1 h-auto p-0">
-              Principal
+              {sectionLabel}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
             <SidebarMenu className={cn("gap-0.5", collapsed && "items-center")}>
-              {SIDEBAR_MAIN_ITEMS.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = Boolean(
                   location.pathname === item.url ||
-                    (item.url !== "/" &&
-                      location.pathname.startsWith(item.url)),
+                    (!item.end && location.pathname.startsWith(item.url)),
                 );
 
                 return (
