@@ -1,6 +1,7 @@
 import { ChevronRight, Shield } from "lucide-react";
-import { DEMO_EMPLOYEE_PROFILE, PROFILE_MENU_ITEMS } from "@/shared/config/demoEmployeeProfile";
+import { PROFILE_MENU_ITEMS } from "@/shared/config/demoEmployeeProfile";
 import { ProfileLogoutButton } from "@/components/header/profile/ProfileLogoutButton";
+import { useProfileView } from "@/features/auth";
 
 interface UserProfilePanelProps {
   onOpenAccount?: () => void;
@@ -11,7 +12,9 @@ export function UserProfilePanel({
   onOpenAccount,
   onOpenSettings,
 }: UserProfilePanelProps) {
-  const profile = DEMO_EMPLOYEE_PROFILE;
+  const profile = useProfileView();
+
+  if (!profile) return null;
 
   return (
     <div className="min-w-0 overflow-hidden">
@@ -27,12 +30,14 @@ export function UserProfilePanel({
               {profile.fullName}
             </p>
             <p className="text-xs text-slate-500">{profile.roleLabel}</p>
-            <div className="mt-1 flex items-center gap-1">
-              <Shield className="h-3 w-3 text-primary" aria-hidden />
-              <span className="text-xs font-medium text-primary">
-                Cuenta verificada
-              </span>
-            </div>
+            {profile.isVerified ? (
+              <div className="mt-1 flex items-center gap-1">
+                <Shield className="h-3 w-3 text-primary" aria-hidden />
+                <span className="text-xs font-medium text-primary">
+                  Cuenta verificada
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

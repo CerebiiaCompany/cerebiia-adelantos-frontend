@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { ChangePasswordForm } from "@/components/header/profile/ChangePasswordForm";
 import { UpdateProfileDataForm } from "@/components/header/profile/UpdateProfileDataForm";
 import { ProfileLogoutButton } from "@/components/header/profile/ProfileLogoutButton";
-import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import { useProfileView } from "@/features/auth";
 import { sanitizeColombianPhone } from "@/shared/validations/register.schema";
 
 type SettingsSection = "update-data" | "change-password" | null;
@@ -37,7 +37,7 @@ export function UserProfileSettingsPanel({
   onBack,
 }: UserProfileSettingsPanelProps) {
   const [openSection, setOpenSection] = useState<SettingsSection>(null);
-  const profile = DEMO_EMPLOYEE_PROFILE;
+  const profile = useProfileView();
 
   const handleSectionChange = (section: Exclude<SettingsSection, null>) => (
     open: boolean,
@@ -99,8 +99,8 @@ export function UserProfileSettingsPanel({
                 {section.id === "update-data" ? (
                   <UpdateProfileDataForm
                     defaultValues={{
-                      email: profile.email,
-                      phone: sanitizeColombianPhone(profile.phone),
+                      email: profile?.email ?? "",
+                      phone: sanitizeColombianPhone(profile?.phone ?? ""),
                     }}
                     onSuccess={() => setOpenSection(null)}
                   />

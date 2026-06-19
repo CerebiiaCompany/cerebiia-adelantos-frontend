@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/shared/config/routes";
+import { env } from "@/shared/config/env";
 import type {
   UserProfileData,
 } from "@/shared/api/types";
@@ -26,6 +27,8 @@ import {
 import { useRegisterDraftPersistence } from "../model/useRegisterDraftPersistence";
 import { useRegisterUser } from "../model/useRegisterUser";
 import { useVerifyDocument } from "../model/useVerifyDocument";
+import { useVerifyPreRegistro } from "../model/useVerifyPreRegistro";
+import { useActivateEmpleado } from "../model/useActivateEmpleado";
 import { RegisterCard } from "./RegisterCard";
 import {
   RegisterStepIndicator,
@@ -72,14 +75,27 @@ const EXISTING_USER_STEP_ORDER: RegisterStepId[] = [
   "password",
 ];
 
+const ACTIVATION_STEP_ORDER: RegisterStepId[] = ["document", "password"];
+
 function getStepOrderIndex(
   stepId: RegisterStepId,
   flowType: RegisterFlowType,
 ): number {
   const order =
-    flowType === "existing" ? EXISTING_USER_STEP_ORDER : NEW_USER_STEP_ORDER;
+    flowType === "activation"
+      ? ACTIVATION_STEP_ORDER
+      : flowType === "existing"
+        ? EXISTING_USER_STEP_ORDER
+        : NEW_USER_STEP_ORDER;
   return order.indexOf(stepId);
 }
+
+const EMPTY_DOCUMENT_DATA: VerifyDocumentFormValues = {
+  documentType: undefined as unknown as VerifyDocumentFormValues["documentType"],
+  documentNumber: "",
+  acceptMandatorySensitiveTreatment: false,
+  acceptAccessoryTreatment: false,
+};
 
 const EMPTY_BASIC_INFO: BasicInfoFormValues = {
   firstNames: "",
@@ -226,7 +242,11 @@ export function RegisterForm() {
 
   const { mutate: verifyDocument, isPending: isVerifying } =
     useVerifyDocument();
+  const { mutate: verifyPreRegistro, isPending: isVerifyingPreRegistro } =
+    useVerifyPreRegistro();
   const { mutate: registerUser, isPending: isRegistering } = useRegisterUser();
+  const { mutate: activateEmpleado, isPending: isActivating } =
+    useActivateEmpleado();
   const { data: companies = [], isLoading: isLoadingCompanies } =
     useCompanies();
 
@@ -264,41 +284,73 @@ export function RegisterForm() {
     state: draftState,
   });
 
+  const resetRegistrationState = useCallback(() => {
+    setStep("document");
+    setStepDirection("back");
+    setFlowType("new");
+    setVerificationStatus("idle");
+    setDocumentData(EMPTY_DOCUMENT_DATA);
+    setProfile(null);
+    setBasicInfo(EMPTY_BASIC_INFO);
+    setContactEmail(EMPTY_CONTACT_EMAIL);
+    setContactPhone(EMPTY_CONTACT_PHONE);
+    setIdentityUpload(EMPTY_IDENTITY_UPLOAD);
+    setSelfieFile(EMPTY_SELFIE_FILE);
+    setLaborCertFile(EMPTY_LABOR_CERT_FILE);
+  }, []);
+
+  const handleResetRegistration = useCallback(async () => {
+    await clearRegisterDraft();
+    resetRegistrationState();
+  }, [resetRegistrationState]);
+
   useEffect(() => {
     let cancelled = false;
 
-    void hydrateRegisterDraftState()
-      .then((restored) => {
-        if (cancelled || !restored) return;
+    async function initializeForm() {
+      const params = new URLSearchParams(window.location.search);
+      const shouldStartFresh = params.get("activar") === "1";
 
-        setStep(restored.step);
-        setFlowType(restored.flowType);
-        setVerificationStatus(
-          restored.verificationStatus !== "idle" &&
-            !restored.documentData.acceptMandatorySensitiveTreatment
-            ? "idle"
-            : restored.verificationStatus,
-        );
-        setDocumentData({
-          ...restored.documentData,
-          acceptMandatorySensitiveTreatment:
-            restored.documentData.acceptMandatorySensitiveTreatment ?? false,
-          acceptAccessoryTreatment:
-            restored.documentData.acceptAccessoryTreatment ?? false,
-        });
-        setProfile(restored.profile);
-        setBasicInfo(restored.basicInfo);
-        setContactEmail(restored.contactEmail);
-        setContactPhone(restored.contactPhone);
-        setIdentityUpload(restored.identityUpload);
-        setSelfieFile(restored.selfieFile);
-        setLaborCertFile(restored.laborCertFile);
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setIsHydrating(false);
-        window.setTimeout(() => setIsReady(true), 450);
-      });
+      if (shouldStartFresh) {
+        await clearRegisterDraft();
+        params.delete("activar");
+        const nextSearch = params.toString();
+        const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}`;
+        window.history.replaceState({}, "", nextUrl);
+      } else {
+        const restored = await hydrateRegisterDraftState();
+        if (!cancelled && restored) {
+          setStep(restored.step);
+          setFlowType(restored.flowType);
+          setVerificationStatus(
+            restored.verificationStatus !== "idle" &&
+              !restored.documentData.acceptMandatorySensitiveTreatment
+              ? "idle"
+              : restored.verificationStatus,
+          );
+          setDocumentData({
+            ...restored.documentData,
+            acceptMandatorySensitiveTreatment:
+              restored.documentData.acceptMandatorySensitiveTreatment ?? false,
+            acceptAccessoryTreatment:
+              restored.documentData.acceptAccessoryTreatment ?? false,
+          });
+          setProfile(restored.profile);
+          setBasicInfo(restored.basicInfo);
+          setContactEmail(restored.contactEmail);
+          setContactPhone(restored.contactPhone);
+          setIdentityUpload(restored.identityUpload);
+          setSelfieFile(restored.selfieFile);
+          setLaborCertFile(restored.laborCertFile);
+        }
+      }
+
+      if (cancelled) return;
+      setIsHydrating(false);
+      window.setTimeout(() => setIsReady(true), 450);
+    }
+
+    void initializeForm();
 
     return () => {
       cancelled = true;
@@ -321,13 +373,7 @@ export function RegisterForm() {
     [flowType, step],
   );
 
-  function handleVerify(values: VerifyDocumentFormValues) {
-    if (!values.acceptMandatorySensitiveTreatment) {
-      return;
-    }
-
-    setDocumentData(values);
-
+  function runFullDocumentVerification(values: VerifyDocumentFormValues) {
     verifyDocument(
       {
         documentType: values.documentType,
@@ -352,6 +398,46 @@ export function RegisterForm() {
         },
       },
     );
+  }
+
+  function handleVerify(values: VerifyDocumentFormValues) {
+    if (!values.acceptMandatorySensitiveTreatment) {
+      return;
+    }
+
+    setDocumentData(values);
+
+    if (env.isApiConfigured) {
+      verifyPreRegistro(values.documentNumber, {
+        onSuccess: (response) => {
+          if (response.existe) {
+            setFlowType("activation");
+            setVerificationStatus("verified-existing");
+            setProfile({
+              firstNames: response.nombre,
+              lastNames: "",
+              gender: "MASCULINO",
+              cityId: "",
+              cityName: "",
+              department: "Bogotá D.C.",
+              address: "",
+              companyId: "",
+              companyName: "",
+              paymentDay: PAYMENT_DAY_DEFAULT,
+              email: "",
+              phone: "",
+            });
+            goToStep("password");
+            return;
+          }
+
+          runFullDocumentVerification(values);
+        },
+      });
+      return;
+    }
+
+    runFullDocumentVerification(values);
   }
 
   function handleProceedNewUser() {
@@ -444,6 +530,14 @@ export function RegisterForm() {
   }
 
   function handlePasswordSubmit(values: PasswordFormValues) {
+    if (flowType === "activation") {
+      activateEmpleado({
+        documento: documentData.documentNumber,
+        password: values.password,
+      });
+      return;
+    }
+
     if (!profile || !identityUpload.frontFile || !selfieFile || !laborCertFile) {
       return;
     }
@@ -486,14 +580,23 @@ export function RegisterForm() {
       case "labor-certification":
         return "selfie-validation";
       case "password":
-        return "labor-certification";
+        return flowType === "activation"
+          ? "document"
+          : "labor-certification";
       default:
         return null;
     }
   }
 
-  const header = STEP_HEADERS[step];
-  const isLoading = isVerifying || isRegistering;
+  const header =
+    step === "password" && flowType === "activation"
+      ? {
+          title: "Activa tu cuenta",
+          subtitle: "Crea tu contraseña para acceder a la plataforma",
+        }
+      : STEP_HEADERS[step];
+  const isLoading =
+    isVerifying || isVerifyingPreRegistro || isRegistering || isActivating;
   const previousStep = getPreviousStep();
 
   if (!isReady || isHydrating) {
@@ -512,9 +615,11 @@ export function RegisterForm() {
       <RegisterCard
         isLoading={isLoading}
         loadingMessage={
-          isVerifying
+          isVerifying || isVerifyingPreRegistro
             ? "Consultando base de datos..."
-            : "Finalizando registro..."
+            : isActivating
+              ? "Activando cuenta..."
+              : "Finalizando registro..."
         }
       >
         {step !== "document" && (
@@ -548,9 +653,18 @@ export function RegisterForm() {
           <RegisterDocumentStep
             defaultValues={documentData}
             verificationStatus={verificationStatus}
-            isVerifying={isVerifying}
+            flowType={flowType}
+            verifiedName={profile?.firstNames}
+            isVerifying={isVerifying || isVerifyingPreRegistro}
             onVerify={handleVerify}
-            onProceedNewUser={handleProceedNewUser}
+            onProceedNewUser={() => {
+              if (flowType === "activation") {
+                goToStep("password");
+                return;
+              }
+              handleProceedNewUser();
+            }}
+            onResetDocument={handleResetRegistration}
           />
         )}
 
@@ -626,11 +740,18 @@ export function RegisterForm() {
           />
         )}
 
-        {step === "password" && profile && (
+        {step === "password" && (flowType === "activation" || profile) && (
           <RegisterPasswordStep
-            isExistingUser={flowType === "existing"}
-            isSubmitting={isRegistering}
-            onBack={() => goToStep("labor-certification")}
+            isExistingUser={flowType === "existing" || flowType === "activation"}
+            isSubmitting={isRegistering || isActivating}
+            onBack={() => {
+              if (flowType === "activation") {
+                setVerificationStatus("idle");
+                goToStep("document");
+                return;
+              }
+              goToStep("labor-certification");
+            }}
             onSubmit={handlePasswordSubmit}
           />
         )}

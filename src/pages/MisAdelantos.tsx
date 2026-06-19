@@ -1,37 +1,29 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { History } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceHistoryTable } from "@/features/advance/ui/AdvanceHistoryTable";
 import { AdvanceHistoryFiltersBar } from "@/features/advance/ui/AdvanceHistoryFilters";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
-import {
-  DEFAULT_ADVANCE_HISTORY_FILTERS,
-  filterAdvanceHistory,
-  hasActiveAdvanceHistoryFilters,
-} from "@/features/advance/model/advanceHistoryFilters";
+import { useFilteredEmployeeAdvanceHistory } from "@/features/advance/model/useFilteredEmployeeAdvanceHistory";
+import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DEMO_ADVANCE_HISTORY,
-  type AdvanceHistoryRecord,
-} from "@/shared/config/advanceHistory";
 
 export default function MisAdelantos() {
   const [selectedRecord, setSelectedRecord] = useState<AdvanceHistoryRecord | null>(
     null,
   );
-  const [filters, setFilters] = useState(DEFAULT_ADVANCE_HISTORY_FILTERS);
-
-  const filteredRecords = useMemo(
-    () => filterAdvanceHistory(DEMO_ADVANCE_HISTORY, filters),
-    [filters],
-  );
-
-  const filtersActive = hasActiveAdvanceHistoryFilters(filters);
+  const {
+    advanceHistory,
+    filteredRecords,
+    filters,
+    setFilters,
+    filtersActive,
+  } = useFilteredEmployeeAdvanceHistory();
 
   return (
     <div className="mx-auto max-w-5xl animate-fade-in space-y-6">
@@ -45,7 +37,7 @@ export default function MisAdelantos() {
         filters={filters}
         onChange={setFilters}
         resultCount={filteredRecords.length}
-        totalCount={DEMO_ADVANCE_HISTORY.length}
+        totalCount={advanceHistory.length}
       />
 
       <AdvanceHistoryTable

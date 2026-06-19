@@ -24,7 +24,8 @@ const STATUS_TO_RECEIPT: Record<
   no_aprobado: null,
 };
 
-function createRecord(
+/** Crea un registro de historial de adelanto. */
+export function buildAdvanceHistoryRecord(
   id: string,
   isoDate: string,
   amount: number,
@@ -50,10 +51,10 @@ function createRecord(
 
 /** Historial demo de adelantos del empleado. */
 export const DEMO_ADVANCE_HISTORY: AdvanceHistoryRecord[] = [
-  createRecord("adv-006", "2026-06-10T14:30:00", 500_000, "en_curso"),
-  createRecord("adv-005", "2026-05-22T11:15:00", 300_000, "aprobado"),
-  createRecord("adv-004", "2026-05-08T09:45:00", 800_000, "aprobado"),
-  createRecord("adv-003", "2026-04-18T16:20:00", 600_000, "aprobado"),
-  createRecord("adv-002", "2026-04-03T10:05:00", 450_000, "no_aprobado"),
-  createRecord("adv-001", "2026-03-12T13:40:00", 1_200_000, "aprobado"),
+  buildAdvanceHistoryRecord("adv-006", "2026-06-10T14:30:00", 500_000, "en_curso"),
+  buildAdvanceHistoryRecord("adv-005", "2026-05-22T11:15:00", 300_000, "aprobado"),
+  buildAdvanceHistoryRecord("adv-004", "2026-05-08T09:45:00", 800_000, "aprobado"),
+  buildAdvanceHistoryRecord("adv-003", "2026-04-18T16:20:00", 600_000, "aprobado"),
+  buildAdvanceHistoryRecord("adv-002", "2026-04-03T10:05:00", 450_000, "no_aprobado"),
+  buildAdvanceHistoryRecord("adv-001", "2026-03-12T13:40:00", 1_200_000, "aprobado"),
 ].sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime());

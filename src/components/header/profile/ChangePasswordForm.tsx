@@ -25,7 +25,6 @@ import {
   type ChangePasswordFormValues,
 } from "@/shared/validations/auth.schema";
 import { getPasswordRequirementChecks } from "@/shared/validations/register.schema";
-import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
 
 const PASSWORD_REQUIREMENTS = [
   { id: "hasUppercase", label: "1 Mayúscula" },
@@ -65,7 +64,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
         ? session.user.email
         : session && isEmpleadoSession(session)
           ? session.empleado.documento
-          : DEMO_EMPLOYEE_PROFILE.documentNumber;
+          : "";
 
     const loginType =
       session && isSystemUserSession(session) ? "empresa" : "empleado";

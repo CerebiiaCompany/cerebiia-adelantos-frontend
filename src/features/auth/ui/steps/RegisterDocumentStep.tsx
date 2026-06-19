@@ -33,6 +33,8 @@ import {
   REGISTER_STEP_FORM_OPTIONS,
 } from "@/features/auth/ui/registerFormOptions";
 
+import type { RegisterFlowType } from "../RegisterStepIndicator";
+
 const documentPlaceholders: Record<DocumentType, string> = {
   CC: "Ej: 1234567890",
   PASSPORT: "Ej: AB123456",
@@ -45,17 +47,23 @@ export type DocumentVerificationStatus = "idle" | "verified-new" | "verified-exi
 interface RegisterDocumentStepProps {
   defaultValues: VerifyDocumentFormValues;
   verificationStatus: DocumentVerificationStatus;
+  flowType: RegisterFlowType;
+  verifiedName?: string;
   isVerifying: boolean;
   onVerify: (values: VerifyDocumentFormValues) => void;
   onProceedNewUser: () => void;
+  onResetDocument?: () => void;
 }
 
 export function RegisterDocumentStep({
   defaultValues,
   verificationStatus,
+  flowType,
+  verifiedName,
   isVerifying,
   onVerify,
   onProceedNewUser,
+  onResetDocument,
 }: RegisterDocumentStepProps) {
   const form = useForm<VerifyDocumentFormValues>({
     ...REGISTER_STEP_FORM_OPTIONS,
@@ -74,10 +82,32 @@ export function RegisterDocumentStep({
   const hasAccessoryConsent = form.watch("acceptAccessoryTreatment");
   const { isValid } = form.formState;
   const isVerifiedNew = verificationStatus === "verified-new";
+  const isVerifiedExisting = verificationStatus === "verified-existing";
   const isDocumentLocked = verificationStatus !== "idle";
   const showVerifiedSuccess =
     isVerifiedNew && hasMandatoryConsent && hasAccessoryConsent;
+  const showActivationSuccess =
+    flowType === "activation" &&
+    isVerifiedExisting &&
+    hasMandatoryConsent &&
+    hasAccessoryConsent;
   const isContinueDisabled = isRegisterContinueDisabled(isValid, isVerifying);
+
+  useEffect(() => {
+    form.reset({
+      ...defaultValues,
+      acceptMandatorySensitiveTreatment:
+        defaultValues.acceptMandatorySensitiveTreatment ?? false,
+      acceptAccessoryTreatment:
+        defaultValues.acceptAccessoryTreatment ?? false,
+    });
+  }, [
+    defaultValues.documentType,
+    defaultValues.documentNumber,
+    defaultValues.acceptMandatorySensitiveTreatment,
+    defaultValues.acceptAccessoryTreatment,
+    form,
+  ]);
 
   useEffect(() => {
     if (!documentType || isDocumentLocked) return;
@@ -106,12 +136,20 @@ export function RegisterDocumentStep({
       return;
     }
 
+    if (flowType === "activation" && isVerifiedExisting) {
+      onProceedNewUser();
+      return;
+    }
+
     onVerify(values);
   }
 
-  const buttonLabel = isVerifiedNew
-    ? "Registrarse"
-    : "Verificar";
+  const buttonLabel =
+    isVerifiedNew || (flowType === "activation" && isVerifiedExisting)
+      ? flowType === "activation"
+        ? "Continuar activación"
+        : "Registrarse"
+      : "Verificar";
 
   const loadingLabel = isVerifiedNew
     ? "Preparando registro..."
@@ -278,6 +316,30 @@ export function RegisterDocumentStep({
             tus datos para registrarte.
           </div>
         )}
+
+        {showActivationSuccess && (
+          <div
+            role="status"
+            className="animate-stagger-up stagger-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
+          >
+            Pre-registro encontrado
+            {verifiedName ? ` para ${verifiedName}` : ""}. Continúa para crear tu
+            contraseña y activar tu cuenta.
+          </div>
+        )}
+
+        {isDocumentLocked && onResetDocument ? (
+          <div className="animate-stagger-up stagger-5 text-center">
+            <button
+              type="button"
+              onClick={onResetDocument}
+              disabled={isVerifying}
+              className="text-sm font-medium text-primary transition-colors hover:text-primary/80 disabled:opacity-50"
+            >
+              Usar otro documento
+            </button>
+          </div>
+        ) : null}
 
         <Button
           type="submit"

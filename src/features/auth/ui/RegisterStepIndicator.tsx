@@ -1,7 +1,7 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type RegisterFlowType = "new" | "existing";
+export type RegisterFlowType = "new" | "existing" | "activation";
 
 export type RegisterStepId =
   | "document"
@@ -31,6 +31,11 @@ const NEW_USER_STEPS: StepConfig[] = [
   { id: "password", label: "Contraseña" },
 ];
 
+const ACTIVATION_STEPS: StepConfig[] = [
+  { id: "document", label: "Verificación" },
+  { id: "password", label: "Activación" },
+];
+
 const EXISTING_USER_STEPS: StepConfig[] = [
   { id: "document", label: "Verificación" },
   { id: "contact-email", label: "Correo" },
@@ -56,7 +61,11 @@ export function RegisterStepIndicator({
   currentStep,
 }: RegisterStepIndicatorProps) {
   const steps =
-    flowType === "existing" ? EXISTING_USER_STEPS : NEW_USER_STEPS;
+    flowType === "activation"
+      ? ACTIVATION_STEPS
+      : flowType === "existing"
+        ? EXISTING_USER_STEPS
+        : NEW_USER_STEPS;
   const currentIndex = Math.max(0, getStepIndex(steps, currentStep));
   const progress = ((currentIndex + 1) / steps.length) * 100;
   const trackProgress =

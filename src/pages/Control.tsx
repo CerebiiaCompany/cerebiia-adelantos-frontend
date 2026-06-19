@@ -11,23 +11,22 @@ import {
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceMonthlyChart } from "@/features/advance/ui/AdvanceMonthlyChart";
 import { ControlUsageDonutCard } from "@/features/control/ui/ControlUsageDonutCard";
-
-const USED_PERCENT = 21;
-const USED_AMOUNT = 500_000;
-const LIMIT_DYNAMIC = 2_400_000;
-const NEXT_PAYMENT = 4_300_000;
-
-const monthlyAdvanceData = [
-  { name: "Ene", adelantos: 800_000, limite: 2_400_000, count: 2, sortKey: "2026-01" },
-  { name: "Feb", adelantos: 1_200_000, limite: 2_400_000, count: 3, sortKey: "2026-02" },
-  { name: "Mar", adelantos: 600_000, limite: 2_250_000, count: 1, sortKey: "2026-03" },
-  { name: "Abr", adelantos: 500_000, limite: 2_400_000, count: 2, sortKey: "2026-04" },
-].map((point) => ({
-  ...point,
-  disponible: Math.max(point.limite - point.adelantos, 0),
-}));
+import { useEmployeeControlData } from "@/features/control/model/useEmployeeControlData";
 
 export default function Control() {
+  const control = useEmployeeControlData();
+
+  if (!control) return null;
+
+  const {
+    usedPercent,
+    usedAmount,
+    limitAmount,
+    nextPaymentNet,
+    limitDelta,
+    monthlyAdvanceData,
+  } = control;
+
   return (
     <div className="mx-auto max-w-3xl animate-fade-in space-y-6">
       <PageHeader
@@ -38,9 +37,9 @@ export default function Control() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <ControlUsageDonutCard
-          percent={USED_PERCENT}
-          usedAmount={USED_AMOUNT}
-          limitAmount={LIMIT_DYNAMIC}
+          percent={usedPercent}
+          usedAmount={usedAmount}
+          limitAmount={limitAmount}
         />
 
         <div className="group/control-stat glass-card flex min-h-[240px] flex-col items-center justify-center p-5 text-center transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
@@ -49,18 +48,24 @@ export default function Control() {
           </span>
           <div className="flex w-full max-w-[220px] flex-col items-center gap-1">
             <AnimatedCurrency
-              value={LIMIT_DYNAMIC}
+              value={limitAmount}
               className="font-display text-2xl font-bold text-gradient"
             />
             <p className="text-sm text-muted-foreground">Límite dinámico</p>
             <p className="text-xs text-primary">
-              +
-              <AnimatedCurrency
-                value={150_000}
-                className="inline"
-                duration={800}
-              />{" "}
-              vs mes anterior
+              {limitDelta > 0 ? (
+                <>
+                  +
+                  <AnimatedCurrency
+                    value={limitDelta}
+                    className="inline"
+                    duration={800}
+                  />{" "}
+                  vs mes anterior
+                </>
+              ) : (
+                "Sin variación este mes"
+              )}
             </p>
           </div>
         </div>
@@ -71,7 +76,7 @@ export default function Control() {
           </span>
           <div className="flex w-full max-w-[220px] flex-col items-center gap-1">
             <AnimatedCurrency
-              value={NEXT_PAYMENT}
+              value={nextPaymentNet}
               className="font-display text-2xl font-bold text-foreground"
             />
             <p className="text-sm text-muted-foreground">Próximo pago neto</p>
@@ -93,14 +98,22 @@ export default function Control() {
         <div>
           <p className="text-sm font-medium text-foreground">Consejo financiero</p>
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Estás usando solo el{" "}
-            <AnimatedPercent
-              value={USED_PERCENT}
-              className="inline font-medium text-foreground"
-              duration={800}
-            />{" "}
-            de tu límite este mes. ¡Excelente control financiero! Tu límite puede
-            aumentar el próximo mes.
+            {usedAmount === 0 ? (
+              <>
+                Tu cuenta está limpia. Puedes adelantar hasta el 30% de tu salario
+                cuando lo necesites.
+              </>
+            ) : (
+              <>
+                Estás usando el{" "}
+                <AnimatedPercent
+                  value={usedPercent}
+                  className="inline font-medium text-foreground"
+                  duration={800}
+                />{" "}
+                de tu límite este mes.
+              </>
+            )}
           </p>
         </div>
       </div>

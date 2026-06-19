@@ -394,7 +394,7 @@ export function LoginForm() {
               disabled={isPending}
               className="auth-outline-btn h-9 rounded-xl px-6 font-medium transition-all duration-300"
             >
-              <Link to={ROUTES.register}>Activa tu cuenta</Link>
+              <Link to={`${ROUTES.register}?activar=1`}>Activa tu cuenta</Link>
             </Button>
           </div>
         ) : (

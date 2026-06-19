@@ -38,16 +38,11 @@ describe("notificationsStorage", () => {
     expect(loadReadNotificationIds()).toEqual(new Set());
   });
 
-  it("combina ids guardados con las notificaciones demo ya leídas", () => {
+  it("solo carga ids guardados en localStorage para cuentas nuevas", () => {
     saveReadNotificationIds(new Set(["advance-processed"]));
 
     expect(getInitialReadNotificationIds()).toEqual(
-      new Set([
-        "advance-processed",
-        "limit-updated",
-        "achievement-unlocked",
-        "budget-reminder",
-      ]),
+      new Set(["advance-processed"]),
     );
   });
 });

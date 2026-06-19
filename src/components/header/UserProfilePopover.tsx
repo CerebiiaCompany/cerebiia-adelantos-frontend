@@ -11,14 +11,15 @@ import {
   HEADER_POPOVER_COLLISION_PADDING,
   headerPopoverContentClass,
 } from "@/components/header/headerPopoverStyles";
-import { DEMO_EMPLOYEE_PROFILE } from "@/shared/config/demoEmployeeProfile";
+import { useProfileView } from "@/features/auth";
 import { cn } from "@/lib/utils";
 
-type ProfileView = "profile" | "account" | "settings";
+type ProfilePanelView = "profile" | "account" | "settings";
 
 export function UserProfilePopover() {
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [view, setView] = useState<ProfileView>("profile");
+  const [view, setView] = useState<ProfilePanelView>("profile");
+  const profile = useProfileView();
 
   const handleOpenChange = (open: boolean) => {
     setPopoverOpen(open);
@@ -36,7 +37,7 @@ export function UserProfilePopover() {
           className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-primary shadow-sm shadow-primary/20 ring-2 ring-primary/15 transition-transform duration-300 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           <span className="text-xs font-semibold text-primary-foreground">
-            {DEMO_EMPLOYEE_PROFILE.initials}
+            {profile?.initials ?? "?"}
           </span>
         </button>
       </PopoverTrigger>
