@@ -66,7 +66,11 @@ export function isValidDocumentNumber(
 ): boolean {
   const trimmed = number.trim();
   if (!trimmed) return false;
-  return documentPatterns[type].test(trimmed);
+
+  const pattern = documentPatterns[type];
+  if (!pattern) return false;
+
+  return pattern.test(trimmed);
 }
 
 export const verifyDocumentSchema = z

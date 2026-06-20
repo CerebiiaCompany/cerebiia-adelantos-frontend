@@ -11,19 +11,28 @@ import {
   createEmpleadoSchema,
   type CreateEmpleadoFormValues,
 } from "@/shared/validations/empleado.schema";
+import {
+  normalizeEmpleadoDocumentNumber,
+} from "@/shared/validations/empleadoDocumentValidation";
+import type { DocumentType } from "@/shared/validations/register.schema";
 import { normalizeSalaryInput } from "@/shared/lib/currency";
 import {
   resolveEmpleadoImportField,
   type EmpleadoImportField,
 } from "./empleadoImportHeaders";
+import {
+  formatValidationImportMessage,
+  type EmpleadoImportRowError,
+  type EmpleadoImportValidRow,
+} from "./importResultMessages";
 
-export interface EmpleadoImportRowError {
-  rowNumber: number;
-  message: string;
-}
+export type {
+  EmpleadoImportRowError,
+  EmpleadoImportValidRow,
+} from "./importResultMessages";
 
 export interface EmpleadoImportParseResult {
-  valid: CreateEmpleadoRequest[];
+  valid: EmpleadoImportValidRow[];
   errors: EmpleadoImportRowError[];
 }
 
@@ -45,6 +54,7 @@ function mapDocumentType(value: string): string {
     cc: "CC",
     cedula: "CC",
     ceduladeciudadania: "CC",
+    pas: "PASSPORT",
     pasaporte: "PASSPORT",
     passport: "PASSPORT",
     ce: "CE",
@@ -110,6 +120,20 @@ function mapBank(value: string): string {
   if (!trimmed) return "";
 
   const normalized = normalizeLookupValue(trimmed);
+  const aliases: Record<string, string> = {
+    bancolombia: "Bancolombia",
+    davivienda: "Davivienda",
+    nequi: "Nequi",
+    daviplata: "Daviplata",
+    bbva: "BBVA Colombia",
+    bancodebogota: "Banco de Bogotá",
+    bogota: "Banco de Bogotá",
+    bancodeoccidente: "Banco de Occidente",
+    occidente: "Banco de Occidente",
+  };
+
+  if (aliases[normalized]) return aliases[normalized];
+
   const match = FINANCIAL_INSTITUTION_LABELS.find(
     (option) =>
       option.value === trimmed ||
@@ -168,12 +192,30 @@ function matrixToRecords(matrix: string[][]): Record<EmpleadoImportField, string
     });
 }
 
+function normalizeImportDocumento(tipoDocumento: string, documento: string): string {
+  const mappedType = mapDocumentType(tipoDocumento);
+
+  if (
+    mappedType === "CC" ||
+    mappedType === "PASSPORT" ||
+    mappedType === "CE" ||
+    mappedType === "PPT"
+  ) {
+    return normalizeEmpleadoDocumentNumber(mappedType as DocumentType, documento);
+  }
+
+  return documento.trim();
+}
+
 function normalizeImportRecord(
   record: Record<EmpleadoImportField, string>,
 ): CreateEmpleadoFormValues {
   return {
     tipo_documento: mapDocumentType(record.tipo_documento ?? ""),
-    documento: (record.documento ?? "").trim(),
+    documento: normalizeImportDocumento(
+      record.tipo_documento ?? "",
+      record.documento ?? "",
+    ),
     nombre: (record.nombre ?? "").trim(),
     correo: (record.correo ?? "").trim(),
     celular: (record.celular ?? "").trim(),
@@ -190,7 +232,7 @@ export function mapEmpleadoImportMatrix(
   matrix: string[][],
 ): EmpleadoImportParseResult {
   const records = matrixToRecords(matrix);
-  const valid: CreateEmpleadoRequest[] = [];
+  const valid: EmpleadoImportValidRow[] = [];
   const errors: EmpleadoImportRowError[] = [];
 
   if (records.length === 0) {
@@ -199,6 +241,7 @@ export function mapEmpleadoImportMatrix(
       errors: [
         {
           rowNumber: 0,
+          kind: "validation",
           message:
             "No se encontraron filas válidas. Verifica los encabezados del archivo.",
         },
@@ -216,14 +259,22 @@ export function mapEmpleadoImportMatrix(
       const fieldName = String(firstIssue.path[0] ?? "campo");
       errors.push({
         rowNumber,
-        message: `Fila ${rowNumber}: ${firstIssue.message} (${fieldName})`,
+        kind: "validation",
+        nombre: normalized.nombre || undefined,
+        documento: normalized.documento || undefined,
+        tipoDocumento: normalized.tipo_documento || undefined,
+        field: fieldName,
+        message: formatValidationImportMessage(fieldName, firstIssue.message),
       });
       return;
     }
 
     valid.push({
-      ...parsed.data,
-      salario: Number(parsed.data.salario).toFixed(2),
+      rowNumber,
+      data: {
+        ...parsed.data,
+        salario: Number(parsed.data.salario).toFixed(2),
+      },
     });
   });
 

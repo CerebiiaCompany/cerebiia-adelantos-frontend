@@ -18,19 +18,12 @@ function isExcelFile(file: File): boolean {
   );
 }
 
-function excelRowsToMatrix(rows: Record<string, unknown>[]): string[][] {
+function excelRowsToMatrix(rows: unknown[][]): string[][] {
   if (rows.length === 0) return [];
 
-  const headers = Object.keys(rows[0]);
-  const matrix: string[][] = [headers];
-
-  rows.forEach((row) => {
-    matrix.push(
-      headers.map((header) => stringifyCellValue(row[header])),
-    );
-  });
-
-  return matrix;
+  return rows.map((row) =>
+    row.map((cell) => stringifyCellValue(cell)),
+  );
 }
 
 function stringifyCellValue(value: unknown): string {
@@ -57,9 +50,11 @@ export async function parseEmpleadoImportFile(file: File): Promise<string[][]> {
     }
 
     const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+    const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+      header: 1,
       defval: "",
       raw: false,
+      dateNF: "yyyy-mm-dd",
     });
 
     return excelRowsToMatrix(rows);

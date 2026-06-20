@@ -10,12 +10,12 @@ import {
 import {
   documentTypes,
   isValidColombianPhone,
-  isValidDocumentNumber,
   isValidEmail,
   normalizeEmail,
   sanitizeColombianPhone,
   type DocumentType,
 } from "./register.schema";
+import { isValidEmpleadoDocumentNumber } from "./empleadoDocumentValidation";
 
 const SALARIO_REGEX = /^\d{1,12}(\.\d{1,2})?$/;
 
@@ -139,7 +139,7 @@ export const createEmpleadoSchema = z
   .superRefine((data, ctx) => {
     if (!data.tipo_documento || !data.documento) return;
 
-    if (!isValidDocumentNumber(data.tipo_documento, data.documento)) {
+    if (!isValidEmpleadoDocumentNumber(data.tipo_documento, data.documento)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Ingresa un número de documento válido",
