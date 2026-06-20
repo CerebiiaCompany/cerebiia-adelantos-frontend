@@ -1,4 +1,5 @@
 export { http, getApiBaseUrl, refreshAuthTokens, registerUnauthorizedHandler } from "./client";
+export { logoutAuthSession } from "./logoutSession";
 export { ApiError } from "./errors";
 export { authStorage, registerAuthSessionListener } from "./authStorage";
 export {

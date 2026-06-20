@@ -10,6 +10,10 @@ import Logros from "@/pages/Logros";
 import Notificaciones from "@/pages/Notificaciones";
 import EmployerPanelPage from "@/pages/employer/EmployerPanelPage";
 import EmployerMisEmpleadosPage from "@/pages/employer/EmployerMisEmpleadosPage";
+import EmployerMonitoreoAdelantosPage from "@/pages/employer/EmployerMonitoreoAdelantosPage";
+import EmployerSeguimientoCuotasPage from "@/pages/employer/EmployerSeguimientoCuotasPage";
+import EmployerHistorialMovimientosPage from "@/pages/employer/EmployerHistorialMovimientosPage";
+import EmployerRetencionesCierresPage from "@/pages/employer/EmployerRetencionesCierresPage";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
@@ -124,6 +128,38 @@ export function AppRouter() {
                 element={
                   <ModuleGuard moduleId="employer.misEmpleados">
                     <EmployerMisEmpleadosPage />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path="monitoreo-adelantos"
+                element={
+                  <ModuleGuard moduleId="employer.monitoreoAdelantos">
+                    <EmployerMonitoreoAdelantosPage />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path="seguimiento-cuotas"
+                element={
+                  <ModuleGuard moduleId="employer.seguimientoCuotas">
+                    <EmployerSeguimientoCuotasPage />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path="historial-movimientos"
+                element={
+                  <ModuleGuard moduleId="employer.historialMovimientos">
+                    <EmployerHistorialMovimientosPage />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path="retenciones-cierres"
+                element={
+                  <ModuleGuard moduleId="employer.retencionesCierres">
+                    <EmployerRetencionesCierresPage />
                   </ModuleGuard>
                 }
               />

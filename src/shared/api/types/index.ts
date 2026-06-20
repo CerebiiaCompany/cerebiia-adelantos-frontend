@@ -13,6 +13,7 @@ export type {
   EmpleadoSession,
   LoginRequest,
   LoginResponse,
+  LogoutRequest,
   RefreshTokenRequest,
   RefreshTokenResponse,
   SystemUserLoginRequest,

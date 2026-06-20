@@ -7,7 +7,7 @@ export type AppUserRole = "employer" | "employee";
 
 export type AuthActorType = "system_user" | "empleado";
 
-export type EmpleadoEstado = "pre_registrado" | "activo";
+export type EmpleadoEstado = "pre_registrado" | "activo" | "inactivo";
 
 export interface AuthUser {
   id: string;
@@ -58,6 +58,10 @@ export interface EmpleadoLoginResponse {
 }
 
 export interface RefreshTokenRequest {
+  refresh: string;
+}
+
+export interface LogoutRequest {
   refresh: string;
 }
 

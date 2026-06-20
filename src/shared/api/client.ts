@@ -8,12 +8,17 @@ import type { RefreshTokenResponse } from "./types/auth";
 
 const BASE_URL = resolveApiUrl();
 
-const PUBLIC_AUTH_PATHS = [
+const NO_BEARER_PATHS = [
   "/auth/login/",
   "/auth/refresh/",
   "/empleados/login/",
   "/empleados/verificar-pre-registro/",
   "/empleados/activar/",
+] as const;
+
+const NO_REFRESH_ON_401_PATHS = [
+  ...NO_BEARER_PATHS,
+  "/auth/logout/",
 ] as const;
 
 type UnauthorizedHandler = () => void;
@@ -30,8 +35,12 @@ export function registerUnauthorizedHandler(handler: UnauthorizedHandler): () =>
   };
 }
 
-function isPublicAuthPath(path: string): boolean {
-  return PUBLIC_AUTH_PATHS.some((publicPath) => path.includes(publicPath));
+function isNoBearerPath(path: string): boolean {
+  return NO_BEARER_PATHS.some((publicPath) => path.includes(publicPath));
+}
+
+function isNoRefreshOn401Path(path: string): boolean {
+  return NO_REFRESH_ON_401_PATHS.some((publicPath) => path.includes(publicPath));
 }
 
 async function parseResponseBody(res: Response): Promise<unknown> {
@@ -99,7 +108,7 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  if (session?.accessToken && !isPublicAuthPath(path)) {
+  if (session?.accessToken && !isNoBearerPath(path)) {
     headers.set("Authorization", `Bearer ${session.accessToken}`);
   }
 
@@ -116,7 +125,7 @@ async function request<T>(
     });
   }
 
-  if (res.status === 401 && !hasRetried && !isPublicAuthPath(path) && session) {
+  if (res.status === 401 && !hasRetried && !isNoRefreshOn401Path(path) && session) {
     const canRefresh =
       isSystemUserSession(session) && Boolean(session.refreshToken);
 

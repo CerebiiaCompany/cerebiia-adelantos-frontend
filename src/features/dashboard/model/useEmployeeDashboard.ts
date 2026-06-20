@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/model/AuthProvider";
+import { registerCompanyAdvance } from "@/entities/employer-audit";
 import {
   buildEmployeeDashboardSnapshot,
   parseEmployeeSalary,
@@ -42,9 +43,20 @@ export function useRecordEmployeeAdvance() {
   const { session } = useAuth();
 
   return useCallback(
-    (amount: number) => {
+    (amount: number, installments = 1) => {
       if (!session || !isEmpleadoSession(session) || amount <= 0) return;
-      recordEmployeeAdvance(session.empleado.id, amount);
+
+      const { empleado } = session;
+      recordEmployeeAdvance(empleado.id, amount);
+      registerCompanyAdvance({
+        empresaId: empleado.empresa_id,
+        employeeId: empleado.id,
+        employeeName: empleado.nombre,
+        employeeDocument: empleado.documento,
+        baseSalary: parseEmployeeSalary(empleado.salario),
+        advancedAmount: amount,
+        installments,
+      });
     },
     [session],
   );

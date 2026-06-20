@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Zap } from "lucide-react";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
@@ -10,7 +10,6 @@ import {
   useEmployeeDashboard,
   useRecordEmployeeAdvance,
 } from "@/features/dashboard";
-import { calculateMaxAdvanceLimit } from "@/entities/employee-dashboard";
 import { useProfileView } from "@/features/auth";
 import {
   Dialog,
@@ -42,10 +41,7 @@ export default function Adelanto() {
   const profile = useProfileView();
   const recordAdvance = useRecordEmployeeAdvance();
 
-  const maxAmount = useMemo(
-    () => calculateMaxAdvanceLimit(dashboard?.salary ?? 0),
-    [dashboard?.salary],
-  );
+  const maxAmount = dashboard?.availableAdvance ?? 0;
   const fee = Math.round(amount * 0.025);
   const total = amount - fee;
   const installmentValue = Math.round(total / installments);
@@ -187,7 +183,7 @@ export default function Adelanto() {
                 type="button"
                 showArrow={false}
                 onClick={() => {
-                  recordAdvance(amount);
+                  recordAdvance(amount, installments);
                   setConfirmOpen(false);
                   setShowReceipt(true);
                 }}

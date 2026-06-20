@@ -8,6 +8,7 @@ import type { EmpleadoDTO } from "@/shared/api/types";
 import { formatCOP } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 import { useEmpleadosList } from "../model/useEmpleadosList";
+import { DeactivateEmpleadoButton } from "./DeactivateEmpleadoButton";
 
 function formatSalario(salario: string): string {
   const amount = Number.parseFloat(salario);
@@ -27,17 +28,23 @@ function filterEmpleados(empleados: EmpleadoDTO[], query: string): EmpleadoDTO[]
 }
 
 function EstadoBadge({ estado }: { estado: EmpleadoDTO["estado"] }) {
+  const styles =
+    estado === "activo"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      : estado === "inactivo"
+        ? "border-red-200 bg-red-50 text-red-700"
+        : "border-amber-200 bg-amber-50 text-amber-700";
+
+  const label =
+    estado === "activo"
+      ? "Activo"
+      : estado === "inactivo"
+        ? "Inactivo"
+        : "Pre-registrado";
+
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "rounded-md font-medium",
-        estado === "activo"
-          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-amber-200 bg-amber-50 text-amber-700",
-      )}
-    >
-      {estado === "activo" ? "Activo" : "Pre-registrado"}
+    <Badge variant="outline" className={cn("rounded-md font-medium", styles)}>
+      {label}
     </Badge>
   );
 }
@@ -98,7 +105,7 @@ export function EmpleadosTable() {
 
       {!isLoading && !isError ? (
         <div className="overflow-x-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[640px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50 text-left">
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
@@ -116,12 +123,15 @@ export function EmpleadosTable() {
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Estado
                 </th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredEmpleados.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center">
+                  <td colSpan={6} className="px-4 py-10 text-center">
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
                       <Users className="h-8 w-8 opacity-60" />
                       <p className="text-sm">
@@ -152,6 +162,9 @@ export function EmpleadosTable() {
                     </td>
                     <td className="px-4 py-3.5">
                       <EstadoBadge estado={empleado.estado} />
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <DeactivateEmpleadoButton empleado={empleado} />
                     </td>
                   </tr>
                 ))

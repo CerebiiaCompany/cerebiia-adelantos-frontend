@@ -17,13 +17,29 @@ describe("moduleAccess", () => {
     }
   });
 
-  it("allows employers to access only dashboard and mis empleados", () => {
+  it("allows employers to access all employer audit modules", () => {
     expect(canAccessModule("employer", "employer.dashboard")).toBe(true);
     expect(canAccessModule("employer", "employer.misEmpleados")).toBe(true);
+    expect(canAccessModule("employer", "employer.monitoreoAdelantos")).toBe(
+      true,
+    );
+    expect(canAccessModule("employer", "employer.seguimientoCuotas")).toBe(
+      true,
+    );
+    expect(canAccessModule("employer", "employer.historialMovimientos")).toBe(
+      true,
+    );
+    expect(canAccessModule("employer", "employer.retencionesCierres")).toBe(
+      true,
+    );
     expect(canAccessModule("employer", "employee.adelanto")).toBe(false);
     expect(getModulesForRole("employer")).toEqual([
       "employer.dashboard",
       "employer.misEmpleados",
+      "employer.monitoreoAdelantos",
+      "employer.seguimientoCuotas",
+      "employer.historialMovimientos",
+      "employer.retencionesCierres",
     ]);
   });
 
@@ -33,6 +49,9 @@ describe("moduleAccess", () => {
     expect(canAccessPath("employer", ROUTES.employer.misEmpleados)).toBe(
       true,
     );
+    expect(
+      canAccessPath("employer", ROUTES.employer.monitoreoAdelantos),
+    ).toBe(true);
     expect(canAccessPath("employee", ROUTES.employer.panel)).toBe(false);
   });
 });

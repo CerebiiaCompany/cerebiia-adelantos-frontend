@@ -1,26 +1,19 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
+import {
+  ADVANCE_AMOUNT_STEP,
+  buildAdvanceQuickAmounts,
+  snapAdvanceAmount,
+} from "@/entities/advance";
 import { cn } from "@/lib/utils";
 
-export const ADVANCE_AMOUNT_STEP = 50_000;
-export const ADVANCE_QUICK_AMOUNTS = [
-  500_000,
-  1_000_000,
-  1_500_000,
-  2_000_000,
-] as const;
+export { ADVANCE_AMOUNT_STEP, snapAdvanceAmount };
 
 const COUNT_DURATION = 450;
 
 export function formatAdvanceAmount(value: number): string {
   return `$${value.toLocaleString("es-CO")}`;
-}
-
-export function snapAdvanceAmount(value: number, maxAmount: number): number {
-  const snapped =
-    Math.round(value / ADVANCE_AMOUNT_STEP) * ADVANCE_AMOUNT_STEP;
-  return Math.min(maxAmount, Math.max(0, snapped));
 }
 
 function parseAmountDigits(raw: string): number {
@@ -47,6 +40,11 @@ export function AdvanceAmountSelector({
   const [isEditingAmount, setIsEditingAmount] = useState(false);
   const [draftAmount, setDraftAmount] = useState("");
 
+  const quickAmounts = useMemo(
+    () => buildAdvanceQuickAmounts(maxAmount),
+    [maxAmount],
+  );
+
   const progressPercent = maxAmount > 0 ? (amount / maxAmount) * 100 : 0;
 
   useEffect(() => {
@@ -70,10 +68,10 @@ export function AdvanceAmountSelector({
   );
 
   const handleQuickSelect = useCallback(
-    (preset: (typeof ADVANCE_QUICK_AMOUNTS)[number]) => {
-      onAmountChange(preset);
+    (preset: number) => {
+      onAmountChange(snapAdvanceAmount(preset, maxAmount));
     },
-    [onAmountChange],
+    [maxAmount, onAmountChange],
   );
 
   const handleAmountFocus = useCallback(() => {
@@ -170,7 +168,7 @@ export function AdvanceAmountSelector({
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {ADVANCE_QUICK_AMOUNTS.map((preset) => {
+        {quickAmounts.map((preset) => {
           const isActive = amount === preset;
 
           return (

@@ -5,10 +5,12 @@ import { useNavigate } from "react-router-dom";import {
   authEndpoints,
   buildDemoEmpleadoSession,
   empleadosEndpoints,
+  isEmpleadoSession,
   mapEmpleadoLoginResponseToSession,
   mapSystemLoginResponseToSession,
   resolveAppRole,
 } from "@/shared/api";
+import { isEmpleadoLocallyDeactivated } from "@/entities/empleado";
 import type { LoginFormValues } from "@/shared/validations/auth.schema";
 import { env } from "@/shared/config/env";
 import { getHomeRouteForAppRole } from "@/shared/config/roleRoutes";
@@ -44,6 +46,16 @@ async function authenticate(values: LoginFormValues) {
             password: values.password,
           }),
         );
+
+  if (
+    isEmpleadoSession(session) &&
+    isEmpleadoLocallyDeactivated(session.empleado.empresa_id, session.empleado.id)
+  ) {
+    throw new ApiError(403, "/empleados/login/", {
+      detail:
+        "Tu cuenta fue desactivada por la empresa. Contacta a Recursos Humanos.",
+    });
+  }
 
   const appRole = resolveAppRole(session);
   if (!appRole) {

@@ -11,7 +11,13 @@ export type EmployeeModuleId =
   | "employee.logros"
   | "employee.notificaciones";
 
-export type EmployerModuleId = "employer.dashboard" | "employer.misEmpleados";
+export type EmployerModuleId =
+  | "employer.dashboard"
+  | "employer.misEmpleados"
+  | "employer.monitoreoAdelantos"
+  | "employer.seguimientoCuotas"
+  | "employer.historialMovimientos"
+  | "employer.retencionesCierres";
 
 export type AppModuleId = EmployeeModuleId | EmployerModuleId;
 
@@ -62,6 +68,22 @@ export const APP_MODULES: Record<AppModuleId, ModuleDefinition> = {
   },
   "employer.misEmpleados": {
     path: ROUTES.employer.misEmpleados,
+    roles: ["employer"],
+  },
+  "employer.monitoreoAdelantos": {
+    path: ROUTES.employer.monitoreoAdelantos,
+    roles: ["employer"],
+  },
+  "employer.seguimientoCuotas": {
+    path: ROUTES.employer.seguimientoCuotas,
+    roles: ["employer"],
+  },
+  "employer.historialMovimientos": {
+    path: ROUTES.employer.historialMovimientos,
+    roles: ["employer"],
+  },
+  "employer.retencionesCierres": {
+    path: ROUTES.employer.retencionesCierres,
     roles: ["employer"],
   },
 };
