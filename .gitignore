@@ -22,3 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Archivos temporales de prueba / debug local
+t.txt
+t-emp.txt
+vitest-*.txt
+
+# Variables de entorno (nunca commitear secrets)
+.env

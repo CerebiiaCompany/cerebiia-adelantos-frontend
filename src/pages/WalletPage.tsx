@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -9,10 +10,10 @@ import {
   ShoppingBag,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useEmployeeDashboard } from "@/features/dashboard";
 import { cn } from "@/lib/utils";
 
 const allies = [
@@ -40,8 +41,12 @@ const allies = [
 ];
 
 export default function WalletPage() {
+  const dashboard = useEmployeeDashboard();
   const [showBalance, setShowBalance] = useState(true);
-  const balance = 0;
+
+  if (!dashboard) return null;
+
+  const balance = dashboard.salary;
   const movements: Array<{
     type: "in" | "out";
     desc: string;
@@ -82,7 +87,7 @@ export default function WalletPage() {
             )}
           </p>
           <p className="text-xs text-muted-foreground">
-            Usa tu saldo para pagar en servicios aliados
+            Salario mensual registrado en tu cuenta
           </p>
         </div>
       </div>

@@ -6,6 +6,7 @@ import type {
   ChangePasswordResponse,
   ForgotPasswordRequest,
   ForgotPasswordResponse,
+  LogoutRequest,
   RefreshTokenRequest,
   RefreshTokenResponse,
   RegisterUserRequest,
@@ -22,6 +23,7 @@ export const authEndpoints = {
     http.post<SystemUserLoginResponse>("/auth/login/", data),
   refresh: (data: RefreshTokenRequest) =>
     http.post<RefreshTokenResponse>("/auth/refresh/", data),
+  logout: (data: LogoutRequest) => http.post<void>("/auth/logout/", data),
   me: () => http.get<AuthUser>("/auth/me/"),
   forgotPassword: (data: ForgotPasswordRequest) =>
     http.post<ForgotPasswordResponse>("/auth/password/forgot/", data),
