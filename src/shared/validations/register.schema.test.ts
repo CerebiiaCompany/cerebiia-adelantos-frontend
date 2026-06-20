@@ -44,6 +44,10 @@ describe("isValidDocumentNumber", () => {
     expect(isValidDocumentNumber("PPT", "12345678901234")).toBe(false);
     expect(isValidDocumentNumber("PPT", "1234567890123456")).toBe(false);
   });
+
+  it("no lanza error con tipos de documento desconocidos", () => {
+    expect(isValidDocumentNumber("PAS" as never, "987654")).toBe(false);
+  });
 });
 
 describe("sanitizeDocumentNumber", () => {

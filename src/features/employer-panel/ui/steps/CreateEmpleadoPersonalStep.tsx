@@ -17,10 +17,10 @@ import {
 import { useEmpleadoFormCatalogs } from "@/features/employer-panel/model/useEmpleadoFormCatalogs";
 import { FormModalSelectContent } from "@/features/employer-panel/ui/FormModalSelectContent";
 import {
-  sanitizeDocumentNumber,
-  type DocumentType,
-} from "@/shared/validations/register.schema";
+  normalizeEmpleadoDocumentNumber,
+} from "@/shared/validations/empleadoDocumentValidation";
 import type { CreateEmpleadoFormValues } from "@/shared/validations/empleado.schema";
+import type { DocumentType } from "@/shared/validations/register.schema";
 
 const inputClassName =
   "h-11 rounded-xl border-border/80 bg-background/80 transition-all duration-300 focus-visible:ring-primary/30";
@@ -29,10 +29,10 @@ const selectTriggerClassName =
   "h-11 rounded-xl border-border/80 bg-background/80 text-left transition-all duration-300 focus:ring-primary/30";
 
 const documentPlaceholders: Record<DocumentType, string> = {
-  CC: "Ej: 1234567890",
-  PASSPORT: "Ej: AB123456",
-  CE: "Ej: 1234567890",
-  PPT: "Ej: 123456789012345",
+  CC: "Ej: 1014234567",
+  PASSPORT: "Ej: 98765432",
+  CE: "Ej: 205412789",
+  PPT: "Ej: 4561230",
 };
 
 interface CreateEmpleadoPersonalStepProps {
@@ -100,7 +100,7 @@ export function CreateEmpleadoPersonalStep({
                       ? documentPlaceholders[tipoDocumento]
                       : "Selecciona primero el tipo"
                   }
-                  inputMode={tipoDocumento === "PASSPORT" ? "text" : "numeric"}
+                  inputMode="numeric"
                   className={inputClassName}
                   disabled={disabled || !tipoDocumento}
                   value={field.value}
@@ -109,7 +109,10 @@ export function CreateEmpleadoPersonalStep({
                   ref={field.ref}
                   onChange={(event) => {
                     const value = tipoDocumento
-                      ? sanitizeDocumentNumber(tipoDocumento, event.target.value)
+                      ? normalizeEmpleadoDocumentNumber(
+                          tipoDocumento,
+                          event.target.value,
+                        )
                       : event.target.value;
                     field.onChange(value);
                   }}
