@@ -61,7 +61,12 @@ export function mapEmpleadoToProfileView(empleado: EmpleadoProfile): ProfileView
     accountNumber: empleado.numero_cuenta,
     employeeNumber: empleado.id,
     company: empleado.empresa_id,
-    status: empleado.estado === "activo" ? "Activo" : "Pre-registrado",
+    status:
+      empleado.estado === "activo"
+        ? "Activo"
+        : empleado.estado === "inactivo"
+          ? "Inactivo"
+          : "Pre-registrado",
     memberSince: formatDate(empleado.created_at),
   };
 }

@@ -9,6 +9,11 @@ const NOTIFICATION_ICON_COLORS: Record<string, string> = {
   "budget-reminder": "text-primary",
 };
 
+function getNotificationIconColor(id: string): string {
+  if (id.startsWith("advance-")) return "text-primary";
+  return NOTIFICATION_ICON_COLORS[id] ?? "text-primary";
+}
+
 interface NotificationItemProps {
   notification: DemoNotification;
   compact?: boolean;
@@ -28,7 +33,7 @@ export function NotificationItem({
       <span
         className={cn(
           "inline-flex shrink-0 items-center justify-center",
-          NOTIFICATION_ICON_COLORS[notification.id] ?? "text-primary",
+          getNotificationIconColor(notification.id),
           "mt-0.5",
         )}
       >

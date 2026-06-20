@@ -92,11 +92,11 @@ export default function EmployerPanelPage() {
           Resumen operativo
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Bienvenido al panel de empresa. El listado de empleados ya está conectado
-          al backend; desde{" "}
-          <span className="font-medium text-foreground">Mis empleados</span> puedes
-          consultar y registrar tu plantilla. Los módulos de solicitudes y datos de
-          empresa se conectarán en la siguiente fase.
+          Bienvenido al panel de empresa. Desde aquí puedes auditar adelantos,
+          supervisar cuotas de préstamos, consultar el libro contable y generar
+          los reportes de retención para nómina. El listado de empleados ya está
+          conectado al backend desde{" "}
+          <span className="font-medium text-foreground">Mis empleados</span>.
         </p>
       </div>
     </div>

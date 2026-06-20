@@ -2,31 +2,28 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { useAuth } from "@/features/auth/model/AuthProvider";
+import {
+  loadEmployeeNotifications,
+  subscribeEmployeeNotifications,
+} from "@/entities/notification";
+import { isEmpleadoSession } from "@/shared/api";
+import type { DemoNotification } from "@/shared/config/demoNotifications";
+import { mapStoredNotificationsToDemo } from "./mapStoredNotifications";
 import {
   getInitialReadNotificationIds,
   saveReadNotificationIds,
 } from "./notificationsStorage";
 
-import type { DemoNotification } from "@/shared/config/demoNotifications";
-
 function getUnreadNotifications(
   notifications: DemoNotification[],
 ): DemoNotification[] {
   return notifications.filter((notification) => !notification.read);
-}
-
-function applyReadState(
-  notifications: DemoNotification[],
-  readIds: Set<string>,
-): DemoNotification[] {
-  return notifications.map((notification) => ({
-    ...notification,
-    read: readIds.has(notification.id),
-  }));
 }
 
 interface NotificationsContextValue {
@@ -42,14 +39,26 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
 );
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuth();
+  const employeeId =
+    session && isEmpleadoSession(session) ? session.empleado.id : null;
+
   const [readIds, setReadIds] = useState<Set<string>>(() =>
     getInitialReadNotificationIds(),
   );
+  const [version, setVersion] = useState(0);
 
-  const notifications = useMemo(
-    () => applyReadState([], readIds),
-    [readIds],
+  useEffect(
+    () => subscribeEmployeeNotifications(() => setVersion((v) => v + 1)),
+    [],
   );
+
+  const notifications = useMemo(() => {
+    if (!employeeId) return [];
+
+    const stored = loadEmployeeNotifications(employeeId);
+    return mapStoredNotificationsToDemo(stored, readIds);
+  }, [employeeId, readIds, version]);
 
   const unreadNotifications = useMemo(
     () => getUnreadNotifications(notifications),
@@ -78,7 +87,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         return current;
       }
 
-      const next = new Set(allIds);
+      const next = new Set([...current, ...allIds]);
       saveReadNotificationIds(next);
       return next;
     });

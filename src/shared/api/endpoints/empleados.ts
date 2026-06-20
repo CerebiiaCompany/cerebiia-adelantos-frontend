@@ -28,4 +28,6 @@ export const empleadosEndpoints = {
     ),
   activar: (data: ActivarEmpleadoRequest) =>
     http.post<ActivarEmpleadoResponse>("/empleados/activar/", data),
+  deactivate: (empleadoId: string) =>
+    http.post<EmpleadoDTO>(`/empleados/${empleadoId}/desactivar/`),
 };

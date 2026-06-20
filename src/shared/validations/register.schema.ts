@@ -15,7 +15,7 @@ export const DOCUMENT_TYPE_OPTIONS = [
   { value: "CC", label: "Cédula de Ciudadanía Colombiana" },
   { value: "PASSPORT", label: "Pasaporte" },
   { value: "CE", label: "Cédula de Extranjería" },
-  { value: "PPT", label: "Permiso por protección temporal -PPT" },
+  { value: "PPT", label: "Permiso por protección temporal - PPT" },
 ] as const;
 
 const genderValues = GENDER_OPTIONS.map((g) => g.value) as [

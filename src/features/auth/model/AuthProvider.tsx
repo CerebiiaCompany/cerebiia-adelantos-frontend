@@ -40,6 +40,8 @@ import {
 
 } from "@/shared/api";
 
+import { isEmpleadoLocallyDeactivated } from "@/entities/empleado";
+
 import type { AppUserRole, AuthSession } from "@/shared/api/types/auth";
 
 import { env } from "@/shared/config/env";
@@ -129,6 +131,24 @@ function restoreEmpleadoSession(stored: AuthSession): AuthSession | null {
 
 
   if (!isEmpleadoSession(stored) || stored.empleado.estado !== "activo") {
+
+    return null;
+
+  }
+
+
+
+  if (
+
+    isEmpleadoLocallyDeactivated(
+
+      stored.empleado.empresa_id,
+
+      stored.empleado.id,
+
+    )
+
+  ) {
 
     return null;
 

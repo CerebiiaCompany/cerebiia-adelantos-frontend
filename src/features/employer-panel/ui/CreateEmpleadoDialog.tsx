@@ -1,9 +1,10 @@
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import {
   Dialog,
   DialogContent,
@@ -12,27 +13,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
 import { ApiError } from "@/shared/api";
 import {
+  CREATE_EMPLEADO_STEP1_FIELDS,
   createEmpleadoSchema,
+  isCreateEmpleadoStep1Complete,
+  isCreateEmpleadoStep2Complete,
   type CreateEmpleadoFormValues,
-} from "@/shared/validations/empleado.schema";
-import { useCreateEmpleado } from "../model/useCreateEmpleado";
+} from "@/shared/validations/empleado.schema";import { useCreateEmpleado } from "../model/useCreateEmpleado";
+import { CreateEmpleadoStepIndicator } from "./CreateEmpleadoStepIndicator";
+import { CreateEmpleadoLaboralStep } from "./steps/CreateEmpleadoLaboralStep";
+import { CreateEmpleadoPersonalStep } from "./steps/CreateEmpleadoPersonalStep";
 
 const DEFAULT_VALUES: CreateEmpleadoFormValues = {
+  tipo_documento: "",
   documento: "",
   nombre: "",
+  correo: "",
+  celular: "",
   salario: "",
+  tipo_contrato: "",
+  fecha_ingreso: "",
   banco: "",
+  tipo_cuenta: "",
   numero_cuenta: "",
 };
 
@@ -45,20 +50,42 @@ export function CreateEmpleadoDialog({
   open,
   onOpenChange,
 }: CreateEmpleadoDialogProps) {
+  const [step, setStep] = useState<1 | 2>(1);
   const { mutate: createEmpleado, isPending, reset: resetMutation } =
     useCreateEmpleado();
 
   const form = useForm<CreateEmpleadoFormValues>({
     resolver: zodResolver(createEmpleadoSchema),
     defaultValues: DEFAULT_VALUES,
+    mode: "onChange",
   });
+
+  const watchedValues = useWatch({ control: form.control });
+
+  const isStep1Complete = useMemo(
+    () => isCreateEmpleadoStep1Complete(watchedValues ?? {}),
+    [watchedValues],
+  );
+
+  const isStep2Complete = useMemo(
+    () => isCreateEmpleadoStep2Complete(watchedValues ?? {}),
+    [watchedValues],
+  );
 
   useEffect(() => {
     if (!open) {
       form.reset(DEFAULT_VALUES);
+      setStep(1);
       resetMutation();
     }
   }, [open, form, resetMutation]);
+
+  async function handleNextStep() {
+    const isValid = await form.trigger([...CREATE_EMPLEADO_STEP1_FIELDS]);
+    if (isValid) {
+      setStep(2);
+    }
+  }
 
   function handleSubmit(values: CreateEmpleadoFormValues) {
     createEmpleado(
@@ -68,7 +95,9 @@ export function CreateEmpleadoDialog({
       },
       {
         onSuccess: (empleado) => {
-          toast.success(`${empleado.nombre} fue registrado como pre-registrado.`);
+          toast.success(
+            `${empleado.nombre} fue registrado. Se enviará la invitación de activación a su correo.`,
+          );
           onOpenChange(false);
         },
         onError: (error) => {
@@ -88,118 +117,44 @@ export function CreateEmpleadoDialog({
         <DialogHeader>
           <DialogTitle className="font-display">Nuevo empleado</DialogTitle>
           <DialogDescription>
-            El empleado quedará en estado pre-registrado hasta que active su
-            cuenta con su documento.
+            Registra al colaborador en dos pasos. Recibirá una invitación por
+            correo para activar su cuenta.
           </DialogDescription>
         </DialogHeader>
+
+        <CreateEmpleadoStepIndicator currentStep={step} />
 
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-4"
           >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
+            {step === 1 ? (
+              <CreateEmpleadoPersonalStep
                 control={form.control}
-                name="documento"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Documento</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        inputMode="numeric"
-                        placeholder="12345678"
-                        className="h-11 rounded-xl"
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                disabled={isPending}
               />
-
-              <FormField
+            ) : (
+              <CreateEmpleadoLaboralStep
                 control={form.control}
-                name="nombre"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre completo</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Juan Pérez"
-                        className="h-11 rounded-xl"
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                disabled={isPending}
               />
-            </div>
+            )}
 
-            <FormField
-              control={form.control}
-              name="salario"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Salario mensual</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      inputMode="decimal"
-                      placeholder="1500000.00"
-                      className="h-11 rounded-xl"
-                      disabled={isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            <DialogFooter className="gap-2 sm:gap-2">
+              {step === 2 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                  disabled={isPending}
+                  className="rounded-xl"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Atrás
+                </Button>
               )}
-            />
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="banco"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Banco</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Bancolombia"
-                        className="h-11 rounded-xl"
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="numero_cuenta"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de cuenta</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="123456789"
-                        className="h-11 rounded-xl"
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
                 variant="outline"
@@ -209,23 +164,37 @@ export function CreateEmpleadoDialog({
               >
                 Cancelar
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="rounded-xl bg-gradient-primary"
-              >
-                {isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Crear empleado
-                  </>
-                )}
-              </Button>
+
+              {step === 1 ? (
+                <PrimaryActionButton
+                  type="button"
+                  onClick={() => void handleNextStep()}
+                  disabled={!isStep1Complete}
+                  className={cn(
+                    "h-11 rounded-xl px-5 text-sm font-semibold shadow-md transition-all duration-500 ease-out",
+                    isStep1Complete &&
+                      "shadow-[0_10px_28px_hsl(var(--primary)/0.22)]",
+                  )}
+                >
+                  Siguiente
+                </PrimaryActionButton>
+              ) : (
+                <PrimaryActionButton
+                  type="submit"
+                  disabled={!isStep2Complete}
+                  loading={isPending}
+                  loadingText="Guardando..."
+                  showArrow={false}
+                  className={cn(
+                    "h-11 rounded-xl px-5 text-sm font-semibold shadow-md transition-all duration-500 ease-out",
+                    isStep2Complete &&
+                      "shadow-[0_10px_28px_hsl(var(--primary)/0.22)]",
+                  )}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Crear empleado
+                </PrimaryActionButton>
+              )}
             </DialogFooter>
           </form>
         </Form>
