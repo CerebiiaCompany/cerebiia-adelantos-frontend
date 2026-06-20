@@ -9,8 +9,10 @@ export {
   useEmployerPayrollClosure,
 } from "./model/useEmployerAuditData";
 export { useDeactivateEmpleado } from "./model/useDeactivateEmpleado";
+export { useImportEmpleados } from "./model/useImportEmpleados";
 export { EmpleadosTable } from "./ui/EmpleadosTable";
 export { DeactivateEmpleadoButton } from "./ui/DeactivateEmpleadoButton";
+export { ImportEmpleadosButton } from "./ui/ImportEmpleadosButton";
 export {
   CreateEmpleadoDialog,
   CreateEmpleadoButton,

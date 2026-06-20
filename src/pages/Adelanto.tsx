@@ -144,6 +144,12 @@ export default function Adelanto() {
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">No. cuenta</dt>
+                  <dd className="font-mono text-xs font-medium text-foreground">
+                    {profile?.accountNumber ?? "—"}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">No. empleado</dt>
                   <dd className="font-mono text-xs font-medium text-foreground">
                     {profile?.employeeNumber ?? "—"}

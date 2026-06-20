@@ -171,6 +171,12 @@ export function AdvanceReceipt({
                 label="Identificación"
                 value={profile.documentNumber ?? "—"}
               />
+              <PartyLine label="Banco" value={profile.bank ?? "—"} />
+              <PartyLine
+                label="No. cuenta"
+                value={profile.accountNumber ?? "—"}
+                mono
+              />
               <PartyLine label="Departamento" value={departmentLabel} />
               <PartyLine
                 label="No. empleado"
