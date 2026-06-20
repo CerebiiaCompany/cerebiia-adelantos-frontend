@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { FileSpreadsheet, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +9,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { downloadCsvFile } from "@/shared/lib/csv";
-import { EMPLEADO_IMPORT_TEMPLATE_HEADERS } from "@/shared/lib/empleadoImport";
+import { downloadExcelFile } from "@/shared/lib/excel";
+import {
+  buildEmpleadoImportTemplateWorkbook,
+  groupImportErrorsByKind,
+  type EmpleadoImportRowError,
+} from "@/shared/lib/empleadoImport";
 import { cn } from "@/lib/utils";
 import {
   useImportEmpleados,
@@ -18,6 +22,92 @@ import {
 } from "../model/useImportEmpleados";
 
 const ACCEPTED_EXTENSIONS = ".csv,.xlsx,.xls";
+
+interface ImportErrorSectionProps {
+  title: string;
+  errors: EmpleadoImportRowError[];
+}
+
+function ImportErrorSection({ title, errors }: ImportErrorSectionProps) {
+  if (errors.length === 0) return null;
+
+  return (
+    <div className="space-y-2">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h4>
+      <div className="space-y-2">
+        {errors.map((error, index) => (
+          <div
+            key={`${error.rowNumber}-${error.kind}-${index}`}
+            className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2.5"
+          >
+            {error.rowNumber > 0 ? (
+              <p className="text-xs font-medium text-foreground">
+                Fila {error.rowNumber}
+                {error.nombre ? ` · ${error.nombre}` : ""}
+              </p>
+            ) : null}
+            <p className="mt-1 text-sm text-destructive">{error.message}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ImportResultSummary({ result }: { result: ImportEmpleadosResult }) {
+  const totalErrors = result.parseErrors.length + result.importErrors.length;
+  const grouped = groupImportErrorsByKind([
+    ...result.parseErrors,
+    ...result.importErrors,
+  ]);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="flex items-center gap-2 rounded-xl border border-success/20 bg-success/5 px-3 py-2.5">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+          <p className="text-sm">
+            <span className="font-semibold text-foreground">
+              {result.createdCount}
+            </span>{" "}
+            empleado{result.createdCount === 1 ? "" : "s"} creado
+            {result.createdCount === 1 ? "" : "s"}
+          </p>
+        </div>
+
+        {totalErrors > 0 ? (
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+            <p className="text-sm">
+              <span className="font-semibold text-foreground">{totalErrors}</span>{" "}
+              fila{totalErrors === 1 ? "" : "s"} con error
+              {totalErrors === 1 ? "" : "es"}
+            </p>
+          </div>
+        ) : null}
+      </div>
+
+      {totalErrors > 0 ? (
+        <div className="max-h-72 space-y-4 overflow-y-auto rounded-xl border border-border/80 bg-secondary/20 p-3">
+          <ImportErrorSection
+            title="Ya registrados en tu empresa"
+            errors={grouped.duplicate}
+          />
+          <ImportErrorSection
+            title="Datos inválidos en el archivo"
+            errors={grouped.validation}
+          />
+          <ImportErrorSection
+            title="Otros errores al crear"
+            errors={grouped.api}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function ImportEmpleadosButton() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,27 +122,19 @@ export function ImportEmpleadosButton() {
   }
 
   function handleDownloadTemplate() {
-    downloadCsvFile("plantilla-importacion-nomina", [
-      [...EMPLEADO_IMPORT_TEMPLATE_HEADERS],
-      [
-        "CC",
-        "1005026054",
-        "Melanny Yilyan Guate Restrepo",
-        "empleado@empresa.com",
-        "3001234567",
-        "1700000",
-        "indefinido",
-        "2026-01-15",
-        "nequi",
-        "ahorros",
-        "3001234567",
-      ],
-    ]);
-    toast.success("Plantilla descargada. Complétala e impórtala.");
+    downloadExcelFile(
+      "plantilla-importacion-nomina",
+      [],
+      "Empleados",
+      buildEmpleadoImportTemplateWorkbook(),
+    );
+    toast.success("Plantilla Excel descargada. Complétala e impórtala.");
   }
 
   function showResultSummary(result: ImportEmpleadosResult) {
-    if (result.createdCount > 0 && result.failedCount === 0 && result.parseErrors.length === 0) {
+    const totalErrors = result.parseErrors.length + result.importErrors.length;
+
+    if (result.createdCount > 0 && totalErrors === 0) {
       toast.success(
         `${result.createdCount} empleado${result.createdCount === 1 ? "" : "s"} importado${result.createdCount === 1 ? "" : "s"} correctamente.`,
       );
@@ -81,13 +163,9 @@ export function ImportEmpleadosButton() {
     });
   }
 
-  const allErrors = [
-    ...(lastResult?.parseErrors.map((error) => ({
-      rowNumber: error.rowNumber,
-      message: error.message,
-    })) ?? []),
-    ...(lastResult?.importErrors ?? []),
-  ];
+  const totalErrors =
+    (lastResult?.parseErrors.length ?? 0) +
+    (lastResult?.importErrors.length ?? 0);
 
   return (
     <>
@@ -135,24 +213,15 @@ export function ImportEmpleadosButton() {
             </DialogTitle>
             <DialogDescription>
               {lastResult?.createdCount
-                ? `Se crearon ${lastResult.createdCount} empleado${lastResult.createdCount === 1 ? "" : "s"}.`
-                : "No se crearon empleados."}
-              {lastResult?.failedCount || lastResult?.parseErrors.length
-                ? " Revisa los errores a continuación."
+                ? `Se importó ${lastResult.createdCount} empleado${lastResult.createdCount === 1 ? "" : "s"} correctamente.`
+                : "No se importó ningún empleado."}
+              {totalErrors > 0
+                ? " Revisa el detalle de las filas con error."
                 : ""}
             </DialogDescription>
           </DialogHeader>
 
-          {allErrors.length > 0 ? (
-            <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-border/80 bg-secondary/20 p-3 text-sm">
-              {allErrors.map((error, index) => (
-                <p key={`${error.rowNumber}-${index}`} className="text-destructive">
-                  {error.rowNumber > 0 ? `Fila ${error.rowNumber}: ` : ""}
-                  {error.message}
-                </p>
-              ))}
-            </div>
-          ) : null}
+          {lastResult ? <ImportResultSummary result={lastResult} /> : null}
         </DialogContent>
       </Dialog>
     </>
