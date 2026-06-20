@@ -6,6 +6,7 @@ import {
   CreateEmpleadoButton,
   CreateEmpleadoDialog,
   EmpleadosTable,
+  ImportEmpleadosButton,
 } from "@/features/employer-panel";
 import { isSystemUserSession } from "@/shared/api";
 
@@ -24,7 +25,10 @@ export default function EmployerMisEmpleadosPage() {
         title="Mis empleados"
         description={`Listado de empleados vinculados a ${companyName}`}
         actions={
-          <CreateEmpleadoButton onClick={() => setCreateDialogOpen(true)} />
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <ImportEmpleadosButton />
+            <CreateEmpleadoButton onClick={() => setCreateDialogOpen(true)} />
+          </div>
         }
       />
 
