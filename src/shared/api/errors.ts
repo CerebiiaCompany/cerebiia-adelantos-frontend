@@ -15,6 +15,14 @@ export class ApiError extends Error {
 }
 
 function parseApiErrorMessage(body: unknown, status: number): string {
+  if (typeof body === "string") {
+    if (body.includes("<!DOCTYPE") || body.includes("<html")) {
+      return `Error interno del servidor (${status}). Revisa la consola del backend.`;
+    }
+    const trimmed = body.trim();
+    if (trimmed) return trimmed.slice(0, 280);
+  }
+
   if (typeof body === "object" && body !== null) {
     const record = body as Record<string, unknown>;
 
@@ -37,6 +45,10 @@ function parseApiErrorMessage(body: unknown, status: number): string {
 
   if (status === 403) {
     return "You do not have permission to perform this action";
+  }
+
+  if (status >= 500) {
+    return `Error interno del servidor (${status})`;
   }
 
   return `Request failed (${status})`;

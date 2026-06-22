@@ -9,9 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -35,7 +33,7 @@ export function CreateEmpleadoLaboralStep({
   control,
   disabled = false,
 }: CreateEmpleadoLaboralStepProps) {
-  const { contractTypes, accountTypes, financialInstitutions } =
+  const { contractTypes, accountTypes, banks, isLoading } =
     useEmpleadoFormCatalogs();
 
   return (
@@ -125,7 +123,7 @@ export function CreateEmpleadoLaboralStep({
       <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           control={control}
-          name="banco"
+          name="banco_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Banco o plataforma</FormLabel>
@@ -133,29 +131,26 @@ export function CreateEmpleadoLaboralStep({
                 modal={false}
                 onValueChange={field.onChange}
                 value={field.value || undefined}
-                disabled={disabled}
+                disabled={disabled || isLoading}
               >
                 <FormControl>
                   <SelectTrigger className={selectTriggerClassName}>
-                    <SelectValue placeholder="Selecciona el banco" />
+                    <SelectValue
+                      placeholder={
+                        isLoading ? "Cargando bancos..." : "Selecciona el banco"
+                      }
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <FormModalSelectContent className="max-h-72">
-                  {financialInstitutions.map((group) => (
-                    <SelectGroup key={group.label}>
-                      <SelectLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                        {group.label}
-                      </SelectLabel>
-                      {group.options.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value}
-                          className="cursor-pointer rounded-lg"
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
+                  {banks.map((option) => (
+                    <SelectItem
+                      key={option.value}
+                      value={option.value}
+                      className="cursor-pointer rounded-lg"
+                    >
+                      {option.label}
+                    </SelectItem>
                   ))}
                 </FormModalSelectContent>
               </Select>

@@ -410,28 +410,23 @@ export function RegisterForm() {
     if (env.isApiConfigured) {
       verifyPreRegistro(values.documentNumber, {
         onSuccess: (response) => {
+          if (response.ya_activo) {
+            setFlowType("new");
+            setVerificationStatus("already-active");
+            setProfile(null);
+            return;
+          }
+
           if (response.existe) {
             setFlowType("activation");
             setVerificationStatus("verified-existing");
-            setProfile({
-              firstNames: response.nombre,
-              lastNames: "",
-              gender: "MASCULINO",
-              cityId: "",
-              cityName: "",
-              department: "Bogotá D.C.",
-              address: "",
-              companyId: "",
-              companyName: "",
-              paymentDay: PAYMENT_DAY_DEFAULT,
-              email: "",
-              phone: "",
-            });
+            setProfile(null);
             goToStep("password");
             return;
           }
 
-          runFullDocumentVerification(values);
+          setFlowType("new");
+          setVerificationStatus("verified-new");
         },
       });
       return;
@@ -654,7 +649,6 @@ export function RegisterForm() {
             defaultValues={documentData}
             verificationStatus={verificationStatus}
             flowType={flowType}
-            verifiedName={profile?.firstNames}
             isVerifying={isVerifying || isVerifyingPreRegistro}
             onVerify={handleVerify}
             onProceedNewUser={() => {

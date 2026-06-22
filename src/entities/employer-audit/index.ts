@@ -28,6 +28,8 @@ export {
 } from "./model/registryStorage";
 export {
   buildPayrollClosureSnapshot,
+  mapSolicitudesToAdvanceAuditRecords,
+  mapSolicitudesToRegisteredCompanyAdvances,
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
   mapToMovementRecords,

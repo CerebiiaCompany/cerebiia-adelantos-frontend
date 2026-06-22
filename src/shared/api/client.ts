@@ -104,7 +104,9 @@ async function request<T>(
 
   const session = authStorage.get();
   const headers = new Headers(init?.headers);
-  if (!headers.has("Content-Type") && init?.body) {
+  const isFormData = init?.body instanceof FormData;
+
+  if (!isFormData && !headers.has("Content-Type") && init?.body) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -157,6 +159,8 @@ export const http = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "POST", body: JSON.stringify(body) }),
+  postForm: <T>(path: string, body: FormData) =>
+    request<T>(path, { method: "POST", body }),
   put: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),

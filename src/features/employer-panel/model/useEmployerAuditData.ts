@@ -1,61 +1,69 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
   loadCompanyAdvances,
+  mapSolicitudesToRegisteredCompanyAdvances,
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
   mapToMovementRecords,
   buildPayrollClosureSnapshot,
   resolveEmpresaId,
-  subscribeCompanyAdvances,
+  type RegisteredCompanyAdvance,
 } from "@/entities/employer-audit";
-import { empleadosEndpoints } from "@/shared/api/endpoints";
+import { adelantosEndpoints } from "@/shared/api/endpoints";
+import { env } from "@/shared/config/env";
+import {
+  EMPLEADOS_QUERY_KEY,
+  fetchEmpleadosList,
+} from "./useEmpleadosList";
 
 export const EMPLOYER_AUDIT_QUERY_KEY = ["employer", "audit"] as const;
 
-function useEmployerAuditVersion() {
-  const [version, setVersion] = useState(0);
+async function fetchEmployerAdvances(
+  queryClient: QueryClient,
+): Promise<{
+  empleados: Awaited<ReturnType<typeof fetchEmpleadosList>>;
+  advances: RegisteredCompanyAdvance[];
+  empresaId: string | null;
+}> {
+  const empleados = await queryClient.fetchQuery({
+    queryKey: EMPLEADOS_QUERY_KEY,
+    queryFn: fetchEmpleadosList,
+  });
+  const empresaId = resolveEmpresaId(empleados);
 
-  useEffect(
-    () => subscribeCompanyAdvances(() => setVersion((current) => current + 1)),
-    [],
-  );
+  if (env.apiUrl) {
+    const solicitudes = await adelantosEndpoints.listSolicitudesEmpresa();
+    return {
+      empleados,
+      empresaId,
+      advances: mapSolicitudesToRegisteredCompanyAdvances(solicitudes, empleados),
+    };
+  }
 
-  return version;
+  return {
+    empleados,
+    empresaId,
+    advances: empresaId ? loadCompanyAdvances(empresaId) : [],
+  };
 }
 
 export function useEmployerCompanyAdvances() {
-  const version = useEmployerAuditVersion();
+  const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "company-advances", version],
-    queryFn: async () => {
-      const empleados = await empleadosEndpoints.list();
-      const empresaId = resolveEmpresaId(empleados);
-
-      if (!empresaId) {
-        return { empleados, empresaId: null, advances: [] };
-      }
-
-      return {
-        empleados,
-        empresaId,
-        advances: loadCompanyAdvances(empresaId),
-      };
-    },
+    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "company-advances"],
+    queryFn: () => fetchEmployerAdvances(queryClient),
     staleTime: 30_000,
   });
 }
 
 export function useEmployerAdvanceAudit() {
-  const version = useEmployerAuditVersion();
+  const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "advance-monitoring", version],
+    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "advance-monitoring"],
     queryFn: async () => {
-      const empleados = await empleadosEndpoints.list();
-      const empresaId = resolveEmpresaId(empleados);
-      const advances = empresaId ? loadCompanyAdvances(empresaId) : [];
+      const { empleados, advances } = await fetchEmployerAdvances(queryClient);
       return mapToAdvanceAuditRecords(advances, empleados);
     },
     staleTime: 30_000,
@@ -63,14 +71,12 @@ export function useEmployerAdvanceAudit() {
 }
 
 export function useEmployerLoanTracking() {
-  const version = useEmployerAuditVersion();
+  const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "loan-tracking", version],
+    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "loan-tracking"],
     queryFn: async () => {
-      const empleados = await empleadosEndpoints.list();
-      const empresaId = resolveEmpresaId(empleados);
-      const advances = empresaId ? loadCompanyAdvances(empresaId) : [];
+      const { advances } = await fetchEmployerAdvances(queryClient);
       return mapToLoanInstallmentRecords(advances);
     },
     staleTime: 30_000,
@@ -78,14 +84,12 @@ export function useEmployerLoanTracking() {
 }
 
 export function useEmployerMovementsLedger() {
-  const version = useEmployerAuditVersion();
+  const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "movements-ledger", version],
+    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "movements-ledger"],
     queryFn: async () => {
-      const empleados = await empleadosEndpoints.list();
-      const empresaId = resolveEmpresaId(empleados);
-      const advances = empresaId ? loadCompanyAdvances(empresaId) : [];
+      const { advances } = await fetchEmployerAdvances(queryClient);
       return mapToMovementRecords(advances);
     },
     staleTime: 30_000,
@@ -93,14 +97,12 @@ export function useEmployerMovementsLedger() {
 }
 
 export function useEmployerPayrollClosure() {
-  const version = useEmployerAuditVersion();
+  const queryClient = useQueryClient();
 
   return useQuery({
-    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "payroll-closure", version],
+    queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "payroll-closure"],
     queryFn: async () => {
-      const empleados = await empleadosEndpoints.list();
-      const empresaId = resolveEmpresaId(empleados);
-      const advances = empresaId ? loadCompanyAdvances(empresaId) : [];
+      const { advances } = await fetchEmployerAdvances(queryClient);
       return buildPayrollClosureSnapshot(advances);
     },
     staleTime: 30_000,

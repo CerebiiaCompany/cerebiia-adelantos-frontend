@@ -1,21 +1,29 @@
 import { useMemo } from "react";
-import { Building2, ClipboardList, Users } from "lucide-react";
+import { AlertCircle, Building2, ClipboardList, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth";
 import { useEmpleadosList } from "@/features/employer-panel";
-import { isSystemUserSession } from "@/shared/api";
+import { ApiError, isSystemUserSession } from "@/shared/api";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { cn } from "@/lib/utils";
 
 export default function EmployerPanelPage() {
   const { session } = useAuth();
-  const { data: empleados, isLoading: isLoadingEmpleados, isError: isEmpleadosError } =
-    useEmpleadosList();
+  const {
+    data: empleados,
+    isLoading: isLoadingEmpleados,
+    isError: isEmpleadosError,
+    error: empleadosError,
+  } = useEmpleadosList();
 
-  const empleadosActivos = useMemo(
-    () => empleados?.filter((empleado) => empleado.estado === "activo").length ?? 0,
+  const empleadosErrorMessage =
+    empleadosError instanceof ApiError
+      ? empleadosError.message
+      : "No pudimos cargar los empleados.";
+
+  const empleadosActivos = useMemo(    () => empleados?.filter((empleado) => empleado.estado === "activo").length ?? 0,
     [empleados],
   );
 
@@ -87,8 +95,24 @@ export default function EmployerPanelPage() {
         ))}
       </div>
 
-      <div className="glass-card glow-border rounded-xl p-6">
-        <h2 className="font-display text-lg font-semibold text-foreground">
+      {isEmpleadosError ? (
+        <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div>
+            <p className="font-medium">Error al cargar empleados (servidor)</p>
+            <p className="mt-1 text-destructive/90">{empleadosErrorMessage}</p>
+            <p className="mt-2 text-xs text-destructive/80">
+              El endpoint{" "}
+              <code className="rounded bg-destructive/10 px-1 py-0.5">
+                GET /api/v1/empleados/
+              </code>{" "}
+              respondió 500. Revisa los logs del backend Django.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="glass-card glow-border rounded-xl p-6">        <h2 className="font-display text-lg font-semibold text-foreground">
           Resumen operativo
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

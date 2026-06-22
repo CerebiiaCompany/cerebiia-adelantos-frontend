@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ApiError, empleadosEndpoints } from "@/shared/api";
+import { empleadosEndpoints } from "@/shared/api";
+import { env } from "@/shared/config/env";
 import {
   buildApiImportRowError,
   mapEmpleadoImportMatrix,
@@ -15,46 +16,46 @@ export interface ImportEmpleadosResult {
   importErrors: EmpleadoImportRowError[];
 }
 
+function mapCargaNominaErrors(
+  errores: Array<{ fila: number; documento: string; errores: string[] }>,
+): EmpleadoImportRowError[] {
+  return errores.map((error) => ({
+    rowNumber: error.fila,
+    kind: "api" as const,
+    message: error.errores.join(". "),
+    documento: error.documento,
+  }));
+}
+
 export function useImportEmpleados() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (file: File): Promise<ImportEmpleadosResult> => {
-      const matrix = await parseEmpleadoImportFile(file);
-      const { valid, errors: parseErrors } = mapEmpleadoImportMatrix(matrix);
-
-      if (valid.length === 0) {
+      if (env.apiUrl) {
+        const result = await empleadosEndpoints.cargarNomina(file);
         return {
-          createdCount: 0,
-          failedCount: 0,
-          parseErrors,
-          importErrors: [],
+          createdCount: result.exitosos,
+          failedCount: result.fallidos,
+          parseErrors: [],
+          importErrors: mapCargaNominaErrors(result.errores),
         };
       }
 
-      const importErrors: EmpleadoImportRowError[] = [];
-      let createdCount = 0;
-
-      for (const row of valid) {
-        try {
-          await empleadosEndpoints.create(row.data);
-          createdCount += 1;
-        } catch (error) {
-          const apiMessage =
-            error instanceof ApiError
-              ? error.message
-              : "No se pudo crear el empleado.";
-          importErrors.push(
-            buildApiImportRowError(row.rowNumber, row.data, apiMessage),
-          );
-        }
-      }
+      const matrix = await parseEmpleadoImportFile(file);
+      const { valid, errors: parseErrors } = mapEmpleadoImportMatrix(matrix);
 
       return {
-        createdCount,
-        failedCount: importErrors.length,
+        createdCount: 0,
+        failedCount: valid.length,
         parseErrors,
-        importErrors,
+        importErrors: valid.map((row) =>
+          buildApiImportRowError(
+            row.rowNumber,
+            row.data,
+            "La importación masiva requiere conexión con el servidor.",
+          ),
+        ),
       };
     },
     onSuccess: (result) => {

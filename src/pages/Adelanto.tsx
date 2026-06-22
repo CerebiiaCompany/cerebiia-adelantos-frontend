@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Zap } from "lucide-react";
+import { toast } from "sonner";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceSimulatorCard } from "@/features/advance/ui/AdvanceSimulatorCard";
 import { AdvanceFeaturesTimeline } from "@/features/advance/ui/AdvanceFeaturesTimeline";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
-import {
-  useEmployeeDashboard,
-  useRecordEmployeeAdvance,
-} from "@/features/dashboard";
+import { useCreateSolicitudAdelanto } from "@/features/advance/model/useCreateSolicitudAdelanto";
+import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
+import { useEmployeeDashboard } from "@/features/dashboard";
 import { useProfileView } from "@/features/auth";
+import { ApiError } from "@/shared/api";
+import { env } from "@/shared/config/env";
 import {
   Dialog,
   DialogContent,
@@ -39,9 +41,17 @@ export default function Adelanto() {
   const [showReceipt, setShowReceipt] = useState(false);
   const dashboard = useEmployeeDashboard();
   const profile = useProfileView();
-  const recordAdvance = useRecordEmployeeAdvance();
+  const { data: empleadoMe } = useEmpleadoMe();
+  const { mutate: createSolicitud, isPending: isSubmitting } =
+    useCreateSolicitudAdelanto();
 
-  const maxAmount = dashboard?.availableAdvance ?? 0;
+  const maxAmount = useMemo(() => {
+    if (empleadoMe?.monto_maximo_adelanto) {
+      const parsed = Number.parseFloat(empleadoMe.monto_maximo_adelanto);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+    return dashboard?.availableAdvance ?? 0;
+  }, [empleadoMe, dashboard?.availableAdvance]);
   const fee = Math.round(amount * 0.025);
   const total = amount - fee;
   const installmentValue = Math.round(total / installments);
@@ -188,10 +198,33 @@ export default function Adelanto() {
               <PrimaryActionButton
                 type="button"
                 showArrow={false}
+                loading={isSubmitting}
+                loadingText="Enviando..."
+                disabled={isSubmitting}
                 onClick={() => {
-                  recordAdvance(amount, installments);
-                  setConfirmOpen(false);
-                  setShowReceipt(true);
+                  if (!env.apiUrl) {
+                    toast.error(
+                      "La solicitud de adelanto requiere conexión con el servidor.",
+                    );
+                    return;
+                  }
+
+                  createSolicitud(
+                    { amount, numeroCuotas: installments },
+                    {
+                      onSuccess: () => {
+                        setConfirmOpen(false);
+                        setShowReceipt(true);
+                      },
+                      onError: (error) => {
+                        const message =
+                          error instanceof ApiError
+                            ? error.message
+                            : "No pudimos enviar la solicitud. Inténtalo de nuevo.";
+                        toast.error(message);
+                      },
+                    },
+                  );
                 }}
                 className="flex-1 py-3 font-bold"
               >

@@ -742,6 +742,21 @@
     @apply active:border-primary/25 active:bg-primary/[0.08] active:text-foreground;
   }
 
+  .login-type-tab {
+    @apply rounded-lg border border-transparent px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-300;
+  }
+
+  .login-type-tab-active {
+    @apply border-primary/35 bg-primary/[0.12] font-semibold text-primary;
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.14),
+      0 4px 14px hsl(var(--primary) / 0.12);
+  }
+
+  .login-type-tab:active:not(:disabled):not(.login-type-tab-active) {
+    @apply border-primary/25 bg-primary/[0.1] text-primary;
+  }
+
   .auth-field-trigger {
     @apply active:border-primary/25 active:bg-primary/[0.08] active:text-foreground;
     @apply data-[state=open]:border-primary/30 data-[state=open]:bg-primary/[0.09] data-[state=open]:text-foreground;
@@ -769,6 +784,18 @@
     .auth-outline-btn,
     .auth-secondary-btn {
       @apply hover:!border-primary/30 hover:!bg-primary/[0.08] hover:!text-foreground;
+    }
+
+    .login-type-tab:not(.login-type-tab-active):hover {
+      @apply border-primary/30 bg-primary/[0.1] text-primary;
+      box-shadow: 0 0 0 1px hsl(var(--primary) / 0.1);
+    }
+
+    .login-type-tab-active:hover {
+      @apply bg-primary/[0.16];
+      box-shadow:
+        0 0 0 1px hsl(var(--primary) / 0.18),
+        0 6px 16px hsl(var(--primary) / 0.16);
     }
 
     .auth-field-trigger {

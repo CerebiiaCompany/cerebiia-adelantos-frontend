@@ -7,7 +7,7 @@ export type AppUserRole = "employer" | "employee";
 
 export type AuthActorType = "system_user" | "empleado";
 
-export type EmpleadoEstado = "pre_registrado" | "activo" | "inactivo";
+export type EmpleadoEstado = "pre_registrado" | "activo";
 
 export interface AuthUser {
   id: string;

@@ -180,10 +180,8 @@ export function LoginForm() {
             disabled={isPending}
             onClick={() => handleLoginTypeChange("empleado")}
             className={cn(
-              "rounded-lg px-3 py-2 text-sm font-medium transition-all",
-              loginType === "empleado"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+              "login-type-tab",
+              loginType === "empleado" && "login-type-tab-active",
             )}
           >
             Soy empleado
@@ -193,10 +191,8 @@ export function LoginForm() {
             disabled={isPending}
             onClick={() => handleLoginTypeChange("empresa")}
             className={cn(
-              "rounded-lg px-3 py-2 text-sm font-medium transition-all",
-              loginType === "empresa"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+              "login-type-tab",
+              loginType === "empresa" && "login-type-tab-active",
             )}
           >
             Soy empresa

@@ -1,4 +1,4 @@
 export { authEndpoints } from "./auth";
 export { empleadosEndpoints } from "./empleados";
-export { advancesEndpoints } from "./advances";
+export { adelantosEndpoints, advancesEndpoints } from "./adelantos";
 export { companiesEndpoints } from "./companies";

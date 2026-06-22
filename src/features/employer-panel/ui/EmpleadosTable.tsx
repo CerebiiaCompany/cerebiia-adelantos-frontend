@@ -6,9 +6,32 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/shared/api";
 import type { EmpleadoDTO } from "@/shared/api/types";
 import { formatCOP } from "@/shared/lib";
+import {
+  formatEmpleadoCell,
+  formatFechaIngreso,
+  formatTipoContrato,
+  formatTipoCuenta,
+  formatTipoDocumento,
+} from "@/shared/utils/empleadoDisplayLabels";
 import { cn } from "@/lib/utils";
 import { useEmpleadosList } from "../model/useEmpleadosList";
 import { DeactivateEmpleadoButton } from "./DeactivateEmpleadoButton";
+
+const TABLE_COLUMNS = [
+  { key: "nombre", label: "Nombre" },
+  { key: "tipo_documento", label: "Tipo doc." },
+  { key: "documento", label: "Documento" },
+  { key: "salario", label: "Salario" },
+  { key: "banco_nombre", label: "Banco" },
+  { key: "numero_cuenta", label: "No. cuenta" },
+  { key: "tipo_cuenta", label: "Tipo cuenta" },
+  { key: "email_empleado", label: "Email" },
+  { key: "celular", label: "Celular" },
+  { key: "tipo_contrato", label: "Tipo contrato" },
+  { key: "fecha_ingreso", label: "Fecha ingreso" },
+  { key: "estado", label: "Estado" },
+  { key: "acciones", label: "Acciones" },
+] as const;
 
 function formatSalario(salario: string): string {
   const amount = Number.parseFloat(salario);
@@ -20,14 +43,23 @@ function filterEmpleados(empleados: EmpleadoDTO[], query: string): EmpleadoDTO[]
   const normalizedQuery = query.trim().toLowerCase();
   if (!normalizedQuery) return empleados;
 
-  return empleados.filter(
-    (empleado) =>
-      empleado.nombre.toLowerCase().includes(normalizedQuery) ||
-      empleado.documento.includes(normalizedQuery),
-  );
+  return empleados.filter((empleado) => {
+    const haystack = [
+      empleado.nombre,
+      empleado.documento,
+      empleado.email_empleado,
+      empleado.celular,
+      empleado.banco_nombre,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
 }
 
-function EstadoBadge({ estado }: { estado: EmpleadoDTO["estado"] }) {
+function EstadoBadge({ estado }: { estado: EmpleadoDTO["estado"] | "inactivo" }) {
   const styles =
     estado === "activo"
       ? "border-emerald-200 bg-emerald-50 text-emerald-700"
@@ -79,7 +111,7 @@ export function EmpleadosTable() {
       <div className="relative mb-5 max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Buscar por nombre o documento..."
+          placeholder="Buscar por nombre, documento, email o celular..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="h-11 rounded-xl border-border/80 bg-background/80 pl-10"
@@ -105,33 +137,26 @@ export function EmpleadosTable() {
 
       {!isLoading && !isError ? (
         <div className="overflow-x-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-[1400px] text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50 text-left">
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Empleado
-                </th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Documento
-                </th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Banco
-                </th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Salario
-                </th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Estado
-                </th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Acciones
-                </th>
+                {TABLE_COLUMNS.map((column) => (
+                  <th
+                    key={column.key}
+                    className="whitespace-nowrap px-3 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    {column.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {filteredEmpleados.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center">
+                  <td
+                    colSpan={TABLE_COLUMNS.length}
+                    className="px-4 py-10 text-center"
+                  >
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
                       <Users className="h-8 w-8 opacity-60" />
                       <p className="text-sm">
@@ -148,22 +173,43 @@ export function EmpleadosTable() {
                     key={empleado.id}
                     className="border-b border-border/70 last:border-0"
                   >
-                    <td className="px-4 py-3.5 font-medium text-foreground">
+                    <td className="whitespace-nowrap px-3 py-3.5 font-medium text-foreground">
                       {empleado.nombre}
                     </td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+                    <td className="whitespace-nowrap px-3 py-3.5 text-foreground">
+                      {formatTipoDocumento(empleado.tipo_documento)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3.5 font-mono text-xs text-muted-foreground">
                       {empleado.documento}
                     </td>
-                    <td className="px-4 py-3.5 text-foreground">
-                      {empleado.banco}
-                    </td>
-                    <td className="px-4 py-3.5 tabular-nums text-foreground">
+                    <td className="whitespace-nowrap px-3 py-3.5 tabular-nums text-foreground">
                       {formatSalario(empleado.salario)}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="whitespace-nowrap px-3 py-3.5 text-foreground">
+                      {formatEmpleadoCell(empleado.banco_nombre)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3.5 font-mono text-xs text-foreground">
+                      {formatEmpleadoCell(empleado.numero_cuenta)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3.5 text-foreground">
+                      {formatTipoCuenta(empleado.tipo_cuenta)}
+                    </td>
+                    <td className="max-w-[200px] truncate px-3 py-3.5 text-foreground">
+                      {formatEmpleadoCell(empleado.email_empleado)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3.5 font-mono text-xs text-foreground">
+                      {formatEmpleadoCell(empleado.celular)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3.5 text-foreground">
+                      {formatTipoContrato(empleado.tipo_contrato)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3.5 text-foreground">
+                      {formatFechaIngreso(empleado.fecha_ingreso)}
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3.5">
                       <EstadoBadge estado={empleado.estado} />
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="whitespace-nowrap px-3 py-3.5">
                       <DeactivateEmpleadoButton empleado={empleado} />
                     </td>
                   </tr>
