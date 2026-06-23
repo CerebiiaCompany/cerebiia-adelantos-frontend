@@ -17,5 +17,6 @@ describe("adelantoMappers", () => {
     expect(record.amount).toBe(500000);
     expect(record.status).toBe("en_curso");
     expect(record.receiptStatus).toBe("en_curso");
+    expect(record.installments).toBe(3);
   });
 });

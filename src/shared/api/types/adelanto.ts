@@ -23,11 +23,20 @@ export interface CrearSolicitudAdelantoRequest {
   numero_cuotas: number;
 }
 
+export interface EmpleadoEmpresaSummaryDTO {
+  id: string;
+  nombre?: string;
+  razon_social?: string;
+}
+
 export interface EmpleadoMeDTO {
   empleado_id: string;
   nombre: string;
   salario: string;
   empresa_id: string;
+  /** Nombre comercial o razón social de la empresa del empleado. */
+  empresa_nombre?: string;
+  empresa?: EmpleadoEmpresaSummaryDTO;
   porcentaje_maximo_adelanto: string;
   monto_maximo_adelanto: string;
   documento: string;

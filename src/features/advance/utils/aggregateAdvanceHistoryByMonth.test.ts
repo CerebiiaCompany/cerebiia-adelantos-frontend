@@ -13,6 +13,10 @@ const sampleRecords: AdvanceHistoryRecord[] = [
     folio: "ADV-1",
     receiptStatus: "transferido",
     paymentMethod: "Transferencia bancaria",
+    installments: 1,
+    bankName: "Bancolombia",
+    accountTypeLabel: "Ahorros",
+    accountNumber: "63920194820",
   },
   {
     id: "2",
@@ -24,6 +28,10 @@ const sampleRecords: AdvanceHistoryRecord[] = [
     folio: "ADV-2",
     receiptStatus: "transferido",
     paymentMethod: "Transferencia bancaria",
+    installments: 2,
+    bankName: "Bancolombia",
+    accountTypeLabel: "Ahorros",
+    accountNumber: "63920194820",
   },
   {
     id: "3",
@@ -35,6 +43,10 @@ const sampleRecords: AdvanceHistoryRecord[] = [
     folio: "ADV-3",
     receiptStatus: null,
     paymentMethod: "Transferencia bancaria",
+    installments: 3,
+    bankName: "Bancolombia",
+    accountTypeLabel: "Ahorros",
+    accountNumber: "63920194820",
   },
 ];
 

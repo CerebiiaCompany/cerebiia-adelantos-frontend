@@ -26,7 +26,7 @@ export default function MisAdelantos() {
   } = useFilteredEmployeeAdvanceHistory();
 
   return (
-    <div className="mx-auto max-w-5xl animate-fade-in space-y-6">
+    <div className="mx-auto max-w-7xl animate-fade-in space-y-6">
       <PageHeader
         icon={History}
         title="Mis adelantos"

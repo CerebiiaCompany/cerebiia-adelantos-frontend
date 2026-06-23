@@ -18,6 +18,10 @@ export function deserializeAdvanceHistoryRecord(
   return {
     ...record,
     requestedAt: new Date(record.requestedAt),
+    installments: record.installments ?? 1,
+    bankName: record.bankName ?? "—",
+    accountTypeLabel: record.accountTypeLabel ?? "—",
+    accountNumber: record.accountNumber ?? "—",
   };
 }
 
