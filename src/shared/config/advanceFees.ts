@@ -1,13 +1,12 @@
-/** Porcentaje que retiene la plataforma por transacción (2.5%). */
-export const ADVANCE_TRANSACTION_FEE_RATE = 0.025;
+import { formatCOP } from "@/shared/lib/currency";
+
+/** Comisión fija que retiene la plataforma por cada adelanto (COP). */
+export const ADVANCE_TRANSACTION_FEE_AMOUNT = 8_000;
 
 export function calculateAdvanceTransactionFee(amount: number): number {
-  return Math.round(amount * ADVANCE_TRANSACTION_FEE_RATE);
+  return amount > 0 ? ADVANCE_TRANSACTION_FEE_AMOUNT : 0;
 }
 
-export function formatAdvanceTransactionFeeRate(
-  rate = ADVANCE_TRANSACTION_FEE_RATE,
-): string {
-  const percent = rate * 100;
-  return Number.isInteger(percent) ? `${percent}%` : `${percent.toFixed(1)}%`;
+export function formatAdvanceTransactionFeeLabel(): string {
+  return `Comisión fija (${formatCOP(ADVANCE_TRANSACTION_FEE_AMOUNT)})`;
 }

@@ -3,10 +3,15 @@ import { useAuth } from "@/features/auth/model/AuthProvider";
 import { registerCompanyAdvance } from "@/entities/employer-audit";
 import {
   buildEmployeeDashboardSnapshot,
+  deriveAdvanceMetricsFromHistory,
   parseEmployeeSalary,
+  resolveEmpleadoFechaIngreso,
   type EmployeeDashboardSnapshot,
 } from "@/entities/employee-dashboard";
+import { useSolicitudesAdelanto } from "@/features/advance/model/useSolicitudesAdelanto";
+import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
 import { isEmpleadoSession } from "@/shared/api";
+import { env } from "@/shared/config/env";
 import {
   loadEmployeeDashboardMetrics,
   recordEmployeeAdvance,
@@ -21,22 +26,49 @@ function getDisplayName(nombre: string): string {
 export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
   const { session } = useAuth();
   const [version, setVersion] = useState(0);
+  const { data: apiHistory, isSuccess: hasApiHistory } = useSolicitudesAdelanto();
+  const { data: empleadoMe } = useEmpleadoMe();
 
   useEffect(() => subscribeEmployeeDashboard(() => setVersion((v) => v + 1)), []);
 
   return useMemo(() => {
     if (!session || !isEmpleadoSession(session)) return null;
 
-    const metrics = loadEmployeeDashboardMetrics(session.empleado.id);
-    const salary = parseEmployeeSalary(session.empleado.salario);
+    const localMetrics = loadEmployeeDashboardMetrics(session.empleado.id);
+    const salary = parseEmployeeSalary(
+      empleadoMe?.salario ?? session.empleado.salario,
+    );
+
+    const metrics =
+      env.apiUrl && hasApiHistory && apiHistory
+        ? {
+            ...localMetrics,
+            ...deriveAdvanceMetricsFromHistory(apiHistory),
+          }
+        : localMetrics;
+
+    const parsedMaxLimit = empleadoMe?.monto_maximo_adelanto
+      ? Number.parseFloat(empleadoMe.monto_maximo_adelanto)
+      : Number.NaN;
+    const maxAdvanceLimit = Number.isNaN(parsedMaxLimit)
+      ? undefined
+      : Math.round(parsedMaxLimit);
+
+    const fechaIngreso = resolveEmpleadoFechaIngreso(
+      empleadoMe,
+      session.empleado,
+    );
 
     return buildEmployeeDashboardSnapshot(
       getDisplayName(session.empleado.nombre),
       salary,
       metrics,
+      maxAdvanceLimit,
+      new Date(),
+      fechaIngreso,
     );
     // version forces refresh when local metrics change
-  }, [session, version]);
+  }, [session, version, apiHistory, hasApiHistory, empleadoMe]);
 }
 
 export function useRecordEmployeeAdvance() {

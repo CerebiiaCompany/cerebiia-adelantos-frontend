@@ -7,7 +7,7 @@ export type AppUserRole = "employer" | "employee";
 
 export type AuthActorType = "system_user" | "empleado";
 
-export type EmpleadoEstado = "pre_registrado" | "activo" | "inactivo";
+export type EmpleadoEstado = "pre_registrado" | "activo";
 
 export interface AuthUser {
   id: string;
@@ -24,13 +24,27 @@ export interface EmpleadoProfile {
   documento: string;
   nombre: string;
   salario: string;
-  banco: string;
+  /** Nombre del banco normalizado para la UI. */
+  banco?: string;
+  /** Campo devuelto por el backend en login/activación. */
+  banco_nombre?: string;
   numero_cuenta: string;
+  tipo_cuenta?: string;
+  fecha_ingreso?: string;
   estado: EmpleadoEstado;
   empresa_id: string;
   created_at: string;
   updated_at: string;
 }
+
+/** Respuesta cruda del backend al iniciar sesión como empleado. */
+export type EmpleadoApiProfile = Omit<EmpleadoProfile, "banco"> & {
+  banco_id?: string;
+  banco?: string;
+  banco_nombre?: string;
+  tipo_cuenta?: string;
+  fecha_ingreso?: string;
+};
 
 export interface SystemUserLoginRequest {
   email: string;
@@ -53,7 +67,7 @@ export interface SystemUserLoginResponse {
 }
 
 export interface EmpleadoLoginResponse {
-  empleado: EmpleadoProfile;
+  empleado: EmpleadoApiProfile;
   tokens: AuthTokens;
 }
 

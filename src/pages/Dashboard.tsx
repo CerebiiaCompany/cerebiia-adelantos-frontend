@@ -131,7 +131,7 @@ export default function Dashboard() {
           sub={
             incomeToday > 0 ? (
               <>
-                +
+                Desde tu ingreso · +
                 <AnimatedCurrency
                   value={incomeToday}
                   className="inline font-medium text-primary"

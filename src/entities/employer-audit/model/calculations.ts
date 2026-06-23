@@ -1,10 +1,15 @@
 // ⚠️ AGNOSTIC — employer audit business rules
 
-export const ADVANCE_FEE_RATE = 0.025;
+import {
+  ADVANCE_TRANSACTION_FEE_AMOUNT,
+  calculateAdvanceTransactionFee,
+} from "@/shared/config/advanceFees";
+
+export const ADVANCE_FEE_AMOUNT = ADVANCE_TRANSACTION_FEE_AMOUNT;
 export const ADVANCE_SALARY_CAP_RATIO = 0.3;
 
 export function calculateAdvanceFee(amount: number): number {
-  return Math.round(amount * ADVANCE_FEE_RATE);
+  return calculateAdvanceTransactionFee(amount);
 }
 
 /** Total que la empresa descuenta en nómina (solo el valor del adelanto). */

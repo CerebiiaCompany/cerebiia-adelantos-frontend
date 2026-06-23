@@ -50,8 +50,8 @@ describe("companyAdvanceRegistry", () => {
       installments: 2,
     });
 
-    expect(record.feeAmount).toBe(10_000);
-    expect(record.netDisbursedAmount).toBe(390_000);
+    expect(record.feeAmount).toBe(8_000);
+    expect(record.netDisbursedAmount).toBe(392_000);
   });
 
   it("notifica suscriptores al registrar", () => {

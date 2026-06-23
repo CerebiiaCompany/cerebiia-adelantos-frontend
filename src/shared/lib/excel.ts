@@ -2,6 +2,20 @@
 
 import * as XLSX from "xlsx";
 
+export function downloadExcelBuffer(filename: string, buffer: ArrayBuffer): void {
+  if (typeof document === "undefined") return;
+
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".xlsx") ? filename : `${filename}.xlsx`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 export function downloadExcelFile(
   filename: string,
   rows: (string | number)[][],

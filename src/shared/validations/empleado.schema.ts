@@ -5,7 +5,6 @@ import {
   EMPLEADO_ACCOUNT_TYPE_OPTIONS,
   EMPLEADO_CONTRACT_TYPE_OPTIONS,
   EMPLEADO_DOCUMENT_TYPE_OPTIONS,
-  EMPLEADO_FINANCIAL_INSTITUTION_VALUES,
 } from "../constants/empleadoFormCatalogs";
 import {
   documentTypes,
@@ -23,6 +22,8 @@ export const TIPO_CONTRATO_VALUES = [
   "indefinido",
   "fijo",
   "obra_labor",
+  "prestacion_servicios",
+  "aprendizaje",
 ] as const;
 
 export const TIPO_CUENTA_VALUES = ["ahorros", "corriente"] as const;
@@ -46,7 +47,7 @@ export const CREATE_EMPLEADO_STEP2_FIELDS = [
   "salario",
   "tipo_contrato",
   "fecha_ingreso",
-  "banco",
+  "banco_id",
   "tipo_cuenta",
   "numero_cuenta",
 ] as const;
@@ -115,13 +116,9 @@ export const createEmpleadoSchema = z
       .string()
       .min(1, "Ingresa la fecha de ingreso")
       .refine(isValidIngresoDate, "La fecha de ingreso no puede ser futura"),
-    banco: z
+    banco_id: z
       .string()
-      .min(1, "Selecciona el banco o plataforma de pago")
-      .refine(
-        (value) => EMPLEADO_FINANCIAL_INSTITUTION_VALUES.includes(value),
-        "Selecciona un banco o plataforma válido",
-      ),
+      .min(1, "Selecciona el banco o plataforma de pago"),
     tipo_cuenta: z
       .string()
       .min(1, "Selecciona el tipo de cuenta")

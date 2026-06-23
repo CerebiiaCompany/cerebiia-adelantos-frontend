@@ -1,9 +1,12 @@
 import { useMemo } from "react";
-import { Building2, ClipboardList, Users } from "lucide-react";
+import { Building2, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth";
-import { useEmpleadosList } from "@/features/employer-panel";
+import {
+  EmployerPanelUnavailableNotice,
+  useEmpleadosList,
+} from "@/features/employer-panel";
 import { isSystemUserSession } from "@/shared/api";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import { AnimatedNumber } from "@/components/ui/animated-number";
@@ -11,11 +14,13 @@ import { cn } from "@/lib/utils";
 
 export default function EmployerPanelPage() {
   const { session } = useAuth();
-  const { data: empleados, isLoading: isLoadingEmpleados, isError: isEmpleadosError } =
-    useEmpleadosList();
+  const {
+    data: empleados,
+    isLoading: isLoadingEmpleados,
+    isError: isEmpleadosError,
+  } = useEmpleadosList();
 
-  const empleadosActivos = useMemo(
-    () => empleados?.filter((empleado) => empleado.estado === "activo").length ?? 0,
+  const empleadosActivos = useMemo(    () => empleados?.filter((empleado) => empleado.estado === "activo").length ?? 0,
     [empleados],
   );
 
@@ -27,22 +32,6 @@ export default function EmployerPanelPage() {
       accent: "text-primary",
       isLoading: isLoadingEmpleados,
       hasError: isEmpleadosError,
-    },
-    {
-      label: "Solicitudes pendientes",
-      value: 7,
-      icon: ClipboardList,
-      accent: "text-amber-600",
-      isLoading: false,
-      hasError: false,
-    },
-    {
-      label: "Empresas vinculadas",
-      value: 1,
-      icon: Building2,
-      accent: "text-emerald-600",
-      isLoading: false,
-      hasError: false,
     },
   ] as const;
 
@@ -59,7 +48,7 @@ export default function EmployerPanelPage() {
         title={greeting.title}
         description="Gestiona adelantos, empleados y solicitudes de tu empresa"
       />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:max-w-xs">
         {stats.map((stat) => (
           <div
             key={stat.label}
@@ -87,8 +76,15 @@ export default function EmployerPanelPage() {
         ))}
       </div>
 
-      <div className="glass-card glow-border rounded-xl p-6">
-        <h2 className="font-display text-lg font-semibold text-foreground">
+      {isEmpleadosError ? (
+        <EmployerPanelUnavailableNotice
+          layout="inline"
+          message="Información de empleados no disponible temporalmente."
+          description="Algunos indicadores del panel pueden mostrarse incompletos. Intenta de nuevo más tarde."
+        />
+      ) : null}
+
+      <div className="glass-card glow-border rounded-xl p-6">        <h2 className="font-display text-lg font-semibold text-foreground">
           Resumen operativo
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

@@ -21,11 +21,13 @@ export const EMPLEADO_DOCUMENT_TYPE_OPTIONS: EmpleadoCatalogOption[] = [
   { value: "PPT", label: "Permiso por protección temporal - PPT" },
 ];
 
-/** Tipos de contrato — provisional. */
+/** Tipos de contrato — alineados con backend. */
 export const EMPLEADO_CONTRACT_TYPE_OPTIONS: EmpleadoCatalogOption[] = [
   { value: "indefinido", label: "Término Indefinido" },
   { value: "fijo", label: "Término Fijo" },
   { value: "obra_labor", label: "Obra o Labor" },
+  { value: "prestacion_servicios", label: "Prestación de servicios" },
+  { value: "aprendizaje", label: "Aprendizaje" },
 ];
 
 /** Tipos de cuenta — provisional. */

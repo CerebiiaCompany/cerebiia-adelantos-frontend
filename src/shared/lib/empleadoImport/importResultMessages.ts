@@ -28,7 +28,7 @@ const FIELD_LABELS: Record<string, string> = {
   salario: "Salario",
   tipo_contrato: "Tipo de contrato",
   fecha_ingreso: "Fecha de ingreso",
-  banco: "Banco",
+  banco_id: "Banco",
   tipo_cuenta: "Tipo de cuenta",
   numero_cuenta: "Número de cuenta",
 };

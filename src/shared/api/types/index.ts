@@ -24,13 +24,25 @@ export type {
 export type {
   ActivarEmpleadoRequest,
   ActivarEmpleadoResponse,
+  BancoDTO,
   CreateEmpleadoRequest,
   CreateEmpleadoResponse,
   EmpleadoDTO,
   EmpleadoEstado,
+  ResultadoCargaNominaDTO,
+  TipoContratoEmpleado,
+  TipoCuentaEmpleado,
+  TipoDocumento,
   VerificarPreRegistroRequest,
   VerificarPreRegistroResponse,
 } from "./empleado";
+
+export type {
+  CrearSolicitudAdelantoRequest,
+  EmpleadoMeDTO,
+  EstadoSolicitud,
+  SolicitudAdelantoDTO,
+} from "./adelanto";
 
 export interface ForgotPasswordRequest {
   email: string;
@@ -62,6 +74,9 @@ export interface AdvanceDTO {
   requestedAt: string;
   employeeId: string;
 }
+
+/** @deprecated Use SolicitudAdelantoDTO from ./adelanto */
+export type { SolicitudAdelantoDTO as AdvanceApiDTO } from "./adelanto";
 
 export type {
   VerifyDocumentRequest,

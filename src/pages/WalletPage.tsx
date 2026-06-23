@@ -46,7 +46,8 @@ export default function WalletPage() {
 
   if (!dashboard) return null;
 
-  const balance = dashboard.salary;
+  const balance = dashboard.walletBalance;
+  const hasAdvances = dashboard.totalAdvancedThisMonth > 0;
   const movements: Array<{
     type: "in" | "out";
     desc: string;
@@ -87,7 +88,9 @@ export default function WalletPage() {
             )}
           </p>
           <p className="text-xs text-muted-foreground">
-            Salario mensual registrado en tu cuenta
+            {hasAdvances
+              ? "Salario mensual menos adelantos registrados este mes"
+              : "Salario mensual sin adelantos descontados"}
           </p>
         </div>
       </div>

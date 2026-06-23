@@ -8,7 +8,6 @@ export type AdvanceHistoryRecord = {
   requestedAt: Date;
   periodLabel: string;
   status: AdvanceHistoryStatus;
-  transactionFeeRate: number;
   transactionFeeAmount: number;
   folio: string;
   receiptStatus: AdvanceReceiptStatus | null;

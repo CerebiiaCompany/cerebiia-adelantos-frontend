@@ -8,7 +8,7 @@ export default function EmployerMonitoreoAdelantosPage() {
       <PageHeader
         icon={ClipboardCheck}
         title="Monitoreo de adelantos"
-        description="Auditoría de adelantos reales solicitados por tu plantilla. Verifica el cumplimiento del tope del 30% del salario y la comisión del 2.5%."
+        description="Auditoría de adelantos reales solicitados por tu plantilla. Verifica el cumplimiento del tope del 30% del salario y la comisión fija de $8.000 por adelanto."
       />
       <AdvanceMonitoringTable />
     </div>

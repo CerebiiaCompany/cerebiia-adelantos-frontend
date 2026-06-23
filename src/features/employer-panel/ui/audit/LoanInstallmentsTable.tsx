@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, CalendarClock, Search } from "lucide-react";
+import { CalendarClock, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EmployerLoanInstallmentRecord } from "@/entities/employer-audit";
 import { formatCOP } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 import { useEmployerLoanTracking } from "../../model/useEmployerAuditData";
+import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { AuditStatusBadge } from "./AuditStatusBadge";
 
 function filterRecords(
@@ -64,12 +65,10 @@ export function LoanInstallmentsTable() {
       {isLoading ? <TableSkeleton /> : null}
 
       {isError ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-8 text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <p className="text-sm text-destructive">
-            No pudimos cargar el seguimiento de cuotas.
-          </p>
-        </div>
+        <EmployerPanelUnavailableNotice
+          message="El seguimiento de cuotas no está disponible en este momento."
+          description="Esta sección se habilitará cuando haya información para mostrar."
+        />
       ) : null}
 
       {!isLoading && !isError ? (

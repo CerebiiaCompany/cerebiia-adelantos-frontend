@@ -2,6 +2,7 @@
 
 import * as XLSX from "xlsx";
 import { parseCsvText } from "./parseCsvText";
+import { stringifyImportCellValue } from "./normalizeImportCellValue";
 
 function isCsvFile(file: File): boolean {
   const name = file.name.toLowerCase();
@@ -22,16 +23,12 @@ function excelRowsToMatrix(rows: unknown[][]): string[][] {
   if (rows.length === 0) return [];
 
   return rows.map((row) =>
-    row.map((cell) => stringifyCellValue(cell)),
+    row.map((cell) => stringifyImportCellValue(cell)),
   );
 }
 
 function stringifyCellValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (value instanceof Date) {
-    return value.toISOString().slice(0, 10);
-  }
-  return String(value).trim();
+  return stringifyImportCellValue(value);
 }
 
 export async function parseEmpleadoImportFile(file: File): Promise<string[][]> {
@@ -43,7 +40,10 @@ export async function parseEmpleadoImportFile(file: File): Promise<string[][]> {
   if (isExcelFile(file)) {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
-    const sheetName = workbook.SheetNames[0];
+    const sheetName =
+      workbook.SheetNames.find((name) =>
+        name.trim().toLowerCase().includes("nomina"),
+      ) ?? workbook.SheetNames[0];
 
     if (!sheetName) {
       throw new Error("El archivo Excel no contiene hojas.");

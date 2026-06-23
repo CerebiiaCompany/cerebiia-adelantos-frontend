@@ -12,9 +12,24 @@ export {
   buildEmployeeDashboardSnapshot,
   calculateAvailableAdvance,
   calculateMaxAdvanceLimit,
+  calculateWalletBalance,
   createEmptyDashboardMetrics,
   parseEmployeeSalary,
 } from "./model/calculations";
+export {
+  buildMonthlyAdvancesFromHistory,
+  deriveAdvanceMetricsFromHistory,
+  getAdvanceMonthKey,
+} from "./model/advanceMetricsFromHistory";
+export { resolveEmpleadoFechaIngreso } from "./model/resolveEmpleadoFechaIngreso";
+export {
+  calculateCumulativeAccumulatedIncome,
+  calculateDailySalaryIncome,
+  calculateIncomeForCalendarMonth,
+  calculateMonthlyAccumulatedIncome,
+  calculateMonthlySalaryIncome,
+  parseIncomeStartDate,
+} from "./model/salaryAccrual";
 export {
   deserializeAdvanceHistory,
   deserializeAdvanceHistoryRecord,
