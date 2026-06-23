@@ -18,6 +18,7 @@ export interface ProfileView {
   salary?: string;
   bank?: string;
   accountNumber?: string;
+  accountType?: string;
   status?: string;
   memberSince?: string;
 }
@@ -48,6 +49,13 @@ function formatSalaryLabel(salario: string): string {
   return formatCOP(amount);
 }
 
+export function resolveEmpleadoBankName(
+  empleado: Pick<EmpleadoProfile, "banco" | "banco_nombre">,
+): string | undefined {
+  const bankName = empleado.banco?.trim() || empleado.banco_nombre?.trim();
+  return bankName || undefined;
+}
+
 export function mapEmpleadoToProfileView(empleado: EmpleadoProfile): ProfileView {
   return {
     actorType: "empleado",
@@ -57,8 +65,9 @@ export function mapEmpleadoToProfileView(empleado: EmpleadoProfile): ProfileView
     isVerified: empleado.estado === "activo",
     documentNumber: empleado.documento,
     salary: formatSalaryLabel(empleado.salario),
-    bank: empleado.banco,
+    bank: resolveEmpleadoBankName(empleado),
     accountNumber: empleado.numero_cuenta,
+    accountType: empleado.tipo_cuenta,
     employeeNumber: empleado.id,
     company: empleado.empresa_id,
     status:

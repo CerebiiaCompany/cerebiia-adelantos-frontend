@@ -1,8 +1,5 @@
 import type { AdvanceReceiptStatus } from "@/shared/config/advanceHistory.types";
-import {
-  ADVANCE_TRANSACTION_FEE_RATE,
-  calculateAdvanceTransactionFee,
-} from "@/shared/config/advanceFees";
+import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
 import type { AdvanceHistoryRecord, AdvanceHistoryStatus } from "@/shared/config/advanceHistory.types";
 import {
   buildAdvanceReceiptFolio,
@@ -31,7 +28,6 @@ export function buildAdvanceHistoryRecord(
   amount: number,
   status: AdvanceHistoryStatus,
   paymentMethod = "Transferencia bancaria",
-  transactionFeeRate = ADVANCE_TRANSACTION_FEE_RATE,
 ): AdvanceHistoryRecord {
   const requestedAt = new Date(isoDate);
 
@@ -41,7 +37,6 @@ export function buildAdvanceHistoryRecord(
     requestedAt,
     periodLabel: getPayrollPeriodLabel(requestedAt),
     status,
-    transactionFeeRate,
     transactionFeeAmount: calculateAdvanceTransactionFee(amount),
     folio: buildAdvanceReceiptFolio(requestedAt),
     receiptStatus: STATUS_TO_RECEIPT[status],

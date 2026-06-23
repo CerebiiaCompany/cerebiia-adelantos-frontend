@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Building2, ClipboardList, Users } from "lucide-react";
+import { Building2, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth";
@@ -33,22 +33,6 @@ export default function EmployerPanelPage() {
       isLoading: isLoadingEmpleados,
       hasError: isEmpleadosError,
     },
-    {
-      label: "Solicitudes pendientes",
-      value: 7,
-      icon: ClipboardList,
-      accent: "text-amber-600",
-      isLoading: false,
-      hasError: false,
-    },
-    {
-      label: "Empresas vinculadas",
-      value: 1,
-      icon: Building2,
-      accent: "text-emerald-600",
-      isLoading: false,
-      hasError: false,
-    },
   ] as const;
 
   const displayName =
@@ -64,7 +48,7 @@ export default function EmployerPanelPage() {
         title={greeting.title}
         description="Gestiona adelantos, empleados y solicitudes de tu empresa"
       />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:max-w-xs">
         {stats.map((stat) => (
           <div
             key={stat.label}

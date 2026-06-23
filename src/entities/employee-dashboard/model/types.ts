@@ -36,7 +36,6 @@ export type SerializedAdvanceHistoryRecord = {
   requestedAt: string;
   periodLabel: string;
   status: AdvanceHistoryStatus;
-  transactionFeeRate: number;
   transactionFeeAmount: number;
   folio: string;
   receiptStatus: AdvanceReceiptStatus | null;
@@ -50,6 +49,7 @@ export interface EmployeeDashboardSnapshot {
   accumulatedIncome: number;
   incomeToday: number;
   totalAdvancedThisMonth: number;
+  walletBalance: number;
   chartData: DashboardChartPoint[];
   recentActivity: DashboardActivityItem[];
 }

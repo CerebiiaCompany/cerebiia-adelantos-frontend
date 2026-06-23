@@ -10,6 +10,7 @@ export const adelantosEndpoints = {
   /** Empleado: solo sus solicitudes. Empresa: solicitudes de toda la plantilla. */
   listSolicitudes: () =>
     http.get<SolicitudAdelantoDTO[]>("/adelantos/solicitudes/"),
+  /** Empresa: solicitudes de toda la plantilla (GET con token empresa). */
   listSolicitudesEmpresa: () =>
     http.get<SolicitudAdelantoDTO[]>("/adelantos/solicitudes/"),
   createSolicitud: (data: CrearSolicitudAdelantoRequest) =>

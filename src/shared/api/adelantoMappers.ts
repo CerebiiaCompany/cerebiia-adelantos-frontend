@@ -1,7 +1,6 @@
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
+import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
 import type { SolicitudAdelantoDTO, EstadoSolicitud } from "./types/adelanto";
-
-const TRANSACTION_FEE_RATE = 0.025;
 
 function mapEstadoToHistoryStatus(
   estado: EstadoSolicitud,
@@ -25,7 +24,7 @@ export function mapSolicitudToHistoryRecord(
 ): AdvanceHistoryRecord {
   const amount = Number.parseFloat(solicitud.monto);
   const safeAmount = Number.isNaN(amount) ? 0 : amount;
-  const transactionFeeAmount = Math.round(safeAmount * TRANSACTION_FEE_RATE);
+  const transactionFeeAmount = calculateAdvanceTransactionFee(safeAmount);
 
   return {
     id: solicitud.id,
@@ -36,7 +35,6 @@ export function mapSolicitudToHistoryRecord(
       year: "numeric",
     }),
     status: mapEstadoToHistoryStatus(solicitud.estado),
-    transactionFeeRate: TRANSACTION_FEE_RATE,
     transactionFeeAmount,
     folio: solicitud.id.slice(0, 8).toUpperCase(),
     receiptStatus: mapEstadoToReceiptStatus(solicitud.estado),

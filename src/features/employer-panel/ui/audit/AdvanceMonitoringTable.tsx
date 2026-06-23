@@ -99,8 +99,8 @@ export function AdvanceMonitoringTable() {
 
       {isError ? (
         <EmployerPanelUnavailableNotice
-          message="El monitoreo de adelantos no está disponible en este momento."
-          description="Esta sección se habilitará cuando haya información para mostrar."
+          message="No pudimos cargar el monitoreo de adelantos."
+          description="Verifica tu conexión con el servidor e intenta recargar la página."
         />
       ) : null}
 
@@ -122,7 +122,7 @@ export function AdvanceMonitoringTable() {
                   % usado del salario
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Comisión (2.5%)
+                  Comisión fija
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Total a descontar en nómina
@@ -241,7 +241,7 @@ export function AdvanceMonitoringTable() {
         <p className="mt-4 text-xs text-muted-foreground">
           {filteredRecords.length} de {data.length} registro
           {data.length === 1 ? "" : "s"} mostrado
-          {filteredRecords.length === 1 ? "" : "s"}. La comisión del 2.5% se
+          {filteredRecords.length === 1 ? "" : "s"}. La comisión fija de $8.000 se
           descuenta al empleado en el desembolso; la empresa solo retiene el
           valor solicitado. Tope permitido: 30% del salario mensual.
         </p>

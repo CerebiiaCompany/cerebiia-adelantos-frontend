@@ -3,10 +3,16 @@ import { Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { useProfileView } from "@/features/auth";
+import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
 import {
   calculateAdvanceTransactionFee,
-  formatAdvanceTransactionFeeRate,
+  formatAdvanceTransactionFeeLabel,
 } from "@/shared/config/advanceFees";
+import {
+  resolveEmpleadoAccountNumber,
+  resolveEmpleadoAccountTypeLabel,
+  resolveEmpleadoBankName,
+} from "@/features/advance/utils/empleadoBankingDisplay";
 import { amountInWordsSpanish } from "@/shared/utils/amountInWords";
 import {
   buildAdvanceReceiptFolio,
@@ -61,6 +67,10 @@ export function AdvanceReceipt({
 }: AdvanceReceiptProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const profile = useProfileView();
+  const { data: empleadoMe } = useEmpleadoMe();
+  const bankName = resolveEmpleadoBankName(empleadoMe, profile);
+  const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
+  const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
 
   const issuedAt = useMemo(
     () => issuedAtProp ?? new Date(),
@@ -94,7 +104,7 @@ export function AdvanceReceipt({
   );
   const statusConfig = ADVANCE_RECEIPT_STATUS_CONFIG[status];
   const concept = `Adelanto de nómina correspondiente al periodo ${periodLabel}`;
-  const transactionFeeConcept = `Costo de transacción (${formatAdvanceTransactionFeeRate()})`;
+  const transactionFeeConcept = formatAdvanceTransactionFeeLabel();
   const disbursementLabel =
     status === "en_curso"
       ? "Pendiente de aprobación"
@@ -102,7 +112,6 @@ export function AdvanceReceipt({
 
   if (!profile) return null;
 
-  const companyLabel = profile.company ?? "Empresa vinculada";
   const departmentLabel = "—";
 
   return (
@@ -120,8 +129,8 @@ export function AdvanceReceipt({
                 A
               </div>
               <div className="min-w-0">
-                <p className="font-display text-base font-bold leading-tight sm:text-lg">
-                  {companyLabel}
+                <p className="font-mono text-base font-bold leading-tight sm:text-lg">
+                  {folio}
                 </p>
                 <p className="text-[11px] text-primary-foreground/80">
                   Plataforma de adelantos de nómina · AdeCerebiia
@@ -171,10 +180,11 @@ export function AdvanceReceipt({
                 label="Identificación"
                 value={profile.documentNumber ?? "—"}
               />
-              <PartyLine label="Banco" value={profile.bank ?? "—"} />
+              <PartyLine label="Banco" value={bankName} />
+              <PartyLine label="Tipo de cuenta" value={accountTypeLabel} />
               <PartyLine
                 label="No. cuenta"
-                value={profile.accountNumber ?? "—"}
+                value={accountNumber}
                 mono
               />
               <PartyLine label="Departamento" value={departmentLabel} />

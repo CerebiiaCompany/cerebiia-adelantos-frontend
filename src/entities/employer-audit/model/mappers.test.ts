@@ -18,8 +18,8 @@ const sampleAdvances: RegisteredCompanyAdvance[] = [
     baseSalary: 2_000_000,
     advancedAmount: 400_000,
     installments: 1,
-    feeAmount: 10_000,
-    netDisbursedAmount: 390_000,
+    feeAmount: 8_000,
+    netDisbursedAmount: 392_000,
     status: "en_curso",
     requestedAt: "2026-06-19T10:00:00-05:00",
     transferId: "TRF-1",
@@ -33,8 +33,8 @@ const sampleAdvances: RegisteredCompanyAdvance[] = [
     baseSalary: 3_000_000,
     advancedAmount: 900_000,
     installments: 3,
-    feeAmount: 22_500,
-    netDisbursedAmount: 877_500,
+    feeAmount: 8_000,
+    netDisbursedAmount: 892_000,
     status: "en_curso",
     requestedAt: "2026-06-19T11:00:00-05:00",
     transferId: "TRF-2",
@@ -124,7 +124,7 @@ describe("employer audit mappers", () => {
   it("genera movimientos desde adelantos reales", () => {
     const movements = mapToMovementRecords(sampleAdvances);
     expect(movements).toHaveLength(2);
-    expect(movements[0].netDisbursedAmount).toBe(877_500);
+    expect(movements[0].netDisbursedAmount).toBe(892_000);
   });
 
   it("consolida retenciones del mes actual", () => {
@@ -135,6 +135,6 @@ describe("employer audit mappers", () => {
 
     expect(closure.employeeSummaries).toHaveLength(2);
     expect(closure.totalPayrollDeductions).toBe(700_000);
-    expect(closure.providerReimbursement).toBe(390_000 + 877_500);
+    expect(closure.providerReimbursement).toBe(392_000 + 892_000);
   });
 });

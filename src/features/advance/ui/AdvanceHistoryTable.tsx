@@ -14,7 +14,7 @@ import {
   ADVANCE_HISTORY_STATUS_BADGE_CLASS,
   ADVANCE_HISTORY_STATUS_LABEL,
 } from "@/shared/config/advanceHistory";
-import { formatAdvanceTransactionFeeRate } from "@/shared/config/advanceFees";
+import { formatAdvanceTransactionFeeLabel } from "@/shared/config/advanceFees";
 import { formatAdvanceRequestDate } from "@/shared/utils/payrollPeriod";
 
 type AdvanceHistoryTableProps = {
@@ -26,11 +26,13 @@ type AdvanceHistoryTableProps = {
 function TransactionCostCell({ record }: { record: AdvanceHistoryRecord }) {
   return (
     <div className="text-right">
-      <p className="font-semibold tabular-nums text-foreground">
-        {formatAdvanceTransactionFeeRate(record.transactionFeeRate)}
-      </p>
-      <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-        <AnimatedCurrency value={record.transactionFeeAmount} duration={450} />
+      <AnimatedCurrency
+        value={record.transactionFeeAmount}
+        className="font-semibold tabular-nums text-foreground"
+        duration={450}
+      />
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {formatAdvanceTransactionFeeLabel()}
       </p>
     </div>
   );
@@ -169,12 +171,9 @@ export function AdvanceHistoryTable({
               </div>
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">
-                  Costo de transacción
+                  {formatAdvanceTransactionFeeLabel()}
                 </p>
                 <p className="font-semibold tabular-nums text-foreground">
-                  {formatAdvanceTransactionFeeRate(record.transactionFeeRate)}
-                </p>
-                <p className="text-xs tabular-nums text-muted-foreground">
                   <AnimatedCurrency
                     value={record.transactionFeeAmount}
                     duration={450}

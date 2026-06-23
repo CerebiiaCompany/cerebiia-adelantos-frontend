@@ -31,19 +31,19 @@ async function fetchEmployerAdvances(
   });
   const empresaId = resolveEmpresaId(empleados);
 
-  if (env.apiUrl) {
-    const solicitudes = await adelantosEndpoints.listSolicitudesEmpresa();
+  if (!env.apiUrl) {
     return {
       empleados,
       empresaId,
-      advances: mapSolicitudesToRegisteredCompanyAdvances(solicitudes, empleados),
+      advances: empresaId ? loadCompanyAdvances(empresaId) : [],
     };
   }
 
+  const solicitudes = await adelantosEndpoints.listSolicitudesEmpresa();
   return {
     empleados,
     empresaId,
-    advances: empresaId ? loadCompanyAdvances(empresaId) : [],
+    advances: mapSolicitudesToRegisteredCompanyAdvances(solicitudes, empleados),
   };
 }
 
@@ -67,6 +67,7 @@ export function useEmployerAdvanceAudit() {
       return mapToAdvanceAuditRecords(advances, empleados);
     },
     staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -30,4 +30,9 @@ export interface EmpleadoMeDTO {
   empresa_id: string;
   porcentaje_maximo_adelanto: string;
   monto_maximo_adelanto: string;
+  documento: string;
+  banco_nombre: string;
+  numero_cuenta: string;
+  tipo_cuenta: string;
+  fecha_ingreso: string;
 }

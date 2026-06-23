@@ -14,6 +14,7 @@ import {
   type CompanyAdvanceStatus,
   type RegisteredCompanyAdvance,
 } from "./registryStorage";
+import { calculateAdvanceFee } from "./calculations";
 
 function parseSalary(salario: string): number {
   const amount = Number.parseFloat(salario);
@@ -56,7 +57,7 @@ export function mapSolicitudesToRegisteredCompanyAdvances(
     const empleado = empleadoById.get(solicitud.empleado_id);
     const advancedAmount = Number.parseFloat(solicitud.monto);
     const safeAmount = Number.isNaN(advancedAmount) ? 0 : advancedAmount;
-    const feeAmount = Math.round(safeAmount * 0.025);
+    const feeAmount = calculateAdvanceFee(safeAmount);
 
     return {
       id: solicitud.id,

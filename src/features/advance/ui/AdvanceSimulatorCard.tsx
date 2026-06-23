@@ -4,6 +4,7 @@ import {
   AnimatedNumber,
 } from "@/components/ui/animated-number";
 import { cn } from "@/lib/utils";
+import { formatAdvanceTransactionFeeLabel } from "@/shared/config/advanceFees";
 import { AdvanceAmountSelector } from "./AdvanceAmountSelector";
 import {
   AdvanceTimelineCenterLine,
@@ -123,7 +124,11 @@ export function AdvanceSimulatorCard({
             </div>
 
             <SummaryRow label="Monto solicitado" value={amount} />
-            <SummaryRow label="Comisión (2.5%)" value={fee} negative />
+            <SummaryRow
+              label={formatAdvanceTransactionFeeLabel()}
+              value={fee}
+              negative
+            />
             <SummaryRow label="Cuotas" value={installments} isCount />
 
             <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-bold">

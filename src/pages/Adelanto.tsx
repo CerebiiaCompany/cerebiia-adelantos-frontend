@@ -13,6 +13,12 @@ import { useEmployeeDashboard } from "@/features/dashboard";
 import { useProfileView } from "@/features/auth";
 import { ApiError } from "@/shared/api";
 import { env } from "@/shared/config/env";
+import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
+import {
+  resolveEmpleadoAccountNumber,
+  resolveEmpleadoAccountTypeLabel,
+  resolveEmpleadoBankName,
+} from "@/features/advance/utils/empleadoBankingDisplay";
 import {
   Dialog,
   DialogContent,
@@ -46,15 +52,24 @@ export default function Adelanto() {
     useCreateSolicitudAdelanto();
 
   const maxAmount = useMemo(() => {
+    if (dashboard?.availableAdvance !== undefined) {
+      return dashboard.availableAdvance;
+    }
+
     if (empleadoMe?.monto_maximo_adelanto) {
       const parsed = Number.parseFloat(empleadoMe.monto_maximo_adelanto);
       if (!Number.isNaN(parsed)) return parsed;
     }
-    return dashboard?.availableAdvance ?? 0;
-  }, [empleadoMe, dashboard?.availableAdvance]);
-  const fee = Math.round(amount * 0.025);
+
+    return 0;
+  }, [dashboard?.availableAdvance, empleadoMe?.monto_maximo_adelanto]);
+  const fee = calculateAdvanceTransactionFee(amount);
   const total = amount - fee;
   const installmentValue = Math.round(total / installments);
+  const bankName = resolveEmpleadoBankName(empleadoMe, profile);
+  const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
+  const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
+  const employeeNumber = empleadoMe?.empleado_id ?? profile?.employeeNumber ?? "—";
   const canRequest = amount >= MIN_AMOUNT;
 
   if (showReceipt) {
@@ -150,19 +165,25 @@ export default function Adelanto() {
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">Banco</dt>
                   <dd className="text-right font-medium text-foreground">
-                    {profile?.bank ?? "—"}
+                    {bankName}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Tipo de cuenta</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {accountTypeLabel}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">No. cuenta</dt>
                   <dd className="font-mono text-xs font-medium text-foreground">
-                    {profile?.accountNumber ?? "—"}
+                    {accountNumber}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">No. empleado</dt>
                   <dd className="font-mono text-xs font-medium text-foreground">
-                    {profile?.employeeNumber ?? "—"}
+                    {employeeNumber}
                   </dd>
                 </div>
               </dl>

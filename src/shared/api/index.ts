@@ -12,6 +12,7 @@ export {
   mapEmpleadoLoginResponseToSession,
   mapLoginResponseToSession,
   mapSystemLoginResponseToSession,
+  normalizeEmpleadoProfile,
   resolveAppRole,
 } from "./authMappers";
 export {
