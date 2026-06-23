@@ -59,12 +59,13 @@ export function PayrollCalendarDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[min(calc(100vw-1.5rem),22rem)] gap-0 overflow-hidden border-border bg-background p-0 shadow-xl sm:max-w-sm sm:rounded-2xl [&>button]:right-3 [&>button]:top-3 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
+      <DialogContent className="flex max-h-[min(92dvh,100%)] w-[calc(100vw-1rem)] max-w-none flex-col gap-0 overflow-hidden border-border bg-background p-0 shadow-xl rounded-t-2xl fixed inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 sm:inset-auto sm:left-[50%] sm:top-[50%] sm:max-h-[min(88dvh,44rem)] sm:w-full sm:max-w-md sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl md:max-w-lg [&>button]:right-3 [&>button]:top-3 [&>button]:z-10 [&>button]:text-muted-foreground [&>button]:hover:text-foreground">
         <DialogTitle className="sr-only">Calendario de nómina</DialogTitle>
         <DialogDescription className="sr-only">
           Fechas de pago y ventanas para solicitar adelanto en cada mes.
         </DialogDescription>
 
+        <div className="scrollbar-modern min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="physical-calendar-shell mx-2 mb-2 mt-3 overflow-hidden rounded-xl sm:mx-3 sm:mb-3">
           {/* Anillas tipo calendario de pared */}
           <div className="physical-calendar-binding">
@@ -102,7 +103,7 @@ export function PayrollCalendarDialog({
           </div>
 
           {/* Cuadrícula del mes */}
-          <div className="physical-calendar-grid bg-[#faf9f7] p-2 sm:p-2.5">
+          <div className="physical-calendar-grid bg-[#faf9f7] p-1.5 min-[400px]:p-2 sm:p-2.5">
             <Calendar
               mode="single"
               locale={es}
@@ -119,11 +120,11 @@ export function PayrollCalendarDialog({
                 table: "w-full border-collapse",
                 head_row: "flex w-full",
                 head_cell:
-                  "flex flex-1 items-center justify-center border border-border/80 bg-muted/60 py-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground",
+                  "flex flex-1 items-center justify-center border border-border/80 bg-muted/60 py-1 text-[9px] font-bold uppercase tracking-wide text-muted-foreground min-[400px]:py-1.5 min-[400px]:text-[10px]",
                 row: "mt-0 flex w-full",
                 cell: "relative flex flex-1 aspect-square min-h-0 p-0 text-center",
                 day: cn(
-                  "physical-calendar-day h-full w-full rounded-none border border-border/70 bg-[#faf9f7] p-0 text-sm font-semibold text-foreground",
+                  "physical-calendar-day h-full w-full rounded-none border border-border/70 bg-[#faf9f7] p-0 text-[11px] font-semibold text-foreground min-[400px]:text-xs sm:text-sm",
                   "hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
                 ),
                 day_outside: "opacity-40",
@@ -172,11 +173,11 @@ export function PayrollCalendarDialog({
           </div>
         </div>
 
-        <div className="space-y-2 border-t border-border bg-muted px-3 pb-4 pt-3 sm:px-4">
+        <div className="space-y-2 border-t border-border bg-muted px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-4">
           <p className="text-[10px] font-bold uppercase tracking-wider text-foreground/70">
             Leyenda
           </p>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
             <LegendItem
               icon={
                 <span className="relative flex h-7 w-7 items-center justify-center border-2 border-amber-500 bg-amber-50 text-[10px] font-extrabold text-amber-900">
@@ -192,10 +193,10 @@ export function PayrollCalendarDialog({
             <LegendItem
               icon={
                 <span className="flex h-7 w-7 items-center justify-center border border-border bg-primary text-[10px] font-bold text-primary-foreground">
-                  15
+                  30
                 </span>
               }
-              label="Pago de nómina (1 y 15)"
+              label="Pago de nómina (1 y 30)"
             />
             <LegendItem
               icon={
@@ -216,6 +217,7 @@ export function PayrollCalendarDialog({
           </div>
 
           <AdvanceAvailabilityNotice info={advanceAvailability} />
+        </div>
         </div>
       </DialogContent>
     </Dialog>

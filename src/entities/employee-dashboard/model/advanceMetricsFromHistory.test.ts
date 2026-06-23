@@ -16,6 +16,10 @@ function makeRecord(
     folio: "ADV-1",
     receiptStatus: "en_curso",
     paymentMethod: "Transferencia bancaria",
+    installments: 1,
+    bankName: "Bancolombia",
+    accountTypeLabel: "Ahorros",
+    accountNumber: "63920194820",
     ...partial,
   };
 }

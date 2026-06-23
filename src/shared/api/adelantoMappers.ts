@@ -39,6 +39,10 @@ export function mapSolicitudToHistoryRecord(
     folio: solicitud.id.slice(0, 8).toUpperCase(),
     receiptStatus: mapEstadoToReceiptStatus(solicitud.estado),
     paymentMethod: "Transferencia bancaria",
+    installments: solicitud.numero_cuotas_snapshot,
+    bankName: "—",
+    accountTypeLabel: "—",
+    accountNumber: "—",
   };
 }
 

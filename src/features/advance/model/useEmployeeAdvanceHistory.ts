@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/model/AuthProvider";
+import { useProfileView } from "@/features/auth";
 import { useSolicitudesAdelanto } from "@/features/advance/model/useSolicitudesAdelanto";
+import { enrichAdvanceHistoryRecords } from "@/features/advance/utils/enrichAdvanceHistoryRecords";
+import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
 import { deserializeAdvanceHistory } from "@/entities/employee-dashboard";
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
 import { isEmpleadoSession } from "@/shared/api";
@@ -30,10 +33,13 @@ function useLocalEmployeeAdvanceHistory(): AdvanceHistoryRecord[] {
 export function useEmployeeAdvanceHistory(): AdvanceHistoryRecord[] {
   const { data: apiHistory, isSuccess } = useSolicitudesAdelanto();
   const localHistory = useLocalEmployeeAdvanceHistory();
+  const { data: empleadoMe } = useEmpleadoMe();
+  const profile = useProfileView();
 
-  if (env.apiUrl && isSuccess && apiHistory) {
-    return apiHistory;
-  }
+  return useMemo(() => {
+    const base =
+      env.apiUrl && isSuccess && apiHistory ? apiHistory : localHistory;
 
-  return localHistory;
+    return enrichAdvanceHistoryRecords(base, empleadoMe, profile);
+  }, [apiHistory, isSuccess, localHistory, empleadoMe, profile]);
 }

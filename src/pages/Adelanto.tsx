@@ -6,13 +6,17 @@ import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceSimulatorCard } from "@/features/advance/ui/AdvanceSimulatorCard";
 import { AdvanceFeaturesTimeline } from "@/features/advance/ui/AdvanceFeaturesTimeline";
+import { AdvanceWindowBlockedNotice } from "@/features/advance/ui/AdvanceWindowBlockedNotice";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
 import { useCreateSolicitudAdelanto } from "@/features/advance/model/useCreateSolicitudAdelanto";
 import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
 import { useEmployeeDashboard } from "@/features/dashboard";
+import { PayrollCalendarDialog } from "@/features/dashboard/ui/PayrollCalendarDialog";
+import { PayrollCalendarFab } from "@/features/dashboard/ui/PayrollCalendarFab";
 import { useProfileView } from "@/features/auth";
 import { ApiError } from "@/shared/api";
 import { env } from "@/shared/config/env";
+import { getAdvanceAvailabilityInfo, getDaysUntilPayment } from "@/shared/config/payrollCalendar";
 import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
 import {
   resolveEmpleadoAccountNumber,
@@ -25,9 +29,8 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ADVANCE_MIN_AMOUNT } from "@/entities/advance";
 import { cn } from "@/lib/utils";
-
-const MIN_AMOUNT = 100_000;
 
 const COUNT_DURATION = 450;
 
@@ -45,6 +48,7 @@ export default function Adelanto() {
   const [installments, setInstallments] = useState(1);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [payrollCalendarOpen, setPayrollCalendarOpen] = useState(false);
   const dashboard = useEmployeeDashboard();
   const profile = useProfileView();
   const { data: empleadoMe } = useEmpleadoMe();
@@ -70,7 +74,14 @@ export default function Adelanto() {
   const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
   const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
   const employeeNumber = empleadoMe?.empleado_id ?? profile?.employeeNumber ?? "—";
-  const canRequest = amount >= MIN_AMOUNT;
+  const advanceAvailability = useMemo(() => getAdvanceAvailabilityInfo(), []);
+  const isAdvanceWindowOpen = advanceAvailability.canRequestAdvance;
+  const canRequest =
+    isAdvanceWindowOpen &&
+    maxAmount >= ADVANCE_MIN_AMOUNT &&
+    amount >= ADVANCE_MIN_AMOUNT &&
+    amount <= maxAmount;
+  const daysUntilPayment = useMemo(() => getDaysUntilPayment(), []);
 
   if (showReceipt) {
     return (
@@ -94,19 +105,43 @@ export default function Adelanto() {
         description="Selecciona el monto y confirma en un clic"
       />
 
+      <PayrollCalendarFab
+        onClick={() => setPayrollCalendarOpen(true)}
+        daysUntilPayment={daysUntilPayment}
+      />
+
+      <PayrollCalendarDialog
+        open={payrollCalendarOpen}
+        onOpenChange={setPayrollCalendarOpen}
+      />
+
+      {!isAdvanceWindowOpen ? (
+        <AdvanceWindowBlockedNotice
+          onOpenCalendar={() => setPayrollCalendarOpen(true)}
+        />
+      ) : null}
+
       <AdvanceSimulatorCard
         amount={amount}
         onAmountChange={setAmount}
         installments={installments}
         onInstallmentsChange={setInstallments}
         maxAmount={maxAmount}
-        minAmount={MIN_AMOUNT}
+        minAmount={ADVANCE_MIN_AMOUNT}
         fee={fee}
         total={total}
         installmentValue={installmentValue}
+        disabled={!isAdvanceWindowOpen}
       />
 
-      <AdvanceFeaturesTimeline />
+      <div
+        className={cn(
+          "transition-opacity duration-300",
+          !isAdvanceWindowOpen && "pointer-events-none opacity-50",
+        )}
+      >
+        <AdvanceFeaturesTimeline />
+      </div>
       <PrimaryActionButton
         type="button"
         onClick={() => setConfirmOpen(true)}
@@ -116,7 +151,9 @@ export default function Adelanto() {
           canRequest && "animate-pulse-glow",
         )}
       >
-        {canRequest ? (
+        {!isAdvanceWindowOpen ? (
+          "No puedes adelantar hoy"
+        ) : canRequest ? (
           <>
             Solicitar{" "}
             <AnimatedCurrency

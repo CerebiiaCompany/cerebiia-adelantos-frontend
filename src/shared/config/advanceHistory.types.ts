@@ -12,4 +12,8 @@ export type AdvanceHistoryRecord = {
   folio: string;
   receiptStatus: AdvanceReceiptStatus | null;
   paymentMethod: string;
+  installments: number;
+  bankName: string;
+  accountTypeLabel: string;
+  accountNumber: string;
 };

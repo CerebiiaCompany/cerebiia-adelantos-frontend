@@ -2,13 +2,13 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import {
-  ADVANCE_AMOUNT_STEP,
   buildAdvanceQuickAmounts,
+  resolveAdvanceAmountStep,
   snapAdvanceAmount,
 } from "@/entities/advance";
 import { cn } from "@/lib/utils";
 
-export { ADVANCE_AMOUNT_STEP, snapAdvanceAmount };
+export { snapAdvanceAmount };
 
 const COUNT_DURATION = 450;
 
@@ -26,6 +26,7 @@ type AdvanceAmountSelectorProps = {
   amount: number;
   onAmountChange: (amount: number) => void;
   maxAmount: number;
+  disabled?: boolean;
   className?: string;
 };
 
@@ -33,12 +34,18 @@ export function AdvanceAmountSelector({
   amount,
   onAmountChange,
   maxAmount,
+  disabled = false,
   className,
 }: AdvanceAmountSelectorProps) {
   const amountInputId = useId();
   const sliderInputId = useId();
   const [isEditingAmount, setIsEditingAmount] = useState(false);
   const [draftAmount, setDraftAmount] = useState("");
+
+  const amountStep = useMemo(
+    () => resolveAdvanceAmountStep(maxAmount),
+    [maxAmount],
+  );
 
   const quickAmounts = useMemo(
     () => buildAdvanceQuickAmounts(maxAmount),
@@ -94,7 +101,14 @@ export function AdvanceAmountSelector({
   }, [amount, commitAmount]);
 
   return (
-    <section className={cn("space-y-4", className)}>
+    <section
+      className={cn(
+        "space-y-4",
+        disabled && "pointer-events-none opacity-50",
+        className,
+      )}
+      aria-disabled={disabled || undefined}
+    >
       <label
         htmlFor={amountInputId}
         className="block text-center font-display text-base font-semibold text-foreground"
@@ -118,6 +132,8 @@ export function AdvanceAmountSelector({
           onFocus={handleAmountFocus}
           onChange={handleAmountChange}
           onBlur={handleAmountBlur}
+          disabled={disabled}
+          readOnly={disabled}
           className={cn(
             "advance-amount-display mx-auto block w-full min-w-0 max-w-full bg-transparent text-center font-display text-[clamp(1.75rem,4.5vw+0.5rem,3rem)] font-bold leading-none tabular-nums text-gradient",
             "border-0 outline-none ring-0 focus:outline-none focus:ring-0",
@@ -152,7 +168,8 @@ export function AdvanceAmountSelector({
             onValueChange={handleSliderChange}
             min={0}
             max={maxAmount}
-            step={ADVANCE_AMOUNT_STEP}
+            step={amountStep}
+            disabled={disabled}
             aria-label="Seleccionar monto del adelanto"
             className="advance-flow-slider relative z-10 cursor-pointer"
           />
@@ -175,6 +192,7 @@ export function AdvanceAmountSelector({
             <button
               key={preset}
               type="button"
+              disabled={disabled}
               onClick={() => handleQuickSelect(preset)}
               aria-pressed={isActive}
               className={cn(
