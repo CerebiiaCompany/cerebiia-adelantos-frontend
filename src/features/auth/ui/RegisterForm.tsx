@@ -210,7 +210,11 @@ function toProfileFromBasicInfo(
   };
 }
 
-export function RegisterForm() {
+export function RegisterForm({
+  onStepChange,
+}: {
+  onStepChange?: (step: RegisterStepId) => void;
+}) {
   const [isReady, setIsReady] = useState(false);
   const [isHydrating, setIsHydrating] = useState(true);
   const [step, setStep] = useState<RegisterStepId>("document");
@@ -303,6 +307,10 @@ export function RegisterForm() {
     await clearRegisterDraft();
     resetRegistrationState();
   }, [resetRegistrationState]);
+
+  useEffect(() => {
+    onStepChange?.(step);
+  }, [step, onStepChange]);
 
   useEffect(() => {
     let cancelled = false;
