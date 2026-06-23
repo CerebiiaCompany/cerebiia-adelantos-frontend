@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, ClipboardCheck, Search, ShieldAlert } from "lucide-react";
+import { ClipboardCheck, Search, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -12,6 +12,7 @@ import {
 import { formatCOP, formatDate } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 import { useEmployerAdvanceAudit } from "../../model/useEmployerAuditData";
+import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { AuditComplianceBadge } from "./AuditComplianceBadge";
 import { AuditStatusBadge } from "./AuditStatusBadge";
 
@@ -97,12 +98,10 @@ export function AdvanceMonitoringTable() {
       {isLoading ? <TableSkeleton /> : null}
 
       {isError ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-8 text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <p className="text-sm text-destructive">
-            No pudimos cargar el monitoreo de adelantos.
-          </p>
-        </div>
+        <EmployerPanelUnavailableNotice
+          message="No pudimos cargar el monitoreo de adelantos."
+          description="Verifica tu conexión con el servidor e intenta recargar la página."
+        />
       ) : null}
 
       {!isLoading && !isError ? (
@@ -123,7 +122,7 @@ export function AdvanceMonitoringTable() {
                   % usado del salario
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Comisión (2.5%)
+                  Comisión fija
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Total a descontar en nómina
@@ -242,7 +241,7 @@ export function AdvanceMonitoringTable() {
         <p className="mt-4 text-xs text-muted-foreground">
           {filteredRecords.length} de {data.length} registro
           {data.length === 1 ? "" : "s"} mostrado
-          {filteredRecords.length === 1 ? "" : "s"}. La comisión del 2.5% se
+          {filteredRecords.length === 1 ? "" : "s"}. La comisión fija de $8.000 se
           descuenta al empleado en el desembolso; la empresa solo retiene el
           valor solicitado. Tope permitido: 30% del salario mensual.
         </p>

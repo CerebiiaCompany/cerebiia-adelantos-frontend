@@ -36,7 +36,7 @@ const DEFAULT_VALUES: CreateEmpleadoFormValues = {
   salario: "",
   tipo_contrato: "",
   fecha_ingreso: "",
-  banco: "",
+  banco_id: "",
   tipo_cuenta: "",
   numero_cuenta: "",
 };

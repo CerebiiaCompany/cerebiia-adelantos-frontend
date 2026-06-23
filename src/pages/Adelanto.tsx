@@ -1,16 +1,24 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Zap } from "lucide-react";
+import { toast } from "sonner";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceSimulatorCard } from "@/features/advance/ui/AdvanceSimulatorCard";
 import { AdvanceFeaturesTimeline } from "@/features/advance/ui/AdvanceFeaturesTimeline";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
-import {
-  useEmployeeDashboard,
-  useRecordEmployeeAdvance,
-} from "@/features/dashboard";
+import { useCreateSolicitudAdelanto } from "@/features/advance/model/useCreateSolicitudAdelanto";
+import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
+import { useEmployeeDashboard } from "@/features/dashboard";
 import { useProfileView } from "@/features/auth";
+import { ApiError } from "@/shared/api";
+import { env } from "@/shared/config/env";
+import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
+import {
+  resolveEmpleadoAccountNumber,
+  resolveEmpleadoAccountTypeLabel,
+  resolveEmpleadoBankName,
+} from "@/features/advance/utils/empleadoBankingDisplay";
 import {
   Dialog,
   DialogContent,
@@ -39,12 +47,29 @@ export default function Adelanto() {
   const [showReceipt, setShowReceipt] = useState(false);
   const dashboard = useEmployeeDashboard();
   const profile = useProfileView();
-  const recordAdvance = useRecordEmployeeAdvance();
+  const { data: empleadoMe } = useEmpleadoMe();
+  const { mutate: createSolicitud, isPending: isSubmitting } =
+    useCreateSolicitudAdelanto();
 
-  const maxAmount = dashboard?.availableAdvance ?? 0;
-  const fee = Math.round(amount * 0.025);
+  const maxAmount = useMemo(() => {
+    if (dashboard?.availableAdvance !== undefined) {
+      return dashboard.availableAdvance;
+    }
+
+    if (empleadoMe?.monto_maximo_adelanto) {
+      const parsed = Number.parseFloat(empleadoMe.monto_maximo_adelanto);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+
+    return 0;
+  }, [dashboard?.availableAdvance, empleadoMe?.monto_maximo_adelanto]);
+  const fee = calculateAdvanceTransactionFee(amount);
   const total = amount - fee;
   const installmentValue = Math.round(total / installments);
+  const bankName = resolveEmpleadoBankName(empleadoMe, profile);
+  const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
+  const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
+  const employeeNumber = empleadoMe?.empleado_id ?? profile?.employeeNumber ?? "—";
   const canRequest = amount >= MIN_AMOUNT;
 
   if (showReceipt) {
@@ -140,19 +165,25 @@ export default function Adelanto() {
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">Banco</dt>
                   <dd className="text-right font-medium text-foreground">
-                    {profile?.bank ?? "—"}
+                    {bankName}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Tipo de cuenta</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {accountTypeLabel}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">No. cuenta</dt>
                   <dd className="font-mono text-xs font-medium text-foreground">
-                    {profile?.accountNumber ?? "—"}
+                    {accountNumber}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">No. empleado</dt>
                   <dd className="font-mono text-xs font-medium text-foreground">
-                    {profile?.employeeNumber ?? "—"}
+                    {employeeNumber}
                   </dd>
                 </div>
               </dl>
@@ -188,10 +219,33 @@ export default function Adelanto() {
               <PrimaryActionButton
                 type="button"
                 showArrow={false}
+                loading={isSubmitting}
+                loadingText="Enviando..."
+                disabled={isSubmitting}
                 onClick={() => {
-                  recordAdvance(amount, installments);
-                  setConfirmOpen(false);
-                  setShowReceipt(true);
+                  if (!env.apiUrl) {
+                    toast.error(
+                      "La solicitud de adelanto requiere conexión con el servidor.",
+                    );
+                    return;
+                  }
+
+                  createSolicitud(
+                    { amount, numeroCuotas: installments },
+                    {
+                      onSuccess: () => {
+                        setConfirmOpen(false);
+                        setShowReceipt(true);
+                      },
+                      onError: (error) => {
+                        const message =
+                          error instanceof ApiError
+                            ? error.message
+                            : "No pudimos enviar la solicitud. Inténtalo de nuevo.";
+                        toast.error(message);
+                      },
+                    },
+                  );
                 }}
                 className="flex-1 py-3 font-bold"
               >

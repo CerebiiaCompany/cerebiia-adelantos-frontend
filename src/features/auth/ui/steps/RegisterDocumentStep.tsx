@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, IdCard, Loader2 } from "lucide-react";
@@ -32,6 +33,7 @@ import {
   isRegisterContinueDisabled,
   REGISTER_STEP_FORM_OPTIONS,
 } from "@/features/auth/ui/registerFormOptions";
+import { ROUTES } from "@/shared/config/routes";
 
 import type { RegisterFlowType } from "../RegisterStepIndicator";
 
@@ -42,13 +44,16 @@ const documentPlaceholders: Record<DocumentType, string> = {
   PPT: "Ej: 123456789012345",
 };
 
-export type DocumentVerificationStatus = "idle" | "verified-new" | "verified-existing";
+export type DocumentVerificationStatus =
+  | "idle"
+  | "verified-new"
+  | "verified-existing"
+  | "already-active";
 
 interface RegisterDocumentStepProps {
   defaultValues: VerifyDocumentFormValues;
   verificationStatus: DocumentVerificationStatus;
   flowType: RegisterFlowType;
-  verifiedName?: string;
   isVerifying: boolean;
   onVerify: (values: VerifyDocumentFormValues) => void;
   onProceedNewUser: () => void;
@@ -59,7 +64,6 @@ export function RegisterDocumentStep({
   defaultValues,
   verificationStatus,
   flowType,
-  verifiedName,
   isVerifying,
   onVerify,
   onProceedNewUser,
@@ -83,6 +87,7 @@ export function RegisterDocumentStep({
   const { isValid } = form.formState;
   const isVerifiedNew = verificationStatus === "verified-new";
   const isVerifiedExisting = verificationStatus === "verified-existing";
+  const isAlreadyActive = verificationStatus === "already-active";
   const isDocumentLocked = verificationStatus !== "idle";
   const showVerifiedSuccess =
     isVerifiedNew && hasMandatoryConsent && hasAccessoryConsent;
@@ -91,6 +96,8 @@ export function RegisterDocumentStep({
     isVerifiedExisting &&
     hasMandatoryConsent &&
     hasAccessoryConsent;
+  const showAlreadyActiveNotice =
+    isAlreadyActive && hasMandatoryConsent && hasAccessoryConsent;
   const isContinueDisabled = isRegisterContinueDisabled(isValid, isVerifying);
 
   useEffect(() => {
@@ -136,6 +143,10 @@ export function RegisterDocumentStep({
       return;
     }
 
+    if (isAlreadyActive) {
+      return;
+    }
+
     if (flowType === "activation" && isVerifiedExisting) {
       onProceedNewUser();
       return;
@@ -145,11 +156,11 @@ export function RegisterDocumentStep({
   }
 
   const buttonLabel =
-    isVerifiedNew || (flowType === "activation" && isVerifiedExisting)
-      ? flowType === "activation"
+    isVerifiedNew
+      ? "Continuar"
+      : flowType === "activation" && isVerifiedExisting
         ? "Continuar activación"
-        : "Registrarse"
-      : "Verificar";
+        : "Verificar";
 
   const loadingLabel = isVerifiedNew
     ? "Preparando registro..."
@@ -312,8 +323,8 @@ export function RegisterDocumentStep({
             role="status"
             className="animate-stagger-up stagger-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
           >
-            Documento verificado. No encontramos una cuenta asociada. Completa
-            tus datos para registrarte.
+            Documento verificado. No encontramos un pre-registro asociado. Pulsa
+            Continuar para completar tu registro.
           </div>
         )}
 
@@ -322,9 +333,18 @@ export function RegisterDocumentStep({
             role="status"
             className="animate-stagger-up stagger-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
           >
-            Pre-registro encontrado
-            {verifiedName ? ` para ${verifiedName}` : ""}. Continúa para crear tu
-            contraseña y activar tu cuenta.
+            Pre-registro encontrado. Continúa para crear tu contraseña y
+            activar tu cuenta.
+          </div>
+        )}
+
+        {showAlreadyActiveNotice && (
+          <div
+            role="status"
+            className="animate-stagger-up stagger-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          >
+            Este documento ya tiene una cuenta activa. Inicia sesión para
+            ingresar a la plataforma.
           </div>
         )}
 
@@ -341,26 +361,38 @@ export function RegisterDocumentStep({
           </div>
         ) : null}
 
-        <Button
-          type="submit"
-          disabled={isContinueDisabled}
-          className={cn(
-            "btn-login animate-stagger-up stagger-6 h-11 w-full rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
-            isVerifying && "animate-pulse-glow",
-          )}
-        >
-          {isVerifying ? (
-            <span className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {loadingLabel}
-            </span>
-          ) : (
-            <>
-              {buttonLabel}
-              <ArrowRight className="btn-arrow h-4 w-4" />
-            </>
-          )}
-        </Button>
+        {isAlreadyActive ? (
+          <Button
+            asChild
+            className="btn-login animate-stagger-up stagger-6 h-11 w-full rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md"
+          >
+            <Link to={ROUTES.login}>
+              Iniciar sesión
+              <ArrowRight className="btn-arrow ml-2 inline h-4 w-4" />
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            disabled={isContinueDisabled}
+            className={cn(
+              "btn-login animate-stagger-up stagger-6 h-11 w-full rounded-xl bg-gradient-primary text-base font-semibold text-primary-foreground shadow-md",
+              isVerifying && "animate-pulse-glow",
+            )}
+          >
+            {isVerifying ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {loadingLabel}
+              </span>
+            ) : (
+              <>
+                {buttonLabel}
+                <ArrowRight className="btn-arrow h-4 w-4" />
+              </>
+            )}
+          </Button>
+        )}
       </form>
     </Form>
   );

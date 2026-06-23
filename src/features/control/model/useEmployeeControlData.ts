@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { calculateMaxAdvanceLimit } from "@/entities/employee-dashboard";
+import { calculateMaxAdvanceLimit, getAdvanceMonthKey } from "@/entities/employee-dashboard";
 import { useEmployeeDashboard } from "@/features/dashboard";
 import { useEmployeeAdvanceHistory } from "@/features/advance/model/useEmployeeAdvanceHistory";
 
@@ -22,7 +22,14 @@ export function useEmployeeControlData() {
     if (!dashboard) return null;
 
     const limitAmount = calculateMaxAdvanceLimit(dashboard.salary);
-    const usedAmount = dashboard.totalAdvancedThisMonth;
+    const currentMonthKey = getAdvanceMonthKey(new Date());
+    const usedAmount = advanceHistory
+      .filter(
+        (record) =>
+          record.status !== "no_aprobado" &&
+          getAdvanceMonthKey(record.requestedAt) === currentMonthKey,
+      )
+      .reduce((sum, record) => sum + record.amount, 0);
     const usedPercent =
       limitAmount > 0 ? Math.round((usedAmount / limitAmount) * 100) : 0;
 

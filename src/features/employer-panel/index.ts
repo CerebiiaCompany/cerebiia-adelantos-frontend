@@ -10,6 +10,7 @@ export {
 } from "./model/useEmployerAuditData";
 export { useDeactivateEmpleado } from "./model/useDeactivateEmpleado";
 export { useImportEmpleados } from "./model/useImportEmpleados";
+export { EmployerPanelUnavailableNotice } from "./ui/EmployerPanelUnavailableNotice";
 export { EmpleadosTable } from "./ui/EmpleadosTable";
 export { DeactivateEmpleadoButton } from "./ui/DeactivateEmpleadoButton";
 export { ImportEmpleadosButton } from "./ui/ImportEmpleadosButton";

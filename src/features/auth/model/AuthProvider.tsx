@@ -38,6 +38,8 @@ import {
 
   resolveAppRole,
 
+  normalizeEmpleadoProfile,
+
 } from "@/shared/api";
 
 import { isEmpleadoLocallyDeactivated } from "@/entities/empleado";
@@ -156,7 +158,10 @@ function restoreEmpleadoSession(stored: AuthSession): AuthSession | null {
 
 
 
-  return stored;
+  return {
+    ...stored,
+    empleado: normalizeEmpleadoProfile(stored.empleado),
+  };
 
 }
 

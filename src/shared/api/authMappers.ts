@@ -5,7 +5,9 @@ import type {
   AppUserRole,
   AuthSession,
   AuthUser,
+  EmpleadoApiProfile,
   EmpleadoLoginResponse,
+  EmpleadoProfile,
   EmpleadoSession,
   SystemUserLoginResponse,
   SystemUserSession,
@@ -53,6 +55,28 @@ export function assertEmpleadoLoginAllowed(
   }
 }
 
+export function normalizeEmpleadoProfile(
+  empleado: EmpleadoApiProfile,
+): EmpleadoProfile {
+  const bankName = empleado.banco?.trim() || empleado.banco_nombre?.trim() || "";
+
+  return {
+    id: empleado.id,
+    documento: empleado.documento,
+    nombre: empleado.nombre,
+    salario: empleado.salario,
+    banco: bankName || undefined,
+    banco_nombre: empleado.banco_nombre,
+    numero_cuenta: empleado.numero_cuenta,
+    tipo_cuenta: empleado.tipo_cuenta,
+    fecha_ingreso: empleado.fecha_ingreso,
+    estado: empleado.estado,
+    empresa_id: empleado.empresa_id,
+    created_at: empleado.created_at,
+    updated_at: empleado.updated_at,
+  };
+}
+
 export function mapSystemLoginResponseToSession(
   response: SystemUserLoginResponse,
 ): SystemUserSession {
@@ -75,7 +99,7 @@ export function mapEmpleadoLoginResponseToSession(
     actorType: "empleado",
     accessToken: response.tokens.access,
     refreshToken: response.tokens.refresh,
-    empleado: response.empleado,
+    empleado: normalizeEmpleadoProfile(response.empleado),
   };
 }
 
@@ -103,6 +127,8 @@ export function buildDemoEmpleadoSession(): EmpleadoSession {
       salario: "2400000.00",
       banco: "Bancolombia",
       numero_cuenta: "123456789",
+      tipo_cuenta: "ahorros",
+      fecha_ingreso: "2025-01-15",
       estado: "activo",
       empresa_id: "demo-empresa",
       created_at: new Date().toISOString(),

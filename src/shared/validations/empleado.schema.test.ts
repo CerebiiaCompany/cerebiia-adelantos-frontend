@@ -10,7 +10,7 @@ const validPayload = {
   salario: "1,500,000.00",
   tipo_contrato: "indefinido",
   fecha_ingreso: "2024-06-15",
-  banco: "Bancolombia",
+  banco_id: "550e8400-e29b-41d4-a716-446655440000",
   tipo_cuenta: "ahorros",
   numero_cuenta: "123456789",
 } as const;
@@ -39,7 +39,7 @@ describe("createEmpleadoSchema", () => {
     });
     const invalidBanco = createEmpleadoSchema.safeParse({
       ...validPayload,
-      banco: "Banco Inventado",
+      banco_id: "",
     });
 
     expect(invalidCc.success).toBe(false);

@@ -4,6 +4,26 @@ import type { CreateEmpleadoFormValues } from "@/shared/validations/empleado.sch
 
 export type EmpleadoImportField = keyof CreateEmpleadoFormValues;
 
+/**
+ * Encabezados oficiales alineados con el parser del backend (POST /empleados/cargar-nomina/).
+ */
+export const EMPLEADO_IMPORT_TEMPLATE_HEADERS = [
+  "documento",
+  "nombre",
+  "salario",
+  "banco",
+  "numero_cuenta",
+  "tipo_documento",
+  "email",
+  "celular",
+  "tipo_contrato",
+  "fecha_ingreso",
+  "tipo_cuenta",
+] as const;
+
+export type EmpleadoImportTemplateHeader =
+  (typeof EMPLEADO_IMPORT_TEMPLATE_HEADERS)[number];
+
 const HEADER_ALIASES: Record<string, EmpleadoImportField> = {
   tipodocumento: "tipo_documento",
   tipodedocumento: "tipo_documento",
@@ -17,6 +37,7 @@ const HEADER_ALIASES: Record<string, EmpleadoImportField> = {
   nombresyapellidos: "nombre",
   correo: "correo",
   email: "correo",
+  mail: "correo",
   correoelectronico: "correo",
   celular: "celular",
   telefono: "celular",
@@ -29,8 +50,8 @@ const HEADER_ALIASES: Record<string, EmpleadoImportField> = {
   fechaingreso: "fecha_ingreso",
   fechaingresoempresa: "fecha_ingreso",
   ingreso: "fecha_ingreso",
-  banco: "banco",
-  entidadfinanciera: "banco",
+  banco: "banco_id",
+  entidadfinanciera: "banco_id",
   tipocuenta: "tipo_cuenta",
   tipodecuenta: "tipo_cuenta",
   cuentabancaria: "tipo_cuenta",
@@ -56,16 +77,5 @@ export function resolveEmpleadoImportField(
   return HEADER_ALIASES[normalized] ?? null;
 }
 
-export const EMPLEADO_IMPORT_TEMPLATE_HEADERS = [
-  "tipo_documento",
-  "documento",
-  "nombre",
-  "correo",
-  "celular",
-  "salario",
-  "tipo_contrato",
-  "fecha_ingreso",
-  "banco",
-  "tipo_cuenta",
-  "numero_cuenta",
-] as const;
+export const EMPLEADO_IMPORT_REQUIRED_BACKEND_HEADERS =
+  EMPLEADO_IMPORT_TEMPLATE_HEADERS;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  ADVANCE_FEE_RATE,
+  ADVANCE_FEE_AMOUNT,
   ADVANCE_SALARY_CAP_RATIO,
   calculateAdvanceFee,
   calculateSalaryPercentage,
@@ -9,9 +9,10 @@ import {
 } from "./calculations";
 
 describe("employer-audit calculations", () => {
-  it("calcula comisión del 2.5%", () => {
-    expect(ADVANCE_FEE_RATE).toBe(0.025);
-    expect(calculateAdvanceFee(400_000)).toBe(10_000);
+  it("aplica comisión fija de $8.000", () => {
+    expect(ADVANCE_FEE_AMOUNT).toBe(8_000);
+    expect(calculateAdvanceFee(400_000)).toBe(8_000);
+    expect(calculateAdvanceFee(0)).toBe(0);
   });
 
   it("calcula total a descontar en nómina (solo valor del adelanto)", () => {

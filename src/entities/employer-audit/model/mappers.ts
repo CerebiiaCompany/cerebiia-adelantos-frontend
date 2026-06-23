@@ -1,5 +1,6 @@
 // ⚠️ AGNOSTIC — maps registered advances to employer audit views
 
+import type { SolicitudAdelantoDTO, EstadoSolicitud } from "@/shared/api/types/adelanto";
 import type { EmpleadoDTO } from "@/shared/api/types";
 import type {
   EmployerAdvanceAuditRecord,
@@ -10,8 +11,10 @@ import type {
 } from "./types";
 import {
   MAX_ADVANCE_INSTALLMENTS,
+  type CompanyAdvanceStatus,
   type RegisteredCompanyAdvance,
 } from "./registryStorage";
+import { calculateAdvanceFee } from "./calculations";
 
 function parseSalary(salario: string): number {
   const amount = Number.parseFloat(salario);
@@ -33,6 +36,56 @@ function capitalizeMonth(label: string): string {
 
 export function resolveEmpresaId(empleados: EmpleadoDTO[]): string | null {
   return empleados[0]?.empresa_id ?? null;
+}
+
+function mapEstadoToCompanyAdvanceStatus(
+  estado: EstadoSolicitud,
+): CompanyAdvanceStatus {
+  if (estado === "rechazado") return "rechazado";
+  if (estado === "aprobado" || estado === "pagado") return "procesado";
+  return "en_curso";
+}
+
+/** Convierte solicitudes API a la estructura interna de auditoría empresa. */
+export function mapSolicitudesToRegisteredCompanyAdvances(
+  solicitudes: SolicitudAdelantoDTO[],
+  empleados: EmpleadoDTO[],
+): RegisteredCompanyAdvance[] {
+  const empleadoById = new Map(empleados.map((empleado) => [empleado.id, empleado]));
+
+  return solicitudes.map((solicitud) => {
+    const empleado = empleadoById.get(solicitud.empleado_id);
+    const advancedAmount = Number.parseFloat(solicitud.monto);
+    const safeAmount = Number.isNaN(advancedAmount) ? 0 : advancedAmount;
+    const feeAmount = calculateAdvanceFee(safeAmount);
+
+    return {
+      id: solicitud.id,
+      empresaId: solicitud.empresa_id,
+      employeeId: solicitud.empleado_id,
+      employeeName: empleado?.nombre ?? "Empleado",
+      employeeDocument: empleado?.documento ?? "—",
+      baseSalary: empleado ? parseSalary(empleado.salario) : 0,
+      advancedAmount: safeAmount,
+      installments: solicitud.numero_cuotas_snapshot,
+      feeAmount,
+      netDisbursedAmount: safeAmount - feeAmount,
+      status: mapEstadoToCompanyAdvanceStatus(solicitud.estado),
+      requestedAt: solicitud.created_at,
+      transferId: solicitud.id.slice(0, 8).toUpperCase(),
+    };
+  });
+}
+
+/** Mapea solicitudes del backend (rol empresa) a registros de monitoreo. */
+export function mapSolicitudesToAdvanceAuditRecords(
+  solicitudes: SolicitudAdelantoDTO[],
+  empleados: EmpleadoDTO[],
+): EmployerAdvanceAuditRecord[] {
+  return mapToAdvanceAuditRecords(
+    mapSolicitudesToRegisteredCompanyAdvances(solicitudes, empleados),
+    empleados,
+  );
 }
 
 export function sortAdvancesByDate(

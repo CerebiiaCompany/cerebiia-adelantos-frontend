@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
-  ADVANCE_TRANSACTION_FEE_RATE,
+  ADVANCE_TRANSACTION_FEE_AMOUNT,
   calculateAdvanceTransactionFee,
-  formatAdvanceTransactionFeeRate,
+  formatAdvanceTransactionFeeLabel,
 } from "./advanceFees";
 
 describe("advanceFees", () => {
-  it("calcula la comisión al 2.5%", () => {
-    expect(calculateAdvanceTransactionFee(500_000)).toBe(12_500);
-    expect(calculateAdvanceTransactionFee(1_000_000)).toBe(25_000);
+  it("aplica comisión fija de $8.000 por adelanto", () => {
+    expect(ADVANCE_TRANSACTION_FEE_AMOUNT).toBe(8_000);
+    expect(calculateAdvanceTransactionFee(500_000)).toBe(8_000);
+    expect(calculateAdvanceTransactionFee(1_000_000)).toBe(8_000);
+    expect(calculateAdvanceTransactionFee(0)).toBe(0);
   });
 
-  it("formatea el porcentaje de comisión", () => {
-    expect(formatAdvanceTransactionFeeRate()).toBe("2.5%");
-    expect(formatAdvanceTransactionFeeRate(ADVANCE_TRANSACTION_FEE_RATE)).toBe(
-      "2.5%",
-    );
+  it("formatea la etiqueta de comisión fija", () => {
+    expect(formatAdvanceTransactionFeeLabel()).toContain("8.000");
+    expect(formatAdvanceTransactionFeeLabel()).toContain("Comisión fija");
   });
 });

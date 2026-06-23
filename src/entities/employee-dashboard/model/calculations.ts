@@ -5,6 +5,11 @@ import type {
   EmployeeDashboardMetrics,
   EmployeeDashboardSnapshot,
 } from "./types";
+import {
+  calculateCumulativeAccumulatedIncome,
+  calculateDailySalaryIncome,
+  calculateIncomeForCalendarMonth,
+} from "./salaryAccrual";
 
 export const ADVANCE_SALARY_RATIO = 0.3;
 
@@ -23,6 +28,13 @@ export function calculateAvailableAdvance(
   totalAdvanced: number,
 ): number {
   return Math.max(0, calculateMaxAdvanceLimit(salary) - totalAdvanced);
+}
+
+export function calculateWalletBalance(
+  salary: number,
+  totalAdvanced: number,
+): number {
+  return Math.max(0, salary - totalAdvanced);
 }
 
 export function createEmptyDashboardMetrics(): EmployeeDashboardMetrics {
@@ -49,18 +61,26 @@ function getMonthKey(date: Date): string {
 
 export function buildDashboardChartData(
   monthlyAdvances: Record<string, number>,
+  salary = 0,
+  referenceDate: Date = new Date(),
+  incomeStartDate?: string | Date | null,
 ): DashboardChartPoint[] {
   const points: DashboardChartPoint[] = [];
 
   for (let offset = 5; offset >= 0; offset -= 1) {
-    const date = new Date();
+    const date = new Date(referenceDate);
     date.setDate(1);
     date.setMonth(date.getMonth() - offset);
 
     const monthKey = getMonthKey(date);
     points.push({
       name: formatMonthLabel(date),
-      ingresos: 0,
+      ingresos: calculateIncomeForCalendarMonth(
+        salary,
+        incomeStartDate,
+        date,
+        referenceDate,
+      ),
       adelantos: monthlyAdvances[monthKey] ?? 0,
     });
   }
@@ -72,20 +92,37 @@ export function buildEmployeeDashboardSnapshot(
   displayName: string,
   salary: number,
   metrics: EmployeeDashboardMetrics,
+  maxAdvanceLimit?: number,
+  referenceDate: Date = new Date(),
+  incomeStartDate?: string | Date | null,
 ): EmployeeDashboardSnapshot {
-  const availableAdvance = calculateAvailableAdvance(
+  const limit = maxAdvanceLimit ?? calculateMaxAdvanceLimit(salary);
+  const availableAdvance = Math.max(0, limit - metrics.totalAdvancedThisMonth);
+  const walletBalance = calculateWalletBalance(
     salary,
     metrics.totalAdvancedThisMonth,
   );
+  const accumulatedIncome = calculateCumulativeAccumulatedIncome(
+    salary,
+    incomeStartDate,
+    referenceDate,
+  );
+  const incomeToday = calculateDailySalaryIncome(salary, referenceDate);
 
   return {
     displayName,
     salary,
     availableAdvance,
-    accumulatedIncome: metrics.accumulatedIncome,
-    incomeToday: metrics.incomeToday,
+    accumulatedIncome,
+    incomeToday,
     totalAdvancedThisMonth: metrics.totalAdvancedThisMonth,
-    chartData: buildDashboardChartData(metrics.monthlyAdvances),
+    walletBalance,
+    chartData: buildDashboardChartData(
+      metrics.monthlyAdvances,
+      salary,
+      referenceDate,
+      incomeStartDate,
+    ),
     recentActivity: metrics.activity,
   };
 }

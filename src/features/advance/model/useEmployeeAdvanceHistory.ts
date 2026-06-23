@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/model/AuthProvider";
+import { useSolicitudesAdelanto } from "@/features/advance/model/useSolicitudesAdelanto";
 import { deserializeAdvanceHistory } from "@/entities/employee-dashboard";
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
 import { isEmpleadoSession } from "@/shared/api";
+import { env } from "@/shared/config/env";
 import {
   loadEmployeeDashboardMetrics,
   subscribeEmployeeDashboard,
 } from "@/features/dashboard/model/employeeDashboardStorage";
 
-export function useEmployeeAdvanceHistory(): AdvanceHistoryRecord[] {
+function useLocalEmployeeAdvanceHistory(): AdvanceHistoryRecord[] {
   const { session } = useAuth();
   const [version, setVersion] = useState(0);
 
@@ -23,4 +25,15 @@ export function useEmployeeAdvanceHistory(): AdvanceHistoryRecord[] {
     const metrics = loadEmployeeDashboardMetrics(session.empleado.id);
     return deserializeAdvanceHistory(metrics.advanceHistory);
   }, [session, version]);
+}
+
+export function useEmployeeAdvanceHistory(): AdvanceHistoryRecord[] {
+  const { data: apiHistory, isSuccess } = useSolicitudesAdelanto();
+  const localHistory = useLocalEmployeeAdvanceHistory();
+
+  if (env.apiUrl && isSuccess && apiHistory) {
+    return apiHistory;
+  }
+
+  return localHistory;
 }

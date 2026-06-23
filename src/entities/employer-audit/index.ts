@@ -9,7 +9,7 @@ export type {
   EmployerPayrollDeductionSummary,
 } from "./model/types";
 export {
-  ADVANCE_FEE_RATE,
+  ADVANCE_FEE_AMOUNT,
   ADVANCE_SALARY_CAP_RATIO,
   calculateAdvanceFee,
   calculateSalaryPercentage,
@@ -28,6 +28,8 @@ export {
 } from "./model/registryStorage";
 export {
   buildPayrollClosureSnapshot,
+  mapSolicitudesToAdvanceAuditRecords,
+  mapSolicitudesToRegisteredCompanyAdvances,
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
   mapToMovementRecords,

@@ -62,6 +62,26 @@ describe("mapEmpleadoLoginResponseToSession", () => {
     expect(session.actorType).toBe("empleado");
     expect(resolveAppRole(session)).toBe("employee");
   });
+
+  it("normaliza banco_nombre del backend al campo banco de sesión", () => {
+    const session = mapEmpleadoLoginResponseToSession({
+      empleado: {
+        id: "emp-1",
+        documento: "12345678",
+        nombre: "Juan Perez",
+        salario: "1500000.00",
+        banco_nombre: "Nequi",
+        numero_cuenta: "123456789",
+        estado: "activo",
+        empresa_id: "empresa-1",
+        created_at: "2026-06-18T10:00:00Z",
+        updated_at: "2026-06-18T10:00:00Z",
+      },
+      tokens: { access: "access", refresh: "refresh" },
+    });
+
+    expect(session.empleado.banco).toBe("Nequi");
+  });
 });
 
 describe("buildDemoEmpleadoSession", () => {

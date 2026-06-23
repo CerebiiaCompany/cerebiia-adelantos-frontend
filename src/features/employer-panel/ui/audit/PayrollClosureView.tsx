@@ -1,10 +1,11 @@
-import { AlertCircle, ArrowRightLeft, Calculator, Receipt } from "lucide-react";
+import { ArrowRightLeft, Calculator, Receipt } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { formatCOP } from "@/shared/lib";
 import { downloadCsvFile } from "@/shared/lib/csv";
 import { toast } from "sonner";
 import { useEmployerPayrollClosure } from "../../model/useEmployerAuditData";
+import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { ExportReportButton } from "./ExportReportButton";
 
 function TableSkeleton() {
@@ -66,12 +67,10 @@ export function PayrollClosureView() {
 
   if (isError || !data) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-8 text-center">
-        <AlertCircle className="h-8 w-8 text-destructive" />
-        <p className="text-sm text-destructive">
-          No pudimos cargar el cierre de nómina.
-        </p>
-      </div>
+      <EmployerPanelUnavailableNotice
+        message="El cierre de nómina no está disponible en este momento."
+        description="Esta sección se habilitará cuando haya información para mostrar."
+      />
     );
   }
 
