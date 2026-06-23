@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, ClipboardCheck, Search, ShieldAlert } from "lucide-react";
+import { ClipboardCheck, Search, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -12,6 +12,7 @@ import {
 import { formatCOP, formatDate } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 import { useEmployerAdvanceAudit } from "../../model/useEmployerAuditData";
+import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { AuditComplianceBadge } from "./AuditComplianceBadge";
 import { AuditStatusBadge } from "./AuditStatusBadge";
 
@@ -97,12 +98,10 @@ export function AdvanceMonitoringTable() {
       {isLoading ? <TableSkeleton /> : null}
 
       {isError ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-8 text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <p className="text-sm text-destructive">
-            No pudimos cargar el monitoreo de adelantos.
-          </p>
-        </div>
+        <EmployerPanelUnavailableNotice
+          message="El monitoreo de adelantos no está disponible en este momento."
+          description="Esta sección se habilitará cuando haya información para mostrar."
+        />
       ) : null}
 
       {!isLoading && !isError ? (

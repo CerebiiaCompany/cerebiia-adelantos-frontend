@@ -1,5 +1,12 @@
 import { useRef, useState } from "react";
-import { AlertCircle, CheckCircle2, FileSpreadsheet, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Download,
+  FileSpreadsheet,
+  Loader2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,13 +16,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { downloadExcelFile } from "@/shared/lib/excel";
+import { downloadExcelBuffer } from "@/shared/lib/excel";
 import {
-  buildEmpleadoImportTemplateWorkbook,
+  buildEmpleadoImportTemplateBuffer,
   groupImportErrorsByKind,
   type EmpleadoImportRowError,
 } from "@/shared/lib/empleadoImport";
-import { cn } from "@/lib/utils";
 import {
   useImportEmpleados,
   type ImportEmpleadosResult,
@@ -121,14 +127,12 @@ export function ImportEmpleadosButton() {
     inputRef.current?.click();
   }
 
-  function handleDownloadTemplate() {
-    downloadExcelFile(
-      "plantilla-importacion-nomina",
-      [],
-      "Empleados",
-      buildEmpleadoImportTemplateWorkbook(),
+  async function handleDownloadTemplate() {
+    const buffer = await buildEmpleadoImportTemplateBuffer();
+    downloadExcelBuffer("plantilla-importacion-nomina", buffer);
+    toast.success(
+      "Plantilla descargada. Diligencia la hoja «Nomina» fila por fila e impórtala.",
     );
-    toast.success("Plantilla Excel descargada. Complétala e impórtala.");
   }
 
   function showResultSummary(result: ImportEmpleadosResult) {
@@ -177,32 +181,44 @@ export function ImportEmpleadosButton() {
         onChange={handleFileChange}
       />
 
-      <div className="flex items-center gap-2">
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
         <Button
           type="button"
           variant="outline"
-          onClick={handlePickFile}
-          disabled={isPending}
-          className={cn(
-            "h-11 rounded-xl border-primary/20 bg-background/80 font-medium",
-            "hover:border-primary/30 hover:bg-primary/5",
-          )}
+          onClick={() => void handleDownloadTemplate()}
+          className="btn-employer-template"
         >
-          {isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-          )}
-          {isPending ? "Importando..." : "Importar nómina"}
+          <Download className="btn-employer-template-icon mr-2 h-4 w-4" />
+          Descargar plantilla
         </Button>
 
-        <button
+        <Button
           type="button"
-          onClick={handleDownloadTemplate}
-          className="hidden text-xs text-muted-foreground underline-offset-2 hover:text-primary hover:underline sm:inline"
+          onClick={handlePickFile}
+          disabled={isPending}
+          className="btn-import-nomina border-0"
         >
-          Plantilla
-        </button>
+          {isPending ? (
+            <>
+              <Loader2 className="btn-import-nomina-icon mr-2 h-4 w-4 animate-spin" />
+              <span className="btn-import-nomina-label">Importando...</span>
+            </>
+          ) : (
+            <>
+              <span className="btn-import-nomina-label btn-import-nomina-label-default">
+                <FileSpreadsheet className="btn-import-nomina-icon h-4 w-4" />
+                Importar nómina
+              </span>
+              <span
+                className="btn-import-nomina-label-hover"
+                aria-hidden="true"
+              >
+                <Upload className="btn-import-nomina-icon h-4 w-4" />
+                Seleccionar archivo
+              </span>
+            </>
+          )}
+        </Button>
       </div>
 
       <Dialog open={resultOpen} onOpenChange={setResultOpen}>

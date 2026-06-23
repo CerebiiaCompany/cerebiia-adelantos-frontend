@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, Loader2, Search, Users } from "lucide-react";
+import { Loader2, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApiError } from "@/shared/api";
 import type { EmpleadoDTO } from "@/shared/api/types";
 import { formatCOP } from "@/shared/lib";
 import {
@@ -16,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useEmpleadosList } from "../model/useEmpleadosList";
 import { DeactivateEmpleadoButton } from "./DeactivateEmpleadoButton";
+import { EmployerPanelUnavailableNotice } from "./EmployerPanelUnavailableNotice";
 
 const TABLE_COLUMNS = [
   { key: "nombre", label: "Nombre" },
@@ -93,18 +93,13 @@ function TableSkeleton() {
 
 export function EmpleadosTable() {
   const [search, setSearch] = useState("");
-  const { data, isLoading, isError, error, refetch, isFetching } =
+  const { data, isLoading, isError, refetch, isFetching } =
     useEmpleadosList();
 
   const filteredEmpleados = useMemo(
     () => filterEmpleados(data ?? [], search),
     [data, search],
   );
-
-  const errorMessage =
-    error instanceof ApiError
-      ? error.message
-      : "No pudimos cargar los empleados. Inténtalo de nuevo.";
 
   return (
     <div className="glass-card glow-border rounded-xl p-4 sm:p-5">
@@ -122,17 +117,11 @@ export function EmpleadosTable() {
       {isLoading ? <TableSkeleton /> : null}
 
       {isError ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-8 text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <p className="text-sm text-destructive">{errorMessage}</p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            Reintentar
-          </button>
-        </div>
+        <EmployerPanelUnavailableNotice
+          message="No hay información de empleados disponible en este momento."
+          description="Puedes reintentar la consulta o volver más tarde."
+          onRetry={() => refetch()}
+        />
       ) : null}
 
       {!isLoading && !isError ? (

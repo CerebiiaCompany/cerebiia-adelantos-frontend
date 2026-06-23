@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { empleadosEndpoints } from "@/shared/api";
+import { empleadosEndpoints, ApiError } from "@/shared/api";
 import { env } from "@/shared/config/env";
 import {
   buildApiImportRowError,
@@ -33,13 +33,25 @@ export function useImportEmpleados() {
   return useMutation({
     mutationFn: async (file: File): Promise<ImportEmpleadosResult> => {
       if (env.apiUrl) {
-        const result = await empleadosEndpoints.cargarNomina(file);
-        return {
-          createdCount: result.exitosos,
-          failedCount: result.fallidos,
-          parseErrors: [],
-          importErrors: mapCargaNominaErrors(result.errores),
-        };
+        try {
+          const result = await empleadosEndpoints.cargarNomina(file);
+          return {
+            createdCount: result.exitosos,
+            failedCount: result.fallidos,
+            parseErrors: [],
+            importErrors: mapCargaNominaErrors(result.errores),
+          };
+        } catch (error) {
+          if (
+            error instanceof ApiError &&
+            error.message.includes("El archivo debe tener las columnas")
+          ) {
+            throw new Error(
+              "La plantilla no tiene las columnas requeridas. Descarga la plantilla actualizada y usa la hoja «Nomina» sin modificar los encabezados.",
+            );
+          }
+          throw error;
+        }
       }
 
       const matrix = await parseEmpleadoImportFile(file);

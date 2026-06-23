@@ -20,6 +20,7 @@ import {
   resolveEmpleadoImportField,
   type EmpleadoImportField,
 } from "./empleadoImportHeaders";
+import { normalizeImportNumericString } from "./normalizeImportCellValue";
 import {
   formatValidationImportMessage,
   type EmpleadoImportRowError,
@@ -52,12 +53,13 @@ function mapDocumentType(value: string): string {
   const normalized = normalizeLookupValue(value);
   const aliases: Record<string, string> = {
     cc: "CC",
+    ce: "CE",
+    ti: "TI",
+    pas: "PASSPORT",
     cedula: "CC",
     ceduladeciudadania: "CC",
-    pas: "PASSPORT",
     pasaporte: "PASSPORT",
     passport: "PASSPORT",
-    ce: "CE",
     ceduladeextranjeria: "CE",
     ppt: "PPT",
     permisoporprotecciontemporal: "PPT",
@@ -214,17 +216,17 @@ function normalizeImportRecord(
     tipo_documento: mapDocumentType(record.tipo_documento ?? ""),
     documento: normalizeImportDocumento(
       record.tipo_documento ?? "",
-      record.documento ?? "",
+      normalizeImportNumericString(record.documento ?? ""),
     ),
     nombre: (record.nombre ?? "").trim(),
     correo: (record.correo ?? "").trim(),
-    celular: (record.celular ?? "").trim(),
+    celular: normalizeImportNumericString(record.celular ?? ""),
     salario: normalizeSalaryInput(record.salario ?? ""),
     tipo_contrato: mapContractType(record.tipo_contrato ?? ""),
     fecha_ingreso: parseImportDate(record.fecha_ingreso ?? ""),
-    banco: mapBank(record.banco ?? ""),
+    banco_id: mapBank(record.banco_id ?? ""),
     tipo_cuenta: mapAccountType(record.tipo_cuenta ?? ""),
-    numero_cuenta: (record.numero_cuenta ?? "").trim(),
+    numero_cuenta: normalizeImportNumericString(record.numero_cuenta ?? ""),
   };
 }
 
@@ -236,6 +238,14 @@ export function mapEmpleadoImportMatrix(
   const errors: EmpleadoImportRowError[] = [];
 
   if (records.length === 0) {
+    const hasRecognizedHeaders = matrix[0]?.some((header) =>
+      Boolean(resolveEmpleadoImportField(header)),
+    );
+
+    if (hasRecognizedHeaders) {
+      return { valid, errors: [] };
+    }
+
     return {
       valid,
       errors: [

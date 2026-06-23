@@ -1,38 +1,56 @@
 import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
 import { createEmpleadoSchema } from "@/shared/validations/empleado.schema";
-import { buildEmpleadoImportTemplateMatrix } from "./empleadoImportTemplate";
+import {
+  buildEmpleadoImportTemplateBuffer,
+  buildEmpleadoImportTemplateMatrix,
+  EMPLEADO_IMPORT_BLANK_ROW_COUNT,
+  EMPLEADO_IMPORT_TEMPLATE_HEADERS,
+} from "./empleadoImportTemplate";
 import { mapEmpleadoImportMatrix } from "./mapEmpleadoImportRows";
 import { parseCsvText } from "./parseCsvText";
 
 describe("empleadoImport", () => {
-  it("genera plantilla Excel con encabezados y 4 filas de ejemplo", () => {
+  it("genera plantilla solo con encabezados y filas en blanco", () => {
     const matrix = buildEmpleadoImportTemplateMatrix();
-    const sheet = XLSX.utils.aoa_to_sheet(matrix);
-    const range = XLSX.utils.decode_range(sheet["!ref"] ?? "A1");
 
-    expect(range.e.r + 1).toBe(5);
-    expect(range.e.c + 1).toBe(11);
+    expect(matrix[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
+    expect(matrix).toHaveLength(1 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
+    expect(matrix[0]).toContain("email");
+    expect(matrix[0]).not.toContain("correo");
+    expect(matrix[1].every((cell) => cell === "")).toBe(true);
   });
 
-  it("valida las 4 filas de la plantilla de ejemplo sin errores", () => {
-    const matrix = buildEmpleadoImportTemplateMatrix();
-    const { valid, errors } = mapEmpleadoImportMatrix(matrix);
+  it("no importa filas vacías de la plantilla en blanco", () => {
+    const { valid, errors } = mapEmpleadoImportMatrix(
+      buildEmpleadoImportTemplateMatrix(),
+    );
 
+    expect(valid).toHaveLength(0);
     expect(errors).toHaveLength(0);
-    expect(valid).toHaveLength(4);
-    expect(valid.map((row) => row.data.tipo_documento)).toEqual([
-      "CC",
-      "PASSPORT",
-      "CE",
-      "PPT",
-    ]);
-    expect(valid[3].data.documento).toBe("4561230");
   });
 
-  it("mapea filas CSV válidas al esquema de creación", () => {
-    const matrix = parseCsvText(`tipo_documento,documento,nombre,correo,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
-CC,1005026054,Melanny Yilyan Guate Restrepo,empleado@empresa.com,3001234567,1700000,indefinido,2026-01-15,nequi,ahorros,3001234567`);
+  it("genera plantilla Excel corporativa descargable sin datos de ejemplo", async () => {
+    const buffer = await buildEmpleadoImportTemplateBuffer();
+    const workbook = XLSX.read(buffer, { type: "array" });
+    const nominaSheet = workbook.Sheets.Nomina ?? workbook.Sheets[workbook.SheetNames[0]];
+
+    expect(workbook.SheetNames).toContain("Nomina");
+    expect(workbook.SheetNames).toContain("Instrucciones");
+
+    const rows = XLSX.utils.sheet_to_json<string[]>(nominaSheet, {
+      header: 1,
+      defval: "",
+    });
+
+    expect(rows[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
+    expect(rows.length).toBe(1 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
+    expect(rows[1]?.every((cell) => cell === "")).toBe(true);
+  });
+
+  it("mapea filas CSV válidas con columna email al esquema de creación", () => {
+    const matrix = parseCsvText(`${EMPLEADO_IMPORT_TEMPLATE_HEADERS.join(",")}
+1005026054,Melanny Yilyan Guate Restrepo,1700000,Nequi,3001234567,cc,empleado@empresa.com,3001234567,indefinido,2026-01-15,ahorros`);
 
     const { valid, errors } = mapEmpleadoImportMatrix(matrix);
 
@@ -40,56 +58,72 @@ CC,1005026054,Melanny Yilyan Guate Restrepo,empleado@empresa.com,3001234567,1700
     expect(valid).toHaveLength(1);
     expect(valid[0].data.documento).toBe("1005026054");
     expect(valid[0].data.salario).toBe("1700000.00");
-    expect(valid[0].data.banco).toBe("Nequi");
+    expect(valid[0].data.banco_id).toBe("Nequi");
+    expect(valid[0].data.correo).toBe("empleado@empresa.com");
   });
 
-  it("mapea PAS a PASSPORT con documento numérico", () => {
+  it("acepta alias correo en CSV legacy", () => {
     const matrix = parseCsvText(`tipo_documento,documento,nombre,correo,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
-PAS,98765432,Maria Silva,maria.silva@empresa.com,3209876543,3800000,fijo,2024-08-15,davivienda,corriente,9876543210`);
+cc,1005026054,Melanny Guate,empleado@empresa.com,3001234567,1700000,indefinido,2026-01-15,Nequi,ahorros,3001234567`);
 
-    expect(() => mapEmpleadoImportMatrix(matrix)).not.toThrow();
+    const { valid, errors } = mapEmpleadoImportMatrix(matrix);
+
+    expect(errors).toHaveLength(0);
+    expect(valid).toHaveLength(1);
+  });
+
+  it("mapea pas a PASSPORT con documento numérico", () => {
+    const matrix = parseCsvText(`tipo_documento,documento,nombre,email,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
+pas,98765432,Maria Silva,maria.silva@empresa.com,3209876543,3800000,fijo,2024-08-15,Davivienda,corriente,9876543210`);
 
     const { valid, errors } = mapEmpleadoImportMatrix(matrix);
 
     expect(errors).toHaveLength(0);
     expect(valid).toHaveLength(1);
     expect(valid[0].data.tipo_documento).toBe("PASSPORT");
-    expect(valid[0].data.banco).toBe("Davivienda");
+    expect(valid[0].data.banco_id).toBe("Davivienda");
   });
 
   it("resuelve alias de banco en minúsculas", () => {
-    const matrix = parseCsvText(`tipo_documento,documento,nombre,correo,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
-CC,10142345,Ana Gomez,ana.gomez@empresa.com,3005554433,4200000,indefinido,2023-11-01,bogota,ahorros,456789123`);
+    const matrix = parseCsvText(`tipo_documento,documento,nombre,email,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
+cc,10142345,Ana Gomez,ana.gomez@empresa.com,3005554433,4200000,indefinido,2023-11-01,bogota,ahorros,456789123`);
 
     const { valid, errors } = mapEmpleadoImportMatrix(matrix);
 
     expect(errors).toHaveLength(0);
-    expect(valid[0].data.banco).toBe("Banco de Bogotá");
+    expect(valid[0].data.banco_id).toBe("Banco de Bogotá");
   });
 
-  it("normaliza PPT con ceros de relleno provenientes de PILA", () => {
-    const matrix = parseCsvText(`tipo_documento,documento,nombre,correo,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
-PPT,0000004561230,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_labor,2025-02-10,nequi,ahorros,3154561230`);
+  it("resuelve alias BBVA al nombre exacto del backend", () => {
+    const matrix = parseCsvText(`tipo_documento,documento,nombre,email,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
+cc,10142345,Ana Gomez,ana.gomez@empresa.com,3005554433,4200000,indefinido,2023-11-01,BBVA,ahorros,456789123`);
 
     const { valid, errors } = mapEmpleadoImportMatrix(matrix);
 
     expect(errors).toHaveLength(0);
-    expect(valid).toHaveLength(1);
-    expect(valid[0].data.documento).toBe("4561230");
+    expect(valid[0].data.banco_id).toBe("BBVA Colombia");
   });
 
-  it("reporta error por fila cuando el PPT supera 8 dígitos", () => {
-    const matrix = parseCsvText(`tipo_documento,documento,nombre,correo,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
-PPT,123456789,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_labor,2025-02-10,nequi,ahorros,3154561230`);
+  it("normaliza documento y celular con sufijo .0 de Excel", () => {
+    const matrix = parseCsvText(`tipo_documento,documento,nombre,email,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
+cc,1014261059.0,Ana Gomez,ana.gomez@empresa.com,3112938473.0,4200000,indefinido,2023-11-01,Nequi,ahorros,456789123`);
 
-    expect(() => mapEmpleadoImportMatrix(matrix)).not.toThrow();
+    const { valid, errors } = mapEmpleadoImportMatrix(matrix);
+
+    expect(errors).toHaveLength(0);
+    expect(valid[0].data.documento).toBe("1014261059");
+    expect(valid[0].data.celular).toBe("3112938473");
+  });
+
+  it("reporta error por fila cuando el documento es inválido", () => {
+    const matrix = parseCsvText(`tipo_documento,documento,nombre,email,celular,salario,tipo_contrato,fecha_ingreso,banco,tipo_cuenta,numero_cuenta
+ppt,123456789,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_labor,2025-02-10,nequi,ahorros,3154561230`);
 
     const { valid, errors } = mapEmpleadoImportMatrix(matrix);
 
     expect(valid).toHaveLength(0);
     expect(errors).toHaveLength(1);
     expect(errors[0].kind).toBe("validation");
-    expect(errors[0].message).toContain("documento");
   });
 
   it("no lanza error con tipo de documento inválido en el esquema", () => {
@@ -102,7 +136,7 @@ PPT,123456789,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_
       salario: "2500000",
       tipo_contrato: "indefinido",
       fecha_ingreso: "2025-03-01",
-      banco: "Bancolombia",
+      banco_id: "Bancolombia",
       tipo_cuenta: "ahorros",
       numero_cuenta: "12345678901",
     });

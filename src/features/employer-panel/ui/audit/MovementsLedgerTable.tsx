@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import {
-  AlertCircle,
   ArrowDownCircle,
   BookOpen,
   Search,
@@ -14,6 +13,7 @@ import { formatCOP } from "@/shared/lib";
 import { downloadCsvFile } from "@/shared/lib/csv";
 import { cn } from "@/lib/utils";
 import { useEmployerMovementsLedger } from "../../model/useEmployerAuditData";
+import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { ExportReportButton } from "./ExportReportButton";
 
 function filterRecords(
@@ -110,12 +110,10 @@ export function MovementsLedgerTable() {
       {isLoading ? <TableSkeleton /> : null}
 
       {isError ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-8 text-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
-          <p className="text-sm text-destructive">
-            No pudimos cargar el historial de movimientos.
-          </p>
-        </div>
+        <EmployerPanelUnavailableNotice
+          message="El historial de movimientos no está disponible en este momento."
+          description="Esta sección se habilitará cuando haya información para mostrar."
+        />
       ) : null}
 
       {!isLoading && !isError ? (
