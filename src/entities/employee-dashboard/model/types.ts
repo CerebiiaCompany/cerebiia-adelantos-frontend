@@ -40,6 +40,10 @@ export type SerializedAdvanceHistoryRecord = {
   folio: string;
   receiptStatus: AdvanceReceiptStatus | null;
   paymentMethod: string;
+  installments?: number;
+  bankName?: string;
+  accountTypeLabel?: string;
+  accountNumber?: string;
 };
 
 export interface EmployeeDashboardSnapshot {

@@ -16,6 +16,7 @@ import {
 } from "@/shared/config/advanceHistory";
 import { formatAdvanceTransactionFeeLabel } from "@/shared/config/advanceFees";
 import { formatAdvanceRequestDate } from "@/shared/utils/payrollPeriod";
+import { formatAdvanceInstallmentsLabel } from "@/features/advance/utils/enrichAdvanceHistoryRecords";
 
 type AdvanceHistoryTableProps = {
   records: AdvanceHistoryRecord[];
@@ -87,13 +88,17 @@ export function AdvanceHistoryTable({
 
   return (
     <>
-      <div className="glass-card glow-border hidden overflow-x-auto md:block">
+      <div className="glass-card glow-border hidden overflow-x-auto lg:block">
         <Table>
           <TableHeader>
             <TableRow className="border-primary/10 hover:bg-transparent">
               <TableHead>Fecha</TableHead>
               <TableHead>Periodo de nómina</TableHead>
               <TableHead className="text-right">Monto</TableHead>
+              <TableHead>Cuotas</TableHead>
+              <TableHead>Banco</TableHead>
+              <TableHead>Tipo de cuenta</TableHead>
+              <TableHead>No. cuenta</TableHead>
               <TableHead className="text-right">Costo de transacción</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Recibo</TableHead>
@@ -105,14 +110,26 @@ export function AdvanceHistoryTable({
                 key={record.id}
                 className="border-primary/5 hover:bg-primary/[0.03]"
               >
-                <TableCell className="font-medium text-foreground">
+                <TableCell className="whitespace-nowrap font-medium text-foreground">
                   {formatAdvanceRequestDate(record.requestedAt)}
                 </TableCell>
-                <TableCell className="capitalize text-muted-foreground">
+                <TableCell className="min-w-[8rem] capitalize text-muted-foreground">
                   {record.periodLabel}
                 </TableCell>
-                <TableCell className="text-right font-semibold tabular-nums text-foreground">
+                <TableCell className="whitespace-nowrap text-right font-semibold tabular-nums text-foreground">
                   <AnimatedCurrency value={record.amount} duration={500} />
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-foreground">
+                  {formatAdvanceInstallmentsLabel(record.installments)}
+                </TableCell>
+                <TableCell className="max-w-[9rem] truncate text-foreground">
+                  {record.bankName}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-foreground">
+                  {record.accountTypeLabel}
+                </TableCell>
+                <TableCell className="whitespace-nowrap font-mono text-xs text-foreground">
+                  {record.accountNumber}
                 </TableCell>
                 <TableCell>
                   <TransactionCostCell record={record} />
@@ -137,7 +154,7 @@ export function AdvanceHistoryTable({
         </Table>
       </div>
 
-      <div className="space-y-3 md:hidden">
+      <div className="space-y-3 lg:hidden">
         {records.map((record) => (
           <div
             key={record.id}
@@ -170,6 +187,28 @@ export function AdvanceHistoryTable({
                 />
               </div>
               <div className="text-right">
+                <p className="text-xs text-muted-foreground">Cuotas</p>
+                <p className="font-medium text-foreground">
+                  {formatAdvanceInstallmentsLabel(record.installments)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Banco</p>
+                <p className="font-medium text-foreground">{record.bankName}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Tipo de cuenta</p>
+                <p className="font-medium text-foreground">
+                  {record.accountTypeLabel}
+                </p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-xs text-muted-foreground">No. cuenta</p>
+                <p className="font-mono text-xs font-medium text-foreground">
+                  {record.accountNumber}
+                </p>
+              </div>
+              <div className="col-span-2 border-t border-primary/10 pt-3">
                 <p className="text-xs text-muted-foreground">
                   {formatAdvanceTransactionFeeLabel()}
                 </p>

@@ -1,42 +1,51 @@
-/** Días del mes en que se dispersa la nómina (quincenal). */
-export const PAYMENT_DAYS_OF_MONTH = [1, 15] as const;
+/** Días del mes en que se dispersa la nómina. */
+export const PAYMENT_DAYS_OF_MONTH = [1, 30] as const;
 
-/** 1.ª quincena: adelantos del día 1 al 10 (inclusive). */
-export const FIRST_QUINCENA_ADVANCE_FIRST_DAY = 1;
-export const FIRST_QUINCENA_ADVANCE_LAST_DAY = 10;
-
-/** 2.ª quincena: adelantos del día 15 al 20 (inclusive). */
-export const SECOND_QUINCENA_ADVANCE_FIRST_DAY = 15;
-export const SECOND_QUINCENA_ADVANCE_LAST_DAY = 20;
+/** Ventana mensual: adelantos del día 1 al 20 (inclusive). Del 21 al 1 no hay adelantos. */
+export const ADVANCE_WINDOW_FIRST_DAY = 1;
+export const ADVANCE_WINDOW_LAST_DAY = 20;
 
 export type PayrollDayType = "payment" | "blocked" | "available";
 
+export function getLastDayOfMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+/** Resuelve el día de pago en un mes (p. ej. 30 → 28/29 en febrero). */
+export function resolvePaymentDayInMonth(
+  year: number,
+  month: number,
+  paymentDay: number,
+): Date {
+  const lastDay = getLastDayOfMonth(year, month);
+  const day = Math.min(paymentDay, lastDay);
+  return new Date(year, month, day);
+}
+
 export function isPaymentDay(date: Date): boolean {
+  const year = date.getFullYear();
+  const month = date.getMonth();
   const day = date.getDate();
-  return (PAYMENT_DAYS_OF_MONTH as readonly number[]).includes(day);
-}
 
-export function isFirstQuincenaAdvanceDay(day: number): boolean {
-  return (
-    day >= FIRST_QUINCENA_ADVANCE_FIRST_DAY &&
-    day <= FIRST_QUINCENA_ADVANCE_LAST_DAY
-  );
-}
-
-export function isSecondQuincenaAdvanceDay(day: number): boolean {
-  return (
-    day >= SECOND_QUINCENA_ADVANCE_FIRST_DAY &&
-    day <= SECOND_QUINCENA_ADVANCE_LAST_DAY
-  );
+  return PAYMENT_DAYS_OF_MONTH.some((paymentDay) => {
+    const resolved = resolvePaymentDayInMonth(year, month, paymentDay);
+    return (
+      resolved.getFullYear() === year &&
+      resolved.getMonth() === month &&
+      resolved.getDate() === day
+    );
+  });
 }
 
 /** Días del mes en los que el empleado puede solicitar adelanto. */
 export function isAdvanceAvailableDay(date: Date): boolean {
   const day = date.getDate();
-  return isFirstQuincenaAdvanceDay(day) || isSecondQuincenaAdvanceDay(day);
+  return (
+    day >= ADVANCE_WINDOW_FIRST_DAY && day <= ADVANCE_WINDOW_LAST_DAY
+  );
 }
 
-/** Días sin solicitud de adelanto fuera de las ventanas quincenales. */
+/** Días sin solicitud de adelanto (del 21 al fin de mes). */
 export function isAdvanceBlockedDay(date: Date): boolean {
   return !isAdvanceAvailableDay(date);
 }
@@ -48,18 +57,33 @@ export function getPayrollDayType(date: Date): PayrollDayType {
 }
 
 export function getNextPaymentDate(from: Date = new Date()): Date {
-  const year = from.getFullYear();
-  const month = from.getMonth();
+  const start = startOfDay(from);
+  const candidates: Date[] = [];
 
-  const candidates = PAYMENT_DAYS_OF_MONTH.map(
-    (paymentDay) => new Date(year, month, paymentDay),
-  ).filter((date) => date >= startOfDay(from));
+  for (let monthOffset = 0; monthOffset <= 1; monthOffset += 1) {
+    const date = new Date(start);
+    date.setDate(1);
+    date.setMonth(start.getMonth() + monthOffset);
 
-  if (candidates.length > 0) {
-    return candidates[0]!;
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    for (const paymentDay of PAYMENT_DAYS_OF_MONTH) {
+      const candidate = startOfDay(
+        resolvePaymentDayInMonth(year, month, paymentDay),
+      );
+      if (candidate >= start) {
+        candidates.push(candidate);
+      }
+    }
   }
 
-  return new Date(year, month + 1, PAYMENT_DAYS_OF_MONTH[0]);
+  candidates.sort((a, b) => a.getTime() - b.getTime());
+  return candidates[0] ?? resolvePaymentDayInMonth(
+    start.getFullYear(),
+    start.getMonth() + 1,
+    PAYMENT_DAYS_OF_MONTH[0],
+  );
 }
 
 function startOfDay(date: Date): Date {
@@ -121,16 +145,12 @@ export function getAdvanceAvailabilityInfo(
   const dayStart = startOfDay(date);
 
   if (canRequestAdvanceOnDate(dayStart)) {
-    const quincenaLabel = isFirstQuincenaAdvanceDay(dayStart.getDate())
-      ? "1.ª quincena"
-      : "2.ª quincena";
-
     return {
       canRequestAdvance: true,
       headline: "Hoy puedes solicitar adelanto",
       detail: isPaymentDay(dayStart)
         ? "Es día de pago de nómina y la ventana de adelanto está abierta."
-        : `La ventana de la ${quincenaLabel} está activa.`,
+        : `La ventana mensual está activa (días ${ADVANCE_WINDOW_FIRST_DAY} al ${ADVANCE_WINDOW_LAST_DAY}).`,
     };
   }
 

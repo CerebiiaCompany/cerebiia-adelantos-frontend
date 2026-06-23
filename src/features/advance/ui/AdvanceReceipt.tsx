@@ -12,6 +12,7 @@ import {
   resolveEmpleadoAccountNumber,
   resolveEmpleadoAccountTypeLabel,
   resolveEmpleadoBankName,
+  resolveEmpleadoCompanyName,
 } from "@/features/advance/utils/empleadoBankingDisplay";
 import { amountInWordsSpanish } from "@/shared/utils/amountInWords";
 import {
@@ -71,6 +72,9 @@ export function AdvanceReceipt({
   const bankName = resolveEmpleadoBankName(empleadoMe, profile);
   const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
   const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
+  const companyName = resolveEmpleadoCompanyName(empleadoMe, profile);
+  const employeeNumber =
+    empleadoMe?.empleado_id?.trim() || profile?.employeeNumber?.trim() || "—";
 
   const issuedAt = useMemo(
     () => issuedAtProp ?? new Date(),
@@ -111,8 +115,6 @@ export function AdvanceReceipt({
       : formatDisbursementDate(disbursementAt);
 
   if (!profile) return null;
-
-  const departmentLabel = "—";
 
   return (
     <div className={cn("mx-auto w-full max-w-xl animate-fade-in", className)}>
@@ -187,10 +189,10 @@ export function AdvanceReceipt({
                 value={accountNumber}
                 mono
               />
-              <PartyLine label="Departamento" value={departmentLabel} />
+              <PartyLine label="Empresa" value={companyName} />
               <PartyLine
                 label="No. empleado"
-                value={profile.employeeNumber ?? "—"}
+                value={employeeNumber}
                 mono
               />
             </PartyBlock>

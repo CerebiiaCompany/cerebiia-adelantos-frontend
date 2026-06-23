@@ -24,6 +24,7 @@ type AdvanceSimulatorCardProps = {
   fee: number;
   total: number;
   installmentValue: number;
+  disabled?: boolean;
 };
 
 export function AdvanceSimulatorCard({
@@ -36,16 +37,27 @@ export function AdvanceSimulatorCard({
   fee,
   total,
   installmentValue,
+  disabled = false,
 }: AdvanceSimulatorCardProps) {
-  const hasAmount = amount >= minAmount;
+  const hasAmount = !disabled && amount >= minAmount;
 
   return (
-    <AdvanceTimelineShell groupClass="group/advance-flow" glow>
-      <div className="space-y-8">
+    <AdvanceTimelineShell
+      groupClass="group/advance-flow"
+      glow={!disabled}
+    >
+      <div
+        className={cn(
+          "space-y-8 transition-opacity duration-300",
+          disabled && "pointer-events-none opacity-50",
+        )}
+        aria-disabled={disabled || undefined}
+      >
         <AdvanceAmountSelector
           amount={amount}
           onAmountChange={onAmountChange}
           maxAmount={maxAmount}
+          disabled={disabled}
         />
 
         <div className="border-t border-border/60" aria-hidden />
@@ -71,7 +83,7 @@ export function AdvanceSimulatorCard({
                   <button
                     key={option}
                     type="button"
-                    disabled={!hasAmount}
+                    disabled={!hasAmount || disabled}
                     onClick={() => onInstallmentsChange(option)}
                     className="group/installment relative z-10 flex shrink-0 flex-col items-center gap-2"
                   >
