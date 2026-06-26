@@ -23,6 +23,11 @@ export {
   formatMontoForApi,
   mapSolicitudToHistoryRecord,
 } from "./adelantoMappers";
+export { mapAdelantoConfiguracion } from "./configuracionMappers";
+export {
+  resolveAdelantoConfigFromEmpleadoMe,
+} from "./configuracionMappers";
+export type { ParsedAdelantoConfiguracion } from "./configuracionMappers";
 export {
   mapEmpleadoDtoToProfile,
   parseApiDecimalAmount,

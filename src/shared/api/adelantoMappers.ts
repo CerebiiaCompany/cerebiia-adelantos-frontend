@@ -1,5 +1,9 @@
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
-import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
+import {
+  calculateAdvanceTotalFee,
+  DEFAULT_TARIFA_FIJA_POR_CUOTA,
+} from "@/shared/config/advanceFees";
+import { resolveComprobantePagoUrl } from "@/shared/lib/comprobantePago";
 import { isSolicitudCancellable } from "./solicitudAdelanto";
 import type { SolicitudAdelantoDTO, EstadoSolicitud } from "./types/adelanto";
 
@@ -28,14 +32,26 @@ export function mapSolicitudToHistoryRecord(
   const parsedNet = solicitud.monto_neto
     ? Number.parseFloat(solicitud.monto_neto)
     : Number.NaN;
+  const installments = solicitud.numero_cuotas_snapshot > 0
+    ? solicitud.numero_cuotas_snapshot
+    : 1;
   const transactionFeeAmount =
     !Number.isNaN(parsedNet) && parsedNet >= 0
       ? Math.max(0, safeAmount - parsedNet)
-      : calculateAdvanceTransactionFee(safeAmount);
+      : calculateAdvanceTotalFee(
+          DEFAULT_TARIFA_FIJA_POR_CUOTA,
+          installments,
+          safeAmount,
+        );
+  const netAmount =
+    !Number.isNaN(parsedNet) && parsedNet >= 0
+      ? Math.round(parsedNet)
+      : Math.max(0, safeAmount - transactionFeeAmount);
 
   return {
     id: solicitud.id,
     amount: safeAmount,
+    netAmount,
     requestedAt: new Date(solicitud.created_at),
     periodLabel: new Date(solicitud.created_at).toLocaleDateString("es-CO", {
       month: "long",
@@ -52,6 +68,8 @@ export function mapSolicitudToHistoryRecord(
     accountNumber: "—",
     estadoApi: solicitud.estado,
     canCancel: isSolicitudCancellable(solicitud.estado),
+    rejectionReason: solicitud.motivo_rechazo?.trim() || null,
+    paymentEvidenceUrl: resolveComprobantePagoUrl(solicitud.comprobante_pago),
   };
 }
 

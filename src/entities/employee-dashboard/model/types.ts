@@ -33,6 +33,7 @@ export interface EmployeeDashboardMetrics {
 export type SerializedAdvanceHistoryRecord = {
   id: string;
   amount: number;
+  netAmount?: number;
   requestedAt: string;
   periodLabel: string;
   status: AdvanceHistoryStatus;
@@ -50,6 +51,12 @@ export interface EmployeeDashboardSnapshot {
   displayName: string;
   salary: number;
   availableAdvance: number;
+  /** Tope mensual según porcentaje global (GET /empleados/me/). */
+  maxAdvanceLimit: number;
+  /** Porcentaje vigente configurado por super admin. */
+  advancePercentage?: number;
+  /** Esperando GET /empleados/me/ con API configurada. */
+  isNominaLoading?: boolean;
   accumulatedIncome: number;
   incomeToday: number;
   totalAdvancedThisMonth: number;

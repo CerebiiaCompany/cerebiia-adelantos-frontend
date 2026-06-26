@@ -21,5 +21,6 @@ export function useSolicitudesAdelanto() {
     },
     enabled: Boolean(env.apiUrl) && isEmpleado,
     staleTime: 30_000,
+    refetchOnWindowFocus: true,
   });
 }
