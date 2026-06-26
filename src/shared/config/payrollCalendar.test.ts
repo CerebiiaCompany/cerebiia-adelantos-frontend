@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ADVANCE_WINDOW_LAST_DAY,
   getAdvanceAvailabilityInfo,
@@ -14,6 +14,10 @@ import {
 } from "./payrollCalendar";
 
 describe("payrollCalendar", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("identifica días de pago mensuales (1 y 30)", () => {
     expect(isPaymentDay(new Date(2026, 3, 1))).toBe(true);
     expect(isPaymentDay(new Date(2026, 3, 30))).toBe(true);
@@ -60,6 +64,8 @@ describe("payrollCalendar", () => {
   });
 
   it("informa si hoy se puede solicitar adelanto", () => {
+    vi.stubEnv("VITE_BYPASS_ADELANTO_DATE_WINDOW", "false");
+
     expect(getAdvanceAvailabilityInfo(new Date(2026, 5, 8)).canRequestAdvance).toBe(
       true,
     );
@@ -86,5 +92,13 @@ describe("payrollCalendar", () => {
     expect(getNextAdvanceAvailableDate(new Date(2026, 5, 12)).getDate()).toBe(12);
     expect(getNextAdvanceAvailableDate(new Date(2026, 5, 25)).getMonth()).toBe(6);
     expect(getNextAdvanceAvailableDate(new Date(2026, 5, 25)).getDate()).toBe(1);
+  });
+
+  it("permite adelantos fuera de ventana cuando el bypass de pruebas está activo", () => {
+    vi.stubEnv("VITE_BYPASS_ADELANTO_DATE_WINDOW", "true");
+
+    const info = getAdvanceAvailabilityInfo(new Date(2026, 5, 23));
+    expect(info.canRequestAdvance).toBe(true);
+    expect(info.headline).toContain("modo pruebas");
   });
 });

@@ -6,6 +6,7 @@ const sampleRecords: AdvanceHistoryRecord[] = [
   {
     id: "1",
     amount: 500_000,
+    netAmount: 492_000,
     requestedAt: new Date("2026-05-08T10:00:00"),
     periodLabel: "mayo 2026 · 1.ª quincena",
     status: "aprobado",
@@ -21,6 +22,7 @@ const sampleRecords: AdvanceHistoryRecord[] = [
   {
     id: "2",
     amount: 300_000,
+    netAmount: 292_000,
     requestedAt: new Date("2026-05-22T10:00:00"),
     periodLabel: "mayo 2026 · 2.ª quincena",
     status: "aprobado",
@@ -36,6 +38,7 @@ const sampleRecords: AdvanceHistoryRecord[] = [
   {
     id: "3",
     amount: 450_000,
+    netAmount: 442_000,
     requestedAt: new Date("2026-04-03T10:00:00"),
     periodLabel: "abril 2026 · 1.ª quincena",
     status: "no_aprobado",

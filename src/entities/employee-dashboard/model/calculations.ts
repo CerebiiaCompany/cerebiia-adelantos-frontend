@@ -113,6 +113,7 @@ export function buildEmployeeDashboardSnapshot(
     displayName,
     salary,
     availableAdvance,
+    maxAdvanceLimit: limit,
     accumulatedIncome,
     incomeToday,
     totalAdvancedThisMonth: metrics.totalAdvancedThisMonth,

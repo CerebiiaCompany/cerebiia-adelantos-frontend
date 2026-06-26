@@ -8,6 +8,7 @@ import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory.types"
 const baseRecord: AdvanceHistoryRecord = {
   id: "adv-1",
   amount: 500_000,
+  netAmount: 492_000,
   requestedAt: new Date("2026-06-10T10:00:00"),
   periodLabel: "junio 2026",
   status: "en_curso",

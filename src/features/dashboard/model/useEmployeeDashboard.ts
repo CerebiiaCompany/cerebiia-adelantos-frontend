@@ -5,12 +5,13 @@ import {
   buildEmployeeDashboardSnapshot,
   deriveAdvanceMetricsFromHistory,
   parseEmployeeSalary,
+  resolveAdvanceLimitsFromNomina,
   resolveEmpleadoFechaIngreso,
   type EmployeeDashboardSnapshot,
 } from "@/entities/employee-dashboard";
 import { useSolicitudesAdelanto } from "@/features/advance/model/useSolicitudesAdelanto";
 import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
-import { isEmpleadoSession, parseApiDecimalAmount } from "@/shared/api";
+import { isEmpleadoSession } from "@/shared/api";
 import { env } from "@/shared/config/env";
 import {
   loadEmployeeDashboardMetrics,
@@ -27,7 +28,11 @@ export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
   const { session } = useAuth();
   const [version, setVersion] = useState(0);
   const { data: apiHistory, isSuccess: hasApiHistory } = useSolicitudesAdelanto();
-  const { data: empleadoMe } = useEmpleadoMe();
+  const {
+    data: empleadoMe,
+    isLoading: isNominaLoading,
+    isSuccess: hasNomina,
+  } = useEmpleadoMe();
 
   useEffect(() => subscribeEmployeeDashboard(() => setVersion((v) => v + 1)), []);
 
@@ -47,38 +52,89 @@ export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
           }
         : localMetrics;
 
-    const parsedMaxLimit = empleadoMe?.monto_maximo_adelanto
-      ? Number.parseFloat(empleadoMe.monto_maximo_adelanto)
-      : Number.NaN;
-    const maxAdvanceLimit = Number.isNaN(parsedMaxLimit)
-      ? undefined
-      : Math.round(parsedMaxLimit);
-
     const fechaIngreso = resolveEmpleadoFechaIngreso(
       empleadoMe,
       session.empleado,
     );
 
-    const snapshot = buildEmployeeDashboardSnapshot(
-      getDisplayName(session.empleado.nombre),
-      salary,
-      metrics,
-      maxAdvanceLimit,
-      new Date(),
-      fechaIngreso,
-    );
+    if (env.apiUrl) {
+      if (isNominaLoading) {
+        const pendingSnapshot = buildEmployeeDashboardSnapshot(
+          getDisplayName(session.empleado.nombre),
+          salary,
+          metrics,
+          undefined,
+          new Date(),
+          fechaIngreso,
+        );
 
-    const saldoDisponible = parseApiDecimalAmount(empleadoMe?.saldo_disponible);
-    if (saldoDisponible !== undefined) {
+        return {
+          ...pendingSnapshot,
+          availableAdvance: 0,
+          maxAdvanceLimit: 0,
+          isNominaLoading: true,
+        };
+      }
+
+      if (hasNomina && empleadoMe) {
+        const limits = resolveAdvanceLimitsFromNomina(
+          empleadoMe,
+          metrics.totalAdvancedThisMonth,
+        );
+
+        const snapshot = buildEmployeeDashboardSnapshot(
+          getDisplayName(session.empleado.nombre),
+          salary,
+          metrics,
+          limits.maxAdvanceLimit,
+          new Date(),
+          fechaIngreso,
+        );
+
+        return {
+          ...snapshot,
+          availableAdvance: limits.availableAdvance,
+          maxAdvanceLimit: limits.maxAdvanceLimit,
+          advancePercentage: limits.advancePercentage,
+          isNominaLoading: false,
+        };
+      }
+
+      const fallbackSnapshot = buildEmployeeDashboardSnapshot(
+        getDisplayName(session.empleado.nombre),
+        salary,
+        metrics,
+        undefined,
+        new Date(),
+        fechaIngreso,
+      );
+
       return {
-        ...snapshot,
-        availableAdvance: saldoDisponible,
+        ...fallbackSnapshot,
+        availableAdvance: 0,
+        maxAdvanceLimit: 0,
+        isNominaLoading: false,
       };
     }
 
-    return snapshot;
+    return buildEmployeeDashboardSnapshot(
+      getDisplayName(session.empleado.nombre),
+      salary,
+      metrics,
+      undefined,
+      new Date(),
+      fechaIngreso,
+    );
     // version forces refresh when local metrics change
-  }, [session, version, apiHistory, hasApiHistory, empleadoMe]);
+  }, [
+    session,
+    version,
+    apiHistory,
+    hasApiHistory,
+    empleadoMe,
+    hasNomina,
+    isNominaLoading,
+  ]);
 }
 
 export function useRecordEmployeeAdvance() {

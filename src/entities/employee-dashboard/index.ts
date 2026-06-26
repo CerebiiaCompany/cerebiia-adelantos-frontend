@@ -23,6 +23,10 @@ export {
 } from "./model/advanceMetricsFromHistory";
 export { resolveEmpleadoFechaIngreso } from "./model/resolveEmpleadoFechaIngreso";
 export {
+  resolveAdvanceLimitsFromNomina,
+  type EmployeeAdvanceLimits,
+} from "./model/advanceLimits";
+export {
   calculateCumulativeAccumulatedIncome,
   calculateDailySalaryIncome,
   calculateIncomeForCalendarMonth,

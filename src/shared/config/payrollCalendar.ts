@@ -1,3 +1,5 @@
+import { isAdelantoDateWindowBypassed } from "./featureFlags";
+
 /** Días del mes en que se dispersa la nómina. */
 export const PAYMENT_DAYS_OF_MONTH = [1, 30] as const;
 
@@ -115,6 +117,7 @@ export function getDaysUntilPayment(from: Date = new Date()): number {
 }
 
 export function canRequestAdvanceOnDate(date: Date): boolean {
+  if (isAdelantoDateWindowBypassed()) return true;
   return isAdvanceAvailableDay(date);
 }
 
@@ -143,6 +146,15 @@ export function getAdvanceAvailabilityInfo(
   date: Date = new Date(),
 ): AdvanceAvailabilityInfo {
   const dayStart = startOfDay(date);
+
+  if (isAdelantoDateWindowBypassed()) {
+    return {
+      canRequestAdvance: true,
+      headline: "Ventana de fechas desactivada (modo pruebas)",
+      detail:
+        "Puedes solicitar adelanto en cualquier fecha mientras se valida la integración con el backend.",
+    };
+  }
 
   if (canRequestAdvanceOnDate(dayStart)) {
     return {

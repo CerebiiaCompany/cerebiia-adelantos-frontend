@@ -21,6 +21,7 @@ describe("employee dashboard calculations", () => {
 
     expect(snapshot.salary).toBe(2_400_000);
     expect(snapshot.availableAdvance).toBe(720_000);
+    expect(snapshot.maxAdvanceLimit).toBe(720_000);
     expect(snapshot.accumulatedIncome).toBe(11_956_129);
     expect(snapshot.incomeToday).toBe(80_000);
     expect(snapshot.totalAdvancedThisMonth).toBe(0);

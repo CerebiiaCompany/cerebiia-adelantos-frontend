@@ -17,6 +17,10 @@ export interface SolicitudAdelantoDTO {
   plazo_dias_snapshot: number;
   estado: EstadoSolicitud;
   created_at: string;
+  /** Motivo ingresado por el super admin al rechazar la solicitud. */
+  motivo_rechazo?: string | null;
+  /** Ruta relativa del comprobante de transferencia (solo cuando estado = pagado). */
+  comprobante_pago?: string | null;
 }
 
 export interface CrearSolicitudAdelantoRequest {
@@ -42,6 +46,10 @@ export interface EmpleadoMeDTO {
   empresa?: EmpleadoEmpresaSummaryDTO;
   porcentaje_maximo_adelanto: string;
   monto_maximo_adelanto: string;
+  /** Tarifa fija por cuota (misma fuente que GET /configuracion/ del super admin). */
+  tarifa_fija_por_cuota?: string;
+  numero_maximo_cuotas?: number;
+  plazo_maximo_dias?: number;
   documento: string;
   banco_nombre: string;
   numero_cuenta: string;

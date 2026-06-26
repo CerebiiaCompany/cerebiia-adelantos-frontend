@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Zap } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
@@ -8,6 +8,7 @@ import { AdvanceSimulatorCard } from "@/features/advance/ui/AdvanceSimulatorCard
 import { AdvanceFeaturesTimeline } from "@/features/advance/ui/AdvanceFeaturesTimeline";
 import { AdvanceWindowBlockedNotice } from "@/features/advance/ui/AdvanceWindowBlockedNotice";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
+import { useAdelantoConfig } from "@/features/advance/model/useAdelantoConfig";
 import { useCreateSolicitudAdelanto } from "@/features/advance/model/useCreateSolicitudAdelanto";
 import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
 import { useEmployeeDashboard } from "@/features/dashboard";
@@ -17,7 +18,10 @@ import { useProfileView } from "@/features/auth";
 import { ApiError } from "@/shared/api";
 import { env } from "@/shared/config/env";
 import { getAdvanceAvailabilityInfo, getDaysUntilPayment } from "@/shared/config/payrollCalendar";
-import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
+import {
+  calculateAdvanceTotalFee,
+  DEFAULT_TARIFA_FIJA_POR_CUOTA,
+} from "@/shared/config/advanceFees";
 import {
   resolveEmpleadoAccountNumber,
   resolveEmpleadoAccountTypeLabel,
@@ -52,32 +56,26 @@ export default function Adelanto() {
   const dashboard = useEmployeeDashboard();
   const profile = useProfileView();
   const { data: empleadoMe } = useEmpleadoMe();
+  const { data: adelantoConfig } = useAdelantoConfig();
   const { mutate: createSolicitud, isPending: isSubmitting } =
     useCreateSolicitudAdelanto();
 
-  const maxAmount = useMemo(() => {
-    if (empleadoMe?.saldo_disponible) {
-      const saldo = Number.parseFloat(empleadoMe.saldo_disponible);
-      if (!Number.isNaN(saldo)) return Math.max(0, Math.round(saldo));
-    }
-
-    if (dashboard?.availableAdvance !== undefined) {
-      return dashboard.availableAdvance;
-    }
-
-    if (empleadoMe?.monto_maximo_adelanto) {
-      const parsed = Number.parseFloat(empleadoMe.monto_maximo_adelanto);
-      if (!Number.isNaN(parsed)) return parsed;
-    }
-
-    return 0;
-  }, [
-    dashboard?.availableAdvance,
-    empleadoMe?.monto_maximo_adelanto,
-    empleadoMe?.saldo_disponible,
-  ]);
-  const fee = calculateAdvanceTransactionFee(amount);
+  const tarifaFijaPorCuota =
+    adelantoConfig?.tarifaFijaPorCuota ?? DEFAULT_TARIFA_FIJA_POR_CUOTA;
+  const maxInstallments = adelantoConfig?.numeroMaximoCuotas ?? 3;
+  const maxAmount = dashboard?.availableAdvance ?? 0;
+  const fee = calculateAdvanceTotalFee(
+    tarifaFijaPorCuota,
+    installments,
+    amount,
+  );
   const total = amount - fee;
+
+  useEffect(() => {
+    if (installments > maxInstallments) {
+      setInstallments(maxInstallments);
+    }
+  }, [installments, maxInstallments]);
   const installmentValue = Math.round(total / installments);
   const bankName = resolveEmpleadoBankName(empleadoMe, profile);
   const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
@@ -137,6 +135,8 @@ export default function Adelanto() {
         onInstallmentsChange={setInstallments}
         maxAmount={maxAmount}
         minAmount={ADVANCE_MIN_AMOUNT}
+        maxInstallments={maxInstallments}
+        tarifaFijaPorCuota={tarifaFijaPorCuota}
         fee={fee}
         total={total}
         installmentValue={installmentValue}
