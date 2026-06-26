@@ -24,6 +24,11 @@ export {
   mapSolicitudToHistoryRecord,
 } from "./adelantoMappers";
 export {
+  mapEmpleadoDtoToProfile,
+  parseApiDecimalAmount,
+} from "./empleadoMeMappers";
+export { isSolicitudCancellable } from "./solicitudAdelanto";
+export {
   getAccessTokenExpirySeconds,
   getRefreshDelayMs,
   isAccessTokenExpired,

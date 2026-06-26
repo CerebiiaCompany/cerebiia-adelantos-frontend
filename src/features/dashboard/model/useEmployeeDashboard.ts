@@ -10,7 +10,7 @@ import {
 } from "@/entities/employee-dashboard";
 import { useSolicitudesAdelanto } from "@/features/advance/model/useSolicitudesAdelanto";
 import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
-import { isEmpleadoSession } from "@/shared/api";
+import { isEmpleadoSession, parseApiDecimalAmount } from "@/shared/api";
 import { env } from "@/shared/config/env";
 import {
   loadEmployeeDashboardMetrics,
@@ -59,7 +59,7 @@ export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
       session.empleado,
     );
 
-    return buildEmployeeDashboardSnapshot(
+    const snapshot = buildEmployeeDashboardSnapshot(
       getDisplayName(session.empleado.nombre),
       salary,
       metrics,
@@ -67,6 +67,16 @@ export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
       new Date(),
       fechaIngreso,
     );
+
+    const saldoDisponible = parseApiDecimalAmount(empleadoMe?.saldo_disponible);
+    if (saldoDisponible !== undefined) {
+      return {
+        ...snapshot,
+        availableAdvance: saldoDisponible,
+      };
+    }
+
+    return snapshot;
     // version forces refresh when local metrics change
   }, [session, version, apiHistory, hasApiHistory, empleadoMe]);
 }

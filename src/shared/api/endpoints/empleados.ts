@@ -13,6 +13,7 @@ import type {
   CreateEmpleadoResponse,
   EmpleadoDTO,
   ResultadoCargaNominaDTO,
+  UpdateEmpleadoMeRequest,
   VerificarPreRegistroRequest,
   VerificarPreRegistroResponse,
 } from "../types/empleado";
@@ -33,6 +34,8 @@ export const empleadosEndpoints = {
     http.post<ActivarEmpleadoResponse>("/empleados/activar/", data),
   listBancos: () => http.get<BancoDTO[]>("/empleados/bancos/"),
   me: () => http.get<EmpleadoMeDTO>("/empleados/me/"),
+  updateMe: (data: UpdateEmpleadoMeRequest) =>
+    http.patch<EmpleadoDTO>("/empleados/me/", data),
   cargarNomina: (archivo: File) => {
     const formData = new FormData();
     formData.append("archivo", archivo);

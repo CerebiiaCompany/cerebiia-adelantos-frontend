@@ -21,6 +21,8 @@ import { formatAdvanceInstallmentsLabel } from "@/features/advance/utils/enrichA
 type AdvanceHistoryTableProps = {
   records: AdvanceHistoryRecord[];
   onViewReceipt: (record: AdvanceHistoryRecord) => void;
+  onCancel?: (record: AdvanceHistoryRecord) => void;
+  cancellingId?: string | null;
   hasActiveFilters?: boolean;
 };
 
@@ -63,9 +65,41 @@ function ReceiptAction({
   );
 }
 
+function RowActions({
+  record,
+  onViewReceipt,
+  onCancel,
+  cancellingId,
+}: {
+  record: AdvanceHistoryRecord;
+  onViewReceipt: (record: AdvanceHistoryRecord) => void;
+  onCancel?: (record: AdvanceHistoryRecord) => void;
+  cancellingId?: string | null;
+}) {
+  const isCancelling = cancellingId === record.id;
+
+  return (
+    <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-end">
+      {record.canCancel && onCancel ? (
+        <button
+          type="button"
+          onClick={() => onCancel(record)}
+          disabled={isCancelling}
+          className="text-sm font-medium text-destructive transition-colors hover:text-destructive/80 disabled:opacity-50"
+        >
+          {isCancelling ? "Cancelando..." : "Cancelar"}
+        </button>
+      ) : null}
+      <ReceiptAction record={record} onViewReceipt={onViewReceipt} />
+    </div>
+  );
+}
+
 export function AdvanceHistoryTable({
   records,
   onViewReceipt,
+  onCancel,
+  cancellingId = null,
   hasActiveFilters = false,
 }: AdvanceHistoryTableProps) {
   if (records.length === 0) {
@@ -101,7 +135,7 @@ export function AdvanceHistoryTable({
               <TableHead>No. cuenta</TableHead>
               <TableHead className="text-right">Costo de transacción</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Recibo</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -143,9 +177,11 @@ export function AdvanceHistoryTable({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <ReceiptAction
+                  <RowActions
                     record={record}
                     onViewReceipt={onViewReceipt}
+                    onCancel={onCancel}
+                    cancellingId={cancellingId}
                   />
                 </TableCell>
               </TableRow>
@@ -222,9 +258,11 @@ export function AdvanceHistoryTable({
             </div>
 
             <div className="flex justify-end border-t border-primary/10 pt-3">
-              <ReceiptAction
+              <RowActions
                 record={record}
                 onViewReceipt={onViewReceipt}
+                onCancel={onCancel}
+                cancellingId={cancellingId}
               />
             </div>
           </div>

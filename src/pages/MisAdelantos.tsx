@@ -1,11 +1,24 @@
 import { useState } from "react";
 import { History } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceHistoryTable } from "@/features/advance/ui/AdvanceHistoryTable";
 import { AdvanceHistoryFiltersBar } from "@/features/advance/ui/AdvanceHistoryFilters";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
+import { useCancelSolicitudAdelanto } from "@/features/advance/model/useCancelSolicitudAdelanto";
 import { useFilteredEmployeeAdvanceHistory } from "@/features/advance/model/useFilteredEmployeeAdvanceHistory";
+import { ApiError } from "@/shared/api";
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +30,8 @@ export default function MisAdelantos() {
   const [selectedRecord, setSelectedRecord] = useState<AdvanceHistoryRecord | null>(
     null,
   );
+  const [recordToCancel, setRecordToCancel] =
+    useState<AdvanceHistoryRecord | null>(null);
   const {
     advanceHistory,
     filteredRecords,
@@ -24,6 +39,26 @@ export default function MisAdelantos() {
     setFilters,
     filtersActive,
   } = useFilteredEmployeeAdvanceHistory();
+  const { mutate: cancelSolicitud, isPending: isCancelling } =
+    useCancelSolicitudAdelanto();
+
+  const handleConfirmCancel = () => {
+    if (!recordToCancel) return;
+
+    cancelSolicitud(recordToCancel.id, {
+      onSuccess: () => {
+        toast.success("Solicitud cancelada. Tu saldo disponible fue actualizado.");
+        setRecordToCancel(null);
+      },
+      onError: (error) => {
+        toast.error(
+          error instanceof ApiError
+            ? error.message
+            : "No pudimos cancelar la solicitud. Inténtalo de nuevo.",
+        );
+      },
+    });
+  };
 
   return (
     <div className="mx-auto max-w-7xl animate-fade-in space-y-6">
@@ -43,8 +78,39 @@ export default function MisAdelantos() {
       <AdvanceHistoryTable
         records={filteredRecords}
         onViewReceipt={setSelectedRecord}
+        onCancel={setRecordToCancel}
+        cancellingId={isCancelling ? recordToCancel?.id ?? null : null}
         hasActiveFilters={filtersActive}
       />
+
+      <AlertDialog
+        open={recordToCancel !== null}
+        onOpenChange={(open) => {
+          if (!open) setRecordToCancel(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar esta solicitud?</AlertDialogTitle>
+            <AlertDialogDescription>
+              El monto solicitado volverá a tu saldo disponible. Solo puedes
+              cancelar solicitudes en estado pendiente o en revisión.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isCancelling}>
+              Volver
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              disabled={isCancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isCancelling ? "Cancelando..." : "Sí, cancelar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog
         open={selectedRecord !== null}
