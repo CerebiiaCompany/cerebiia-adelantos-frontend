@@ -18,5 +18,23 @@ describe("adelantoMappers", () => {
     expect(record.status).toBe("en_curso");
     expect(record.receiptStatus).toBe("en_curso");
     expect(record.installments).toBe(3);
+    expect(record.canCancel).toBe(true);
+  });
+
+  it("usa monto_neto del backend para calcular la tarifa", () => {
+    const record = mapSolicitudToHistoryRecord({
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      empleado_id: "emp-1",
+      empresa_id: "empresa-1",
+      monto: "400000.00",
+      monto_neto: "384000.00",
+      numero_cuotas_snapshot: 2,
+      plazo_dias_snapshot: 90,
+      estado: "aprobado",
+      created_at: "2026-06-22T16:56:49Z",
+    });
+
+    expect(record.transactionFeeAmount).toBe(16000);
+    expect(record.canCancel).toBe(false);
   });
 });

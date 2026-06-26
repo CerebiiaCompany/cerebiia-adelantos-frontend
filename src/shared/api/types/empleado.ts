@@ -35,8 +35,15 @@ export interface EmpleadoDTO {
   tipo_cuenta: TipoCuentaEmpleado;
   estado: EmpleadoEstado;
   empresa_id: string;
+  saldo_disponible?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface UpdateEmpleadoMeRequest {
+  email?: string;
+  celular?: string;
+  password?: string;
 }
 
 export interface CreateEmpleadoRequest {

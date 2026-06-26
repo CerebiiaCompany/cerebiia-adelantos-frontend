@@ -33,6 +33,7 @@ export type {
   TipoContratoEmpleado,
   TipoCuentaEmpleado,
   TipoDocumento,
+  UpdateEmpleadoMeRequest,
   VerificarPreRegistroRequest,
   VerificarPreRegistroResponse,
 } from "./empleado";

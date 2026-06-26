@@ -12,6 +12,7 @@ export interface SolicitudAdelantoDTO {
   empleado_id: string;
   empresa_id: string;
   monto: string;
+  monto_neto?: string;
   numero_cuotas_snapshot: number;
   plazo_dias_snapshot: number;
   estado: EstadoSolicitud;
@@ -34,6 +35,8 @@ export interface EmpleadoMeDTO {
   nombre: string;
   salario: string;
   empresa_id: string;
+  /** Monto que aún puede solicitar en adelantos (fuente de verdad del backend). */
+  saldo_disponible?: string;
   /** Nombre comercial o razón social de la empresa del empleado. */
   empresa_nombre?: string;
   empresa?: EmpleadoEmpresaSummaryDTO;

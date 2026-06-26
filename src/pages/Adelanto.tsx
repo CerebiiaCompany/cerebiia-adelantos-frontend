@@ -56,6 +56,11 @@ export default function Adelanto() {
     useCreateSolicitudAdelanto();
 
   const maxAmount = useMemo(() => {
+    if (empleadoMe?.saldo_disponible) {
+      const saldo = Number.parseFloat(empleadoMe.saldo_disponible);
+      if (!Number.isNaN(saldo)) return Math.max(0, Math.round(saldo));
+    }
+
     if (dashboard?.availableAdvance !== undefined) {
       return dashboard.availableAdvance;
     }
@@ -66,7 +71,11 @@ export default function Adelanto() {
     }
 
     return 0;
-  }, [dashboard?.availableAdvance, empleadoMe?.monto_maximo_adelanto]);
+  }, [
+    dashboard?.availableAdvance,
+    empleadoMe?.monto_maximo_adelanto,
+    empleadoMe?.saldo_disponible,
+  ]);
   const fee = calculateAdvanceTransactionFee(amount);
   const total = amount - fee;
   const installmentValue = Math.round(total / installments);

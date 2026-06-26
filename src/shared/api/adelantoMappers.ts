@@ -1,5 +1,6 @@
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
 import { calculateAdvanceTransactionFee } from "@/shared/config/advanceFees";
+import { isSolicitudCancellable } from "./solicitudAdelanto";
 import type { SolicitudAdelantoDTO, EstadoSolicitud } from "./types/adelanto";
 
 function mapEstadoToHistoryStatus(
@@ -24,7 +25,13 @@ export function mapSolicitudToHistoryRecord(
 ): AdvanceHistoryRecord {
   const amount = Number.parseFloat(solicitud.monto);
   const safeAmount = Number.isNaN(amount) ? 0 : amount;
-  const transactionFeeAmount = calculateAdvanceTransactionFee(safeAmount);
+  const parsedNet = solicitud.monto_neto
+    ? Number.parseFloat(solicitud.monto_neto)
+    : Number.NaN;
+  const transactionFeeAmount =
+    !Number.isNaN(parsedNet) && parsedNet >= 0
+      ? Math.max(0, safeAmount - parsedNet)
+      : calculateAdvanceTransactionFee(safeAmount);
 
   return {
     id: solicitud.id,
@@ -43,6 +50,8 @@ export function mapSolicitudToHistoryRecord(
     bankName: "—",
     accountTypeLabel: "—",
     accountNumber: "—",
+    estadoApi: solicitud.estado,
+    canCancel: isSolicitudCancellable(solicitud.estado),
   };
 }
 

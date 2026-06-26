@@ -102,6 +102,7 @@ export function UserProfileSettingsPanel({
                       email: profile?.email ?? "",
                       phone: sanitizeColombianPhone(profile?.phone ?? ""),
                     }}
+                    key={`${profile?.email ?? ""}-${profile?.phone ?? ""}`}
                     onSuccess={() => setOpenSection(null)}
                   />
                 ) : (

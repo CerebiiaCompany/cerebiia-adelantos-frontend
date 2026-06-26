@@ -64,6 +64,8 @@ export function mapEmpleadoToProfileView(empleado: EmpleadoProfile): ProfileView
     roleLabel: formatEmployeeRoleLabel(empleado.created_at),
     isVerified: empleado.estado === "activo",
     documentNumber: empleado.documento,
+    email: empleado.email_empleado,
+    phone: empleado.celular,
     salary: formatSalaryLabel(empleado.salario),
     bank: resolveEmpleadoBankName(empleado),
     accountNumber: empleado.numero_cuenta,
