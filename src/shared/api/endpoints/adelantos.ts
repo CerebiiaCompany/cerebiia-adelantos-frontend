@@ -15,6 +15,11 @@ export const adelantosEndpoints = {
     http.get<SolicitudAdelantoDTO[]>("/adelantos/solicitudes/"),
   createSolicitud: (data: CrearSolicitudAdelantoRequest) =>
     http.post<SolicitudAdelantoDTO>("/adelantos/solicitudes/", data),
+  cancelSolicitud: (solicitudId: string) =>
+    http.post<SolicitudAdelantoDTO>(
+      `/adelantos/solicitudes/${solicitudId}/cancelar/`,
+      {},
+    ),
   empleadoMe: () => http.get<EmpleadoMeDTO>("/empleados/me/"),
 };
 /** @deprecated Use adelantosEndpoints */

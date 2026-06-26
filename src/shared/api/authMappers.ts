@@ -70,6 +70,8 @@ export function normalizeEmpleadoProfile(
     numero_cuenta: empleado.numero_cuenta,
     tipo_cuenta: empleado.tipo_cuenta,
     fecha_ingreso: empleado.fecha_ingreso,
+    email_empleado: empleado.email_empleado,
+    celular: empleado.celular,
     estado: empleado.estado,
     empresa_id: empleado.empresa_id,
     created_at: empleado.created_at,

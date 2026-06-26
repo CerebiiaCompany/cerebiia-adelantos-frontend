@@ -1,6 +1,6 @@
 // ⚠️ AGNOSTIC — persisted JWT session (localStorage)
 
-import type { AuthSession, AuthUser } from "./types/auth";
+import type { AuthSession, AuthUser, EmpleadoProfile } from "./types/auth";
 
 const STORAGE_KEY = "cerebiia_auth";
 
@@ -106,6 +106,13 @@ export const authStorage = {
     if (!current || current.actorType !== "system_user") return;
 
     this.set({ ...current, user });
+  },
+
+  updateEmpleado(empleado: EmpleadoProfile): void {
+    const current = this.get();
+    if (!current || current.actorType !== "empleado") return;
+
+    this.set({ ...current, empleado });
   },
 
   clear(): void {

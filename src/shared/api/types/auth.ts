@@ -31,6 +31,8 @@ export interface EmpleadoProfile {
   numero_cuenta: string;
   tipo_cuenta?: string;
   fecha_ingreso?: string;
+  email_empleado?: string;
+  celular?: string;
   estado: EmpleadoEstado;
   empresa_id: string;
   created_at: string;
@@ -44,6 +46,8 @@ export type EmpleadoApiProfile = Omit<EmpleadoProfile, "banco"> & {
   banco_nombre?: string;
   tipo_cuenta?: string;
   fecha_ingreso?: string;
+  email_empleado?: string;
+  celular?: string;
 };
 
 export interface SystemUserLoginRequest {
