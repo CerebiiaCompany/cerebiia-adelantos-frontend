@@ -45,14 +45,16 @@ export function buildAdvanceHistoryRecord(
 ): AdvanceHistoryRecord {
   const requestedAt = new Date(isoDate);
   const paymentMethod = options.paymentMethod ?? "Transferencia bancaria";
+  const transactionFeeAmount = calculateAdvanceTransactionFee(amount);
 
   return {
     id,
     amount,
+    netAmount: Math.max(0, amount - transactionFeeAmount),
     requestedAt,
     periodLabel: getPayrollPeriodLabel(requestedAt),
     status,
-    transactionFeeAmount: calculateAdvanceTransactionFee(amount),
+    transactionFeeAmount,
     folio: buildAdvanceReceiptFolio(requestedAt),
     receiptStatus: STATUS_TO_RECEIPT[status],
     paymentMethod,

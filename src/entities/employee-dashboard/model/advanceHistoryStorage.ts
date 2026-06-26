@@ -18,6 +18,9 @@ export function deserializeAdvanceHistoryRecord(
   return {
     ...record,
     requestedAt: new Date(record.requestedAt),
+    netAmount:
+      record.netAmount ??
+      Math.max(0, record.amount - record.transactionFeeAmount),
     installments: record.installments ?? 1,
     bankName: record.bankName ?? "—",
     accountTypeLabel: record.accountTypeLabel ?? "—",

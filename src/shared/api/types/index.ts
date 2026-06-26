@@ -45,6 +45,8 @@ export type {
   SolicitudAdelantoDTO,
 } from "./adelanto";
 
+export type { AdelantoConfiguracionDTO } from "./configuracion";
+
 export interface ForgotPasswordRequest {
   email: string;
 }

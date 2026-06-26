@@ -10,6 +10,7 @@ function makeRecord(
 ): AdvanceHistoryRecord {
   return {
     id: "adv-1",
+    netAmount: partial.netAmount ?? Math.max(0, partial.amount - 8_000),
     periodLabel: "junio 2026",
     status: "en_curso",
     transactionFeeAmount: 8_000,

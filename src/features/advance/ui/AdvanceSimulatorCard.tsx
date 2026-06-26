@@ -12,7 +12,6 @@ import {
 } from "./AdvanceTimelineParts";
 
 const COUNT_DURATION = 450;
-const INSTALLMENT_OPTIONS = [1, 2, 3] as const;
 
 type AdvanceSimulatorCardProps = {
   amount: number;
@@ -21,6 +20,8 @@ type AdvanceSimulatorCardProps = {
   onInstallmentsChange: (installments: number) => void;
   maxAmount: number;
   minAmount: number;
+  maxInstallments: number;
+  tarifaFijaPorCuota: number;
   fee: number;
   total: number;
   installmentValue: number;
@@ -34,12 +35,18 @@ export function AdvanceSimulatorCard({
   onInstallmentsChange,
   maxAmount,
   minAmount,
+  maxInstallments,
+  tarifaFijaPorCuota,
   fee,
   total,
   installmentValue,
   disabled = false,
 }: AdvanceSimulatorCardProps) {
   const hasAmount = !disabled && amount >= minAmount;
+  const installmentOptions = Array.from(
+    { length: Math.max(1, maxInstallments) },
+    (_, index) => index + 1,
+  );
 
   return (
     <AdvanceTimelineShell
@@ -76,7 +83,7 @@ export function AdvanceSimulatorCard({
             <AdvanceTimelineCenterLine filled={hasAmount} />
 
             <div className="relative flex justify-between">
-              {INSTALLMENT_OPTIONS.map((option) => {
+              {installmentOptions.map((option) => {
                 const selected = installments === option;
 
                 return (
@@ -137,7 +144,7 @@ export function AdvanceSimulatorCard({
 
             <SummaryRow label="Monto solicitado" value={amount} />
             <SummaryRow
-              label={formatAdvanceTransactionFeeLabel()}
+              label={formatAdvanceTransactionFeeLabel(tarifaFijaPorCuota)}
               value={fee}
               negative
             />

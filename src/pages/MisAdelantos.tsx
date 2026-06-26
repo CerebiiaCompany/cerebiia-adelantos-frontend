@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { History } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvanceHistoryTable } from "@/features/advance/ui/AdvanceHistoryTable";
 import { AdvanceHistoryFiltersBar } from "@/features/advance/ui/AdvanceHistoryFilters";
 import { AdvanceReceipt } from "@/features/advance/ui/AdvanceReceipt";
+import { AdvancePaymentEvidenceDialog } from "@/features/advance/ui/AdvancePaymentEvidenceDialog";
 import { useCancelSolicitudAdelanto } from "@/features/advance/model/useCancelSolicitudAdelanto";
+import { EMPLEADO_ME_QUERY_KEY } from "@/features/advance/model/useEmpleadoMe";
+import { SOLICITUDES_ADELANTO_QUERY_KEY } from "@/features/advance/model/useSolicitudesAdelanto";
 import { useFilteredEmployeeAdvanceHistory } from "@/features/advance/model/useFilteredEmployeeAdvanceHistory";
 import { ApiError } from "@/shared/api";
+import { env } from "@/shared/config/env";
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory";
 import {
   AlertDialog,
@@ -30,6 +35,8 @@ export default function MisAdelantos() {
   const [selectedRecord, setSelectedRecord] = useState<AdvanceHistoryRecord | null>(
     null,
   );
+  const [evidenceRecord, setEvidenceRecord] =
+    useState<AdvanceHistoryRecord | null>(null);
   const [recordToCancel, setRecordToCancel] =
     useState<AdvanceHistoryRecord | null>(null);
   const {
@@ -41,6 +48,16 @@ export default function MisAdelantos() {
   } = useFilteredEmployeeAdvanceHistory();
   const { mutate: cancelSolicitud, isPending: isCancelling } =
     useCancelSolicitudAdelanto();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!env.apiUrl) return;
+
+    void queryClient.invalidateQueries({
+      queryKey: SOLICITUDES_ADELANTO_QUERY_KEY,
+    });
+    void queryClient.invalidateQueries({ queryKey: EMPLEADO_ME_QUERY_KEY });
+  }, [queryClient]);
 
   const handleConfirmCancel = () => {
     if (!recordToCancel) return;
@@ -78,6 +95,7 @@ export default function MisAdelantos() {
       <AdvanceHistoryTable
         records={filteredRecords}
         onViewReceipt={setSelectedRecord}
+        onViewEvidence={setEvidenceRecord}
         onCancel={setRecordToCancel}
         cancellingId={isCancelling ? recordToCancel?.id ?? null : null}
         hasActiveFilters={filtersActive}
@@ -140,6 +158,16 @@ export default function MisAdelantos() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <AdvancePaymentEvidenceDialog
+        open={evidenceRecord !== null}
+        onOpenChange={(open) => {
+          if (!open) setEvidenceRecord(null);
+        }}
+        evidenceUrl={evidenceRecord?.paymentEvidenceUrl ?? null}
+        amount={evidenceRecord?.amount}
+        requestedAt={evidenceRecord?.requestedAt}
+      />
     </div>
   );
 }

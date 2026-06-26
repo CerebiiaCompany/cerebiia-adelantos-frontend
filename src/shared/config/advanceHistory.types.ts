@@ -7,6 +7,8 @@ import type { EstadoSolicitud } from "@/shared/api/types/adelanto";
 export type AdvanceHistoryRecord = {
   id: string;
   amount: number;
+  /** Monto neto que recibe el empleado (monto − comisión). */
+  netAmount: number;
   requestedAt: Date;
   periodLabel: string;
   status: AdvanceHistoryStatus;
@@ -20,4 +22,8 @@ export type AdvanceHistoryRecord = {
   accountNumber: string;
   estadoApi?: EstadoSolicitud;
   canCancel?: boolean;
+  /** Motivo de rechazo visible para el empleado. */
+  rejectionReason?: string | null;
+  /** URL absoluta o relativa al comprobante de transferencia del super admin. */
+  paymentEvidenceUrl?: string | null;
 };

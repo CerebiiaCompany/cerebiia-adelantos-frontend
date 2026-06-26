@@ -67,6 +67,9 @@ export default function Dashboard() {
   const {
     salary,
     availableAdvance,
+    maxAdvanceLimit,
+    advancePercentage,
+    isNominaLoading,
     accumulatedIncome,
     incomeToday,
     totalAdvancedThisMonth,
@@ -101,20 +104,36 @@ export default function Dashboard() {
         <StatCard
           label="Disponible para adelanto"
           value={
-            <AnimatedCurrency
-              value={availableAdvance}
-              className="font-display text-2xl font-bold text-gradient"
-            />
+            isNominaLoading ? (
+              <span className="font-display text-2xl font-bold text-muted-foreground">
+                —
+              </span>
+            ) : (
+              <AnimatedCurrency
+                value={availableAdvance}
+                className="font-display text-2xl font-bold text-gradient"
+              />
+            )
           }
           sub={
-            <>
-              de{" "}
-              <AnimatedCurrency
-                value={salary}
-                className="inline font-medium text-foreground"
-                duration={700}
-              />
-            </>
+            isNominaLoading ? (
+              <span className="text-muted-foreground">Cargando tu nómina…</span>
+            ) : (
+              <>
+                de{" "}
+                <AnimatedCurrency
+                  value={maxAdvanceLimit}
+                  className="inline font-medium text-foreground"
+                  duration={700}
+                />
+                {advancePercentage ? (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    ({advancePercentage}% del salario)
+                  </span>
+                ) : null}
+              </>
+            )
           }
           icon={<Zap className="h-5 w-5" strokeWidth={2.25} />}
           iconMotion="zap"
