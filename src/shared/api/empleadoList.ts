@@ -69,3 +69,20 @@ export async function fetchAllEmpleadosPages(
 
   return all;
 }
+
+export async function fetchEmpleadoDocumentoExists(
+  list: (params: EmpleadosListParams) => Promise<PaginatedResponse<EmpleadoDTO>>,
+  documento: string,
+): Promise<boolean> {
+  const trimmed = documento.trim();
+  if (!trimmed) return false;
+
+  const response = await list({
+    documento: trimmed,
+    page: 1,
+    page_size: 20,
+  });
+  const results = extractPaginatedResults(response);
+
+  return results.some((empleado) => empleado.documento === trimmed);
+}

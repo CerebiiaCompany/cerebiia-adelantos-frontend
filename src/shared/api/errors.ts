@@ -14,7 +14,31 @@ export class ApiError extends Error {
   }
 }
 
+function isBackendUnreachable(body: unknown, status: number): boolean {
+  if (status !== 500 && status !== 502 && status !== 503) {
+    return false;
+  }
+
+  if (body === null || body === "") {
+    return true;
+  }
+
+  if (typeof body === "string") {
+    const lower = body.toLowerCase();
+    return (
+      lower.includes("econnrefused") ||
+      lower.includes("proxy error") ||
+      lower.includes("socket hang up")
+    );
+  }
+
+  return false;
+}
+
 function parseApiErrorMessage(body: unknown, status: number): string {
+  if (isBackendUnreachable(body, status)) {
+    return "No se pudo conectar con el backend. Inicia el servidor en http://localhost:8000 (Docker + runserver).";
+  }
   if (typeof body === "string") {
     if (body.includes("<!DOCTYPE") || body.includes("<html")) {
       return `Error interno del servidor (${status}). Revisa la consola del backend.`;

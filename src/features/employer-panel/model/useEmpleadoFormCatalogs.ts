@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   EMPLEADO_ACCOUNT_TYPE_OPTIONS,
   EMPLEADO_CONTRACT_TYPE_OPTIONS,
@@ -10,14 +9,16 @@ import { useBancos } from "./useBancos";
  * Catálogos del formulario Nuevo empleado.
  * Bancos: GET /empleados/bancos/ cuando hay API configurada.
  */
-export function useEmpleadoFormCatalogs() {
-  const bancosQuery = useBancos();
+export function useEmpleadoFormCatalogs(enabled = true) {
+  const bancosQuery = useBancos(enabled);
 
   const banks =
-    bancosQuery.data?.map((banco) => ({
-      value: banco.id,
-      label: banco.nombre,
-    })) ?? [];
+    bancosQuery.data
+      ?.map((banco) => ({
+        value: banco.id,
+        label: banco.nombre,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label, "es")) ?? [];
 
   return {
     documentTypes: EMPLEADO_DOCUMENT_TYPE_OPTIONS,
@@ -26,5 +27,7 @@ export function useEmpleadoFormCatalogs() {
     banks,
     isLoading: bancosQuery.isLoading,
     isError: bancosQuery.isError,
+    isEmpty: !bancosQuery.isLoading && !bancosQuery.isError && banks.length === 0,
+    refetchBancos: bancosQuery.refetch,
   };
 }

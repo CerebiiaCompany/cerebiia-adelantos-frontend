@@ -20,6 +20,7 @@ import {
   resolveEmpleadoImportField,
   type EmpleadoImportField,
 } from "./empleadoImportHeaders";
+import { EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER } from "./empleadoImportCatalogs";
 import { normalizeImportNumericString } from "./normalizeImportCellValue";
 import {
   formatValidationImportMessage,
@@ -168,6 +169,24 @@ function parseImportDate(value: string): string {
   return trimmed;
 }
 
+function isTemplatePlaceholderCell(header: string, value: string): boolean {
+  const field = resolveEmpleadoImportField(header);
+  if (field !== "fecha_ingreso") return false;
+
+  return (
+    value.trim().toUpperCase() === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER
+  );
+}
+
+function rowHasImportableData(headerRow: string[], row: string[]): boolean {
+  return row.some((cell, index) => {
+    const trimmed = cell.trim();
+    if (!trimmed) return false;
+    if (isTemplatePlaceholderCell(headerRow[index] ?? "", trimmed)) return false;
+    return true;
+  });
+}
+
 function matrixToRecords(matrix: string[][]): Record<EmpleadoImportField, string>[] {
   if (matrix.length < 2) return [];
 
@@ -182,7 +201,7 @@ function matrixToRecords(matrix: string[][]): Record<EmpleadoImportField, string
   });
 
   return dataRows
-    .filter((row) => row.some((cell) => cell.trim().length > 0))
+    .filter((row) => rowHasImportableData(headerRow, row))
     .map((row) => {
       const record = {} as Record<EmpleadoImportField, string>;
 
@@ -223,7 +242,16 @@ function normalizeImportRecord(
     celular: normalizeImportNumericString(record.celular ?? ""),
     salario: normalizeSalaryInput(record.salario ?? ""),
     tipo_contrato: mapContractType(record.tipo_contrato ?? ""),
-    fecha_ingreso: parseImportDate(record.fecha_ingreso ?? ""),
+    fecha_ingreso: (() => {
+      const raw = (record.fecha_ingreso ?? "").trim();
+      if (
+        !raw ||
+        raw.toUpperCase() === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER
+      ) {
+        return "";
+      }
+      return parseImportDate(raw);
+    })(),
     banco_id: mapBank(record.banco_id ?? ""),
     tipo_cuenta: mapAccountType(record.tipo_cuenta ?? ""),
     numero_cuenta: normalizeImportNumericString(record.numero_cuenta ?? ""),

@@ -38,11 +38,13 @@ const documentPlaceholders: Record<DocumentType, string> = {
 interface CreateEmpleadoPersonalStepProps {
   control: Control<CreateEmpleadoFormValues>;
   disabled?: boolean;
+  isCheckingDocumento?: boolean;
 }
 
 export function CreateEmpleadoPersonalStep({
   control,
   disabled = false,
+  isCheckingDocumento = false,
 }: CreateEmpleadoPersonalStepProps) {
   const { documentTypes } = useEmpleadoFormCatalogs();
   const tipoDocumento = useWatch({
@@ -119,6 +121,11 @@ export function CreateEmpleadoPersonalStep({
                 />
               </FormControl>
               <FormMessage />
+              {isCheckingDocumento ? (
+                <p className="text-xs text-muted-foreground">
+                  Verificando documento...
+                </p>
+              ) : null}
             </FormItem>
           )}
         />

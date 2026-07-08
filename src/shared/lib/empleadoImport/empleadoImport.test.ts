@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import ExcelJS from "exceljs";
 import * as XLSX from "xlsx";
 import { createEmpleadoSchema } from "@/shared/validations/empleado.schema";
 import {
@@ -6,7 +7,12 @@ import {
   buildEmpleadoImportTemplateMatrix,
   EMPLEADO_IMPORT_BLANK_ROW_COUNT,
   EMPLEADO_IMPORT_TEMPLATE_HEADERS,
+  getEmpleadoImportListSheetName,
 } from "./empleadoImportTemplate";
+import { buildBackendNominaUploadMatrix } from "./prepareEmpleadoImportFileForUpload";
+import {
+  EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER,
+} from "./empleadoImportCatalogs";
 import { mapEmpleadoImportMatrix } from "./mapEmpleadoImportRows";
 import { parseCsvText } from "./parseCsvText";
 
@@ -17,8 +23,16 @@ describe("empleadoImport", () => {
     expect(matrix[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
     expect(matrix).toHaveLength(1 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
     expect(matrix[0]).toContain("email");
+    expect(matrix[0][0]).toBe("tipo_documento");
     expect(matrix[0]).not.toContain("correo");
-    expect(matrix[1].every((cell) => cell === "")).toBe(true);
+    expect(
+      matrix[1].every(
+        (cell, index) =>
+          cell === "" ||
+          (EMPLEADO_IMPORT_TEMPLATE_HEADERS[index] === "fecha_ingreso" &&
+            cell === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER),
+      ),
+    ).toBe(true);
   });
 
   it("no importa filas vacías de la plantilla en blanco", () => {
@@ -45,12 +59,43 @@ describe("empleadoImport", () => {
 
     expect(rows[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
     expect(rows.length).toBe(1 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
-    expect(rows[1]?.every((cell) => cell === "")).toBe(true);
+    expect(
+      rows[1]?.every(
+        (cell, index) =>
+          cell === "" ||
+          (EMPLEADO_IMPORT_TEMPLATE_HEADERS[index] === "fecha_ingreso" &&
+            cell === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER),
+      ),
+    ).toBe(true);
+  });
+
+  it("incluye hoja Listas oculta y validaciones en columnas de catálogo", async () => {
+    const buffer = await buildEmpleadoImportTemplateBuffer({
+      bancos: ["Bancolombia", "Nequi"],
+    });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+
+    const listas = workbook.getWorksheet(getEmpleadoImportListSheetName());
+    expect(listas).toBeDefined();
+    expect(listas?.state).toBe("hidden");
+    expect(listas?.getCell(1, 1).value).toBe("Bancolombia");
+    expect(listas?.getCell(2, 1).value).toBe("Nequi");
+    expect(listas?.getCell(1, 2).value).toBe("cc");
+
+    const nomina = workbook.getWorksheet("Nomina");
+    expect(nomina?.dataValidations?.model?.A2?.type).toBe("list");
+    expect(nomina?.dataValidations?.model?.G2?.type).toBe("list");
+    expect(nomina?.dataValidations?.model?.I2?.type).toBe("list");
+    expect(nomina?.dataValidations?.model?.J2?.type).toBe("list");
+    expect(nomina?.getCell(2, 8).value).toBe(
+      EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER,
+    );
   });
 
   it("mapea filas CSV válidas con columna email al esquema de creación", () => {
     const matrix = parseCsvText(`${EMPLEADO_IMPORT_TEMPLATE_HEADERS.join(",")}
-1005026054,Melanny Yilyan Guate Restrepo,1700000,Nequi,3001234567,cc,empleado@empresa.com,3001234567,indefinido,2026-01-15,ahorros`);
+cc,1005026054,Melanny Yilyan Guate Restrepo,empleado@empresa.com,3001234567,1700000,indefinido,2026-01-15,Nequi,ahorros,3001234567`);
 
     const { valid, errors } = mapEmpleadoImportMatrix(matrix);
 
@@ -142,5 +187,43 @@ ppt,123456789,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_
     });
 
     expect(parsed.success).toBe(false);
+  });
+
+  it("reordena columnas al formato backend para upload legacy", () => {
+    const sourceMatrix = [
+      [
+        "banco",
+        "tipo_documento",
+        "nombre",
+        "documento",
+        "email",
+        "celular",
+        "salario",
+        "tipo_contrato",
+        "fecha_ingreso",
+        "tipo_cuenta",
+        "numero_cuenta",
+      ],
+      [
+        "Bancolombia",
+        "cc",
+        "Ana María Restrepo",
+        "1002345678",
+        "ana@empresa.com",
+        "3001234567",
+        "2500000",
+        "fijo",
+        "2024-01-15",
+        "ahorros",
+        "12345678901",
+      ],
+    ];
+
+    const uploadMatrix = buildBackendNominaUploadMatrix(sourceMatrix);
+
+    expect(uploadMatrix[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
+    expect(uploadMatrix[1]?.[1]).toBe("1002345678");
+    expect(uploadMatrix[1]?.[3]).toBe("ana@empresa.com");
+    expect(uploadMatrix).toHaveLength(2);
   });
 });

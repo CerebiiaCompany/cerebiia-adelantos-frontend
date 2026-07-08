@@ -1,5 +1,6 @@
 // ⚠️ AGNOSTIC — no react-router-dom, no react-dom, no UI imports
 
+import { normalizeBancosList } from "../bancosMappers";
 import {
   buildEmpleadosListPath,
   type EmpleadosListParams,
@@ -41,7 +42,8 @@ export const empleadosEndpoints = {
     ),
   activar: (data: ActivarEmpleadoRequest) =>
     http.post<ActivarEmpleadoResponse>("/empleados/activar/", data),
-  listBancos: () => http.get<BancoDTO[]>("/empleados/bancos/"),
+  listBancos: async () =>
+    normalizeBancosList(await http.get<unknown>("/empleados/bancos/")),
   me: () => http.get<EmpleadoMeDTO>("/empleados/me/"),
   updateMe: (data: UpdateEmpleadoMeRequest) =>
     http.patch<EmpleadoDTO>("/empleados/me/", data),
