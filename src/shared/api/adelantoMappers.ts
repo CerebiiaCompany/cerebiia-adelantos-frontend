@@ -29,20 +29,27 @@ export function mapSolicitudToHistoryRecord(
 ): AdvanceHistoryRecord {
   const amount = Number.parseFloat(solicitud.monto);
   const safeAmount = Number.isNaN(amount) ? 0 : amount;
-  const parsedNet = solicitud.monto_neto
-    ? Number.parseFloat(solicitud.monto_neto)
-    : Number.NaN;
+  const parsedNet = solicitud.monto_a_recibir
+    ? Number.parseFloat(solicitud.monto_a_recibir)
+    : solicitud.monto_neto
+      ? Number.parseFloat(solicitud.monto_neto)
+      : Number.NaN;
   const installments = solicitud.numero_cuotas_snapshot > 0
     ? solicitud.numero_cuotas_snapshot
     : 1;
+  const parsedTarifaTotal = solicitud.tarifa_total
+    ? Number.parseFloat(solicitud.tarifa_total)
+    : Number.NaN;
   const transactionFeeAmount =
-    !Number.isNaN(parsedNet) && parsedNet >= 0
-      ? Math.max(0, safeAmount - parsedNet)
-      : calculateAdvanceTotalFee(
-          DEFAULT_TARIFA_FIJA_POR_CUOTA,
-          installments,
-          safeAmount,
-        );
+    !Number.isNaN(parsedTarifaTotal) && parsedTarifaTotal >= 0
+      ? Math.round(parsedTarifaTotal)
+      : !Number.isNaN(parsedNet) && parsedNet >= 0
+        ? Math.max(0, safeAmount - parsedNet)
+        : calculateAdvanceTotalFee(
+            DEFAULT_TARIFA_FIJA_POR_CUOTA,
+            installments,
+            safeAmount,
+          );
   const netAmount =
     !Number.isNaN(parsedNet) && parsedNet >= 0
       ? Math.round(parsedNet)
@@ -69,7 +76,9 @@ export function mapSolicitudToHistoryRecord(
     estadoApi: solicitud.estado,
     canCancel: isSolicitudCancellable(solicitud.estado),
     rejectionReason: solicitud.motivo_rechazo?.trim() || null,
-    paymentEvidenceUrl: resolveComprobantePagoUrl(solicitud.comprobante_pago),
+    paymentEvidenceUrl: resolveComprobantePagoUrl(
+      solicitud.comprobante_pago ?? solicitud.comprobante_pago_url,
+    ),
   };
 }
 

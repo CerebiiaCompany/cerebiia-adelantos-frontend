@@ -4,6 +4,7 @@ import { adelantosEndpoints } from "@/shared/api/endpoints";
 import { env } from "@/shared/config/env";
 import { SOLICITUDES_ADELANTO_QUERY_KEY } from "./useSolicitudesAdelanto";
 import { EMPLEADO_ME_QUERY_KEY } from "./useEmpleadoMe";
+import { MI_SITUACION_FINANCIERA_QUERY_KEY } from "./useMiSituacionFinanciera";
 
 interface CreateSolicitudInput {
   amount: number;
@@ -31,6 +32,9 @@ export function useCreateSolicitudAdelanto() {
         queryKey: SOLICITUDES_ADELANTO_QUERY_KEY,
       });
       void queryClient.invalidateQueries({ queryKey: EMPLEADO_ME_QUERY_KEY });
+      void queryClient.invalidateQueries({
+        queryKey: MI_SITUACION_FINANCIERA_QUERY_KEY,
+      });
     },
   });
 }
