@@ -16,7 +16,6 @@ import {
   ADVANCE_HISTORY_STATUS_BADGE_CLASS,
   ADVANCE_HISTORY_STATUS_LABEL,
 } from "@/shared/config/advanceHistory";
-import { formatAdvanceTransactionFeeLabel } from "@/shared/config/advanceFees";
 import { formatAdvanceRequestDate } from "@/shared/utils/payrollPeriod";
 import { formatAdvanceInstallmentsLabel } from "@/features/advance/utils/enrichAdvanceHistoryRecords";
 
@@ -95,9 +94,6 @@ function TransactionCostCell({ record }: { record: AdvanceHistoryRecord }) {
         className="font-semibold tabular-nums text-foreground"
         duration={450}
       />
-      <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
-        {formatAdvanceTransactionFeeLabel()}
-      </p>
     </div>
   );
 }
