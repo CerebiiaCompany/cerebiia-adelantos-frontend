@@ -22,6 +22,8 @@ import {
   groupImportErrorsByKind,
   type EmpleadoImportRowError,
 } from "@/shared/lib/empleadoImport";
+import { env } from "@/shared/config/env";
+import { fetchBancosList } from "../model/useBancos";
 import {
   useImportEmpleados,
   type ImportEmpleadosResult,
@@ -128,10 +130,25 @@ export function ImportEmpleadosButton() {
   }
 
   async function handleDownloadTemplate() {
-    const buffer = await buildEmpleadoImportTemplateBuffer();
+    let bancos: string[] | undefined;
+
+    if (env.apiUrl) {
+      try {
+        const catalog = await fetchBancosList();
+        if (catalog.length > 0) {
+          bancos = catalog.map((banco) => banco.nombre);
+        }
+      } catch {
+        // Usa catálogo estático del seed si la API no responde.
+      }
+    }
+
+    const buffer = await buildEmpleadoImportTemplateBuffer(
+      bancos ? { bancos } : undefined,
+    );
     downloadExcelBuffer("plantilla-importacion-nomina", buffer);
     toast.success(
-      "Plantilla descargada. Diligencia la hoja «Nomina» fila por fila e impórtala.",
+      "Plantilla descargada. Usa los desplegables en banco, tipo de documento, contrato y cuenta.",
     );
   }
 

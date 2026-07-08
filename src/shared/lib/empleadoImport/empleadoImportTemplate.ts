@@ -2,13 +2,30 @@
 
 import ExcelJS from "exceljs";
 import {
+  EMPLEADO_IMPORT_ACCOUNT_TYPES,
+  EMPLEADO_IMPORT_CONTRACT_TYPES,
+  EMPLEADO_IMPORT_DOCUMENT_TYPES,
+  EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER,
+  getEmpleadoImportListSheetName,
+  resolveEmpleadoImportBancoNames,
+  type EmpleadoImportListRanges,
+  type EmpleadoImportTemplateOptions,
+} from "./empleadoImportCatalogs";
+import {
+  applyExcelColumnInputHint,
+  applyExcelListValidation,
+  buildExcelListRange,
+} from "./empleadoImportExcelValidation";
+import {
   EMPLEADO_IMPORT_TEMPLATE_HEADERS,
   type EmpleadoImportTemplateHeader,
 } from "./empleadoImportHeaders";
-import { EMPLEADO_IMPORT_ACCEPTED_BANKS } from "./empleadoImportBancos";
 
-/** Columnas que deben conservarse como texto en Excel (evita .0 y notación científica). */
-export const EMPLEADO_IMPORT_TEXT_COLUMN_INDEXES = [0, 4, 5, 7] as const;
+export { getEmpleadoImportListSheetName, EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER } from "./empleadoImportCatalogs";
+export type { EmpleadoImportTemplateOptions } from "./empleadoImportCatalogs";
+
+/** Columnas en formato texto: documento, celular, numero_cuenta (índice 0-based). */
+export const EMPLEADO_IMPORT_TEXT_COLUMN_INDEXES = [1, 4, 10] as const;
 
 /**
  * Encabezados alineados con POST /empleados/cargar-nomina/ (backend Django).
@@ -20,7 +37,9 @@ export { EMPLEADO_IMPORT_TEMPLATE_HEADERS };
 export const EMPLEADO_IMPORT_BLANK_ROW_COUNT = 50;
 
 function buildBlankImportRow(): string[] {
-  return Array.from({ length: EMPLEADO_IMPORT_TEMPLATE_HEADERS.length }, () => "");
+  return EMPLEADO_IMPORT_TEMPLATE_HEADERS.map((header) =>
+    header === "fecha_ingreso" ? EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER : "",
+  );
 }
 
 const BRAND_PRIMARY = "FF3B5BDB";
@@ -39,11 +58,18 @@ const COLUMN_GUIDE: Array<{
   notes: string;
 }> = [
   {
+    field: "tipo_documento",
+    label: "Tipo de documento",
+    required: "Sí",
+    example: "cc",
+    notes: "Use el desplegable: cc, ce, ti o pas.",
+  },
+  {
     field: "documento",
     label: "Número de documento",
     required: "Sí",
     example: "1014234567",
-    notes: "Sin puntos ni espacios. Celda en formato texto (columna preformateada).",
+    notes: "Sin puntos ni espacios. Celda en formato texto.",
   },
   {
     field: "nombre",
@@ -51,35 +77,6 @@ const COLUMN_GUIDE: Array<{
     required: "Sí",
     example: "Juan Carlos Pérez",
     notes: "Nombre y apellidos del empleado.",
-  },
-  {
-    field: "salario",
-    label: "Salario mensual",
-    required: "Sí",
-    example: "2500000",
-    notes: "Valor numérico en pesos colombianos, sin separadores.",
-  },
-  {
-    field: "banco",
-    label: "Entidad financiera",
-    required: "Sí",
-    example: "BBVA Colombia",
-    notes:
-      "Nombre exacto del catálogo (ver lista inferior). No use abreviaturas: escriba «BBVA Colombia», no «BBVA».",
-  },
-  {
-    field: "numero_cuenta",
-    label: "Número de cuenta",
-    required: "Sí",
-    example: "12345678901",
-    notes: "Formato texto. Sin espacios ni decimales (.0).",
-  },
-  {
-    field: "tipo_documento",
-    label: "Tipo de documento",
-    required: "Sí",
-    example: "cc",
-    notes: "Valores: cc, ce, ti, pas.",
   },
   {
     field: "email",
@@ -96,25 +93,47 @@ const COLUMN_GUIDE: Array<{
     notes: "10 dígitos, inicia en 3. Formato texto (evita 3001234567.0).",
   },
   {
+    field: "salario",
+    label: "Salario mensual",
+    required: "Sí",
+    example: "2500000",
+    notes: "Valor numérico en pesos colombianos, sin separadores.",
+  },
+  {
     field: "tipo_contrato",
     label: "Tipo de contrato",
     required: "Sí",
     example: "indefinido",
-    notes: "indefinido, fijo, obra_labor, prestacion_servicios, aprendizaje.",
+    notes: "Use el desplegable de tipos de contrato.",
   },
   {
     field: "fecha_ingreso",
     label: "Fecha de ingreso",
     required: "Sí",
     example: "2025-03-01",
-    notes: "Formato AAAA-MM-DD.",
+    notes: "Reemplace AAAA-MM-DD por la fecha real (ej. 2025-03-01).",
+  },
+  {
+    field: "banco",
+    label: "Entidad financiera",
+    required: "Sí",
+    example: "BBVA Colombia",
+    notes:
+      "Use el desplegable. Nombre exacto del catálogo (ej. «BBVA Colombia», no «BBVA»).",
   },
   {
     field: "tipo_cuenta",
     label: "Tipo de cuenta",
     required: "Sí",
     example: "ahorros",
-    notes: "Valores: ahorros o corriente.",
+    notes: "Use el desplegable: ahorros o corriente.",
+  },
+  {
+    field: "numero_cuenta",
+    label: "Número de cuenta",
+    required: "Sí",
+    example: "12345678901",
+    notes: "Formato texto. Sin espacios ni decimales (.0).",
   },
 ];
 
@@ -213,7 +232,137 @@ function styleDataRow(
   }
 }
 
-function buildNominaWorksheet(workbook: ExcelJS.Workbook) {
+function columnIndexForHeader(header: EmpleadoImportTemplateHeader): number {
+  return EMPLEADO_IMPORT_TEMPLATE_HEADERS.indexOf(header) + 1;
+}
+
+function computeEmpleadoImportListRanges(
+  options?: EmpleadoImportTemplateOptions,
+): EmpleadoImportListRanges {
+  const sheetName = getEmpleadoImportListSheetName();
+  const bancos = resolveEmpleadoImportBancoNames(options);
+
+  return {
+    bancos: buildExcelListRange(sheetName, 1, bancos.length),
+    tipoDocumento: buildExcelListRange(
+      sheetName,
+      2,
+      EMPLEADO_IMPORT_DOCUMENT_TYPES.length,
+    ),
+    tipoContrato: buildExcelListRange(
+      sheetName,
+      3,
+      EMPLEADO_IMPORT_CONTRACT_TYPES.length,
+    ),
+    tipoCuenta: buildExcelListRange(
+      sheetName,
+      4,
+      EMPLEADO_IMPORT_ACCOUNT_TYPES.length,
+    ),
+  };
+}
+
+function buildListasWorksheet(
+  workbook: ExcelJS.Workbook,
+  options?: EmpleadoImportTemplateOptions,
+): void {
+  const sheetName = getEmpleadoImportListSheetName();
+  const sheet = workbook.addWorksheet(sheetName, { state: "hidden" });
+
+  const bancos = resolveEmpleadoImportBancoNames(options);
+  bancos.forEach((nombre, index) => {
+    sheet.getCell(index + 1, 1).value = nombre;
+  });
+
+  EMPLEADO_IMPORT_DOCUMENT_TYPES.forEach((value, index) => {
+    sheet.getCell(index + 1, 2).value = value;
+  });
+
+  EMPLEADO_IMPORT_CONTRACT_TYPES.forEach((value, index) => {
+    sheet.getCell(index + 1, 3).value = value;
+  });
+
+  EMPLEADO_IMPORT_ACCOUNT_TYPES.forEach((value, index) => {
+    sheet.getCell(index + 1, 4).value = value;
+  });
+}
+
+function applyNominaCatalogValidations(
+  worksheet: ExcelJS.Worksheet,
+  listRanges: EmpleadoImportListRanges,
+  lastDataRow: number,
+) {
+  const firstDataRow = 2;
+
+  applyExcelListValidation(
+    worksheet,
+    columnIndexForHeader("banco"),
+    listRanges.bancos,
+    "Seleccione el banco o plataforma de la lista (nombre exacto).",
+    firstDataRow,
+    lastDataRow,
+  );
+
+  applyExcelListValidation(
+    worksheet,
+    columnIndexForHeader("tipo_documento"),
+    listRanges.tipoDocumento,
+    "Seleccione el tipo de documento: cc, ce, ti o pas.",
+    firstDataRow,
+    lastDataRow,
+  );
+
+  applyExcelListValidation(
+    worksheet,
+    columnIndexForHeader("tipo_contrato"),
+    listRanges.tipoContrato,
+    "Seleccione el tipo de contrato de la lista.",
+    firstDataRow,
+    lastDataRow,
+  );
+
+  applyExcelListValidation(
+    worksheet,
+    columnIndexForHeader("tipo_cuenta"),
+    listRanges.tipoCuenta,
+    "Seleccione ahorros o corriente.",
+    firstDataRow,
+    lastDataRow,
+  );
+
+  applyExcelColumnInputHint(
+    worksheet,
+    columnIndexForHeader("fecha_ingreso"),
+    `Reemplace ${EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER} por la fecha real (ej. 2025-03-01).`,
+    firstDataRow,
+    lastDataRow,
+  );
+}
+
+function applyFechaIngresoPlaceholderStyle(
+  worksheet: ExcelJS.Worksheet,
+  firstDataRow: number,
+  lastDataRow: number,
+) {
+  const columnIndex = columnIndexForHeader("fecha_ingreso");
+
+  for (let rowIndex = firstDataRow; rowIndex <= lastDataRow; rowIndex += 1) {
+    const cell = worksheet.getCell(rowIndex, columnIndex);
+    if (cell.value === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER) {
+      cell.font = {
+        name: "Calibri",
+        size: 11,
+        italic: true,
+        color: { argb: "FF94A3B8" },
+      };
+    }
+  }
+}
+
+function buildNominaWorksheet(
+  workbook: ExcelJS.Workbook,
+  listRanges: EmpleadoImportListRanges,
+) {
   const worksheet = workbook.addWorksheet("Nomina", {
     views: [{ state: "frozen", ySplit: 1 }],
     properties: { defaultRowHeight: 22 },
@@ -222,7 +371,7 @@ function buildNominaWorksheet(workbook: ExcelJS.Workbook) {
   const matrix = buildEmpleadoImportTemplateMatrix();
   worksheet.addRows(matrix);
 
-  const columnWidths = [16, 32, 14, 18, 18, 16, 28, 14, 18, 14, 14];
+  const columnWidths = [14, 16, 32, 28, 14, 14, 18, 16, 22, 14, 18];
   columnWidths.forEach((width, index) => {
     worksheet.getColumn(index + 1).width = width;
   });
@@ -249,10 +398,16 @@ function buildNominaWorksheet(workbook: ExcelJS.Workbook) {
     to: { row: 1, column: EMPLEADO_IMPORT_TEMPLATE_HEADERS.length },
   };
 
+  applyNominaCatalogValidations(worksheet, listRanges, matrix.length);
+  applyFechaIngresoPlaceholderStyle(worksheet, 2, matrix.length);
+
   return worksheet;
 }
 
-function buildInstructionsWorksheet(workbook: ExcelJS.Workbook) {
+function buildInstructionsWorksheet(
+  workbook: ExcelJS.Workbook,
+  options?: EmpleadoImportTemplateOptions,
+) {
   const sheet = workbook.addWorksheet("Instrucciones", {
     properties: { defaultRowHeight: 20 },
   });
@@ -276,7 +431,7 @@ function buildInstructionsWorksheet(workbook: ExcelJS.Workbook) {
 
   sheet.mergeCells("A2:F2");
   sheet.getCell("A2").value =
-    "Complete la hoja «Nomina» desde la fila 2. No modifique los encabezados de la fila 1. Las filas vienen en blanco para que registre cada empleado.";
+    "Complete la hoja «Nomina» desde la fila 2, en el mismo orden que «Nuevo empleado». Use los desplegables y reemplace AAAA-MM-DD en fecha de ingreso.";
   sheet.getCell("A2").font = {
     name: "Calibri",
     size: 11,
@@ -286,10 +441,11 @@ function buildInstructionsWorksheet(workbook: ExcelJS.Workbook) {
   sheet.getRow(2).height = 24;
 
   const steps = [
-    "1. Registre un empleado por fila en la hoja «Nomina».",
-    "2. Use los valores permitidos indicados en la tabla inferior.",
-    "3. Guarde el archivo y utilice «Importar nómina» en el panel de empresa.",
-    "4. Revise el resumen de importación: las filas válidas se guardan aunque otras fallen.",
+    "1. Registre un empleado por fila en la hoja «Nomina» (mismo orden que «Nuevo empleado»).",
+    "2. Use los desplegables en tipo de documento, contrato, banco y tipo de cuenta.",
+    "3. Reemplace AAAA-MM-DD en fecha de ingreso por la fecha real (ej. 2025-03-01).",
+    "4. Guarde el archivo y utilice «Importar nómina» en el panel de empresa.",
+    "5. Revise el resumen de importación: las filas válidas se guardan aunque otras fallen.",
   ];
 
   steps.forEach((step, index) => {
@@ -405,7 +561,7 @@ function buildInstructionsWorksheet(workbook: ExcelJS.Workbook) {
   banksTitle.alignment = { vertical: "middle", horizontal: "left" };
   sheet.getRow(banksStartRow).height = 26;
 
-  EMPLEADO_IMPORT_ACCEPTED_BANKS.forEach((bankName, index) => {
+  resolveEmpleadoImportBancoNames(options).forEach((bankName, index) => {
     const row = sheet.getRow(banksStartRow + 1 + index);
     row.getCell(1).value = bankName;
     row.getCell(1).font = { name: "Calibri", size: 10, color: { argb: "FF334155" } };
@@ -413,21 +569,35 @@ function buildInstructionsWorksheet(workbook: ExcelJS.Workbook) {
   });
 }
 
-export async function buildEmpleadoImportTemplateBuffer(): Promise<ArrayBuffer> {
+export async function buildEmpleadoImportTemplateBuffer(
+  options?: EmpleadoImportTemplateOptions,
+): Promise<ArrayBuffer> {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "AdeCerebiia";
   workbook.created = new Date();
   workbook.modified = new Date();
   workbook.company = "Cerebiia";
 
-  buildNominaWorksheet(workbook);
-  buildInstructionsWorksheet(workbook);
+  const listRanges = computeEmpleadoImportListRanges(options);
+  buildNominaWorksheet(workbook, listRanges);
+  buildListasWorksheet(workbook, options);
+  buildInstructionsWorksheet(workbook, options);
+
+  workbook.views = [
+    {
+      activeTab: 0,
+      firstSheet: 0,
+      visibility: "visible",
+    },
+  ];
 
   const buffer = await workbook.xlsx.writeBuffer();
   return buffer as ArrayBuffer;
 }
 
 /** @deprecated Usar buildEmpleadoImportTemplateBuffer para descarga con diseño corporativo. */
-export async function buildEmpleadoImportTemplateWorkbook(): Promise<ArrayBuffer> {
-  return buildEmpleadoImportTemplateBuffer();
+export async function buildEmpleadoImportTemplateWorkbook(
+  options?: EmpleadoImportTemplateOptions,
+): Promise<ArrayBuffer> {
+  return buildEmpleadoImportTemplateBuffer(options);
 }

@@ -10,7 +10,7 @@ type FormModalSelectContentProps = ComponentPropsWithoutRef<typeof SelectContent
  */
 export function FormModalSelectContent({
   className,
-  position = "popper",
+  position = "item-aligned",
   sideOffset = 4,
   ...props
 }: FormModalSelectContentProps) {
@@ -18,7 +18,10 @@ export function FormModalSelectContent({
     <SelectContent
       position={position}
       sideOffset={sideOffset}
-      className={cn("z-[110] rounded-xl border-border/80", className)}
+      className={cn(
+        "z-[120] max-h-72 overflow-y-auto rounded-xl border-border/80 bg-popover shadow-lg",
+        className,
+      )}
       {...props}
     />
   );

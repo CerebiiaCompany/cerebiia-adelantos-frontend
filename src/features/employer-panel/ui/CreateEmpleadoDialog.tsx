@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, UserPlus } from "lucide-react";
@@ -14,7 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
+import { env } from "@/shared/config/env";
 import { ApiError } from "@/shared/api";
 import {
   CREATE_EMPLEADO_STEP1_FIELDS,
@@ -22,7 +23,14 @@ import {
   isCreateEmpleadoStep1Complete,
   isCreateEmpleadoStep2Complete,
   type CreateEmpleadoFormValues,
-} from "@/shared/validations/empleado.schema";import { useCreateEmpleado } from "../model/useCreateEmpleado";
+} from "@/shared/validations/empleado.schema";
+import { cn } from "@/lib/utils";
+import { useCreateEmpleado } from "../model/useCreateEmpleado";
+import { useEmpleadoDocumentoExists } from "../model/useEmpleadoDocumentoExists";
+import {
+  BANCOS_QUERY_KEY,
+  fetchBancosList,
+} from "../model/useBancos";
 import { CreateEmpleadoStepIndicator } from "./CreateEmpleadoStepIndicator";
 import { CreateEmpleadoLaboralStep } from "./steps/CreateEmpleadoLaboralStep";
 import { CreateEmpleadoPersonalStep } from "./steps/CreateEmpleadoPersonalStep";
@@ -50,6 +58,7 @@ export function CreateEmpleadoDialog({
   open,
   onOpenChange,
 }: CreateEmpleadoDialogProps) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<1 | 2>(1);
   const { mutate: createEmpleado, isPending, reset: resetMutation } =
     useCreateEmpleado();
@@ -62,9 +71,33 @@ export function CreateEmpleadoDialog({
 
   const watchedValues = useWatch({ control: form.control });
 
+  const tipoDocumento = watchedValues?.tipo_documento ?? "";
+  const documento = watchedValues?.documento ?? "";
+  const { exists: documentoExists, isChecking: isCheckingDocumento } =
+    useEmpleadoDocumentoExists(tipoDocumento, documento, open);
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (documentoExists) {
+      form.setError("documento", {
+        type: "duplicate",
+        message: "Este documento ya existe",
+      });
+      return;
+    }
+
+    if (form.getFieldState("documento").error?.type === "duplicate") {
+      void form.trigger("documento");
+    }
+  }, [documentoExists, form, open]);
+
   const isStep1Complete = useMemo(
-    () => isCreateEmpleadoStep1Complete(watchedValues ?? {}),
-    [watchedValues],
+    () =>
+      isCreateEmpleadoStep1Complete(watchedValues ?? {}) &&
+      !documentoExists &&
+      !isCheckingDocumento,
+    [watchedValues, documentoExists, isCheckingDocumento],
   );
 
   const isStep2Complete = useMemo(
@@ -77,14 +110,21 @@ export function CreateEmpleadoDialog({
       form.reset(DEFAULT_VALUES);
       setStep(1);
       resetMutation();
+      return;
     }
-  }, [open, form, resetMutation]);
+
+    if (env.apiUrl) {
+      void queryClient.prefetchQuery({
+        queryKey: BANCOS_QUERY_KEY,
+        queryFn: fetchBancosList,
+      });
+    }
+  }, [open, form, resetMutation, queryClient]);
 
   async function handleNextStep() {
     const isValid = await form.trigger([...CREATE_EMPLEADO_STEP1_FIELDS]);
-    if (isValid) {
-      setStep(2);
-    }
+    if (!isValid || documentoExists || isCheckingDocumento) return;
+    setStep(2);
   }
 
   function handleSubmit(values: CreateEmpleadoFormValues) {
@@ -133,6 +173,7 @@ export function CreateEmpleadoDialog({
               <CreateEmpleadoPersonalStep
                 control={form.control}
                 disabled={isPending}
+                isCheckingDocumento={isCheckingDocumento}
               />
             ) : (
               <CreateEmpleadoLaboralStep

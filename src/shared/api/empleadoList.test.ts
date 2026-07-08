@@ -3,6 +3,7 @@ import {
   buildEmpleadosListPath,
   extractPaginatedResults,
   fetchAllEmpleadosPages,
+  fetchEmpleadoDocumentoExists,
 } from "./empleadoList";
 import type { EmpleadoDTO } from "./types/empleado";
 
@@ -75,5 +76,40 @@ describe("empleadoList", () => {
     const empleados = await fetchAllEmpleadosPages(listPage);
     expect(empleados).toHaveLength(2);
     expect(listPage).toHaveBeenCalledTimes(2);
+  });
+
+  it("detecta documento existente con coincidencia exacta", async () => {
+    const listPage = vi.fn().mockResolvedValue({
+      count: 1,
+      page: 1,
+      page_size: 20,
+      next: null,
+      previous: null,
+      results: [{ ...empleadoFixture, documento: "1005026054" }],
+    });
+
+    await expect(
+      fetchEmpleadoDocumentoExists(listPage, "1005026054"),
+    ).resolves.toBe(true);
+    expect(listPage).toHaveBeenCalledWith({
+      documento: "1005026054",
+      page: 1,
+      page_size: 20,
+    });
+  });
+
+  it("ignora coincidencias parciales al verificar documento", async () => {
+    const listPage = vi.fn().mockResolvedValue({
+      count: 1,
+      page: 1,
+      page_size: 20,
+      next: null,
+      previous: null,
+      results: [{ ...empleadoFixture, documento: "10050260540" }],
+    });
+
+    await expect(
+      fetchEmpleadoDocumentoExists(listPage, "1005026054"),
+    ).resolves.toBe(false);
   });
 });
