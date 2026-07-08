@@ -57,7 +57,22 @@ export function mapSolicitudesToRegisteredCompanyAdvances(
     const empleado = empleadoById.get(solicitud.empleado_id);
     const advancedAmount = Number.parseFloat(solicitud.monto);
     const safeAmount = Number.isNaN(advancedAmount) ? 0 : advancedAmount;
-    const feeAmount = calculateAdvanceFee(safeAmount);
+    const parsedTarifaTotal = solicitud.tarifa_total
+      ? Number.parseFloat(solicitud.tarifa_total)
+      : Number.NaN;
+    const parsedNet = solicitud.monto_a_recibir
+      ? Number.parseFloat(solicitud.monto_a_recibir)
+      : solicitud.monto_neto
+        ? Number.parseFloat(solicitud.monto_neto)
+        : Number.NaN;
+    const feeAmount =
+      !Number.isNaN(parsedTarifaTotal) && parsedTarifaTotal >= 0
+        ? Math.round(parsedTarifaTotal)
+        : calculateAdvanceFee(safeAmount);
+    const netDisbursedAmount =
+      !Number.isNaN(parsedNet) && parsedNet >= 0
+        ? Math.round(parsedNet)
+        : safeAmount - feeAmount;
 
     return {
       id: solicitud.id,
@@ -69,7 +84,7 @@ export function mapSolicitudesToRegisteredCompanyAdvances(
       advancedAmount: safeAmount,
       installments: solicitud.numero_cuotas_snapshot,
       feeAmount,
-      netDisbursedAmount: safeAmount - feeAmount,
+      netDisbursedAmount,
       status: mapEstadoToCompanyAdvanceStatus(solicitud.estado),
       requestedAt: solicitud.created_at,
       transferId: solicitud.id.slice(0, 8).toUpperCase(),

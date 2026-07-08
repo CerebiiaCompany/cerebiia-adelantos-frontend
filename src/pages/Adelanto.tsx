@@ -56,7 +56,7 @@ export default function Adelanto() {
   const dashboard = useEmployeeDashboard();
   const profile = useProfileView();
   const { data: empleadoMe } = useEmpleadoMe();
-  const { data: adelantoConfig } = useAdelantoConfig();
+  const { data: adelantoConfig, solicitudActiva } = useAdelantoConfig();
   const { mutate: createSolicitud, isPending: isSubmitting } =
     useCreateSolicitudAdelanto();
 
@@ -85,6 +85,7 @@ export default function Adelanto() {
   const isAdvanceWindowOpen = advanceAvailability.canRequestAdvance;
   const canRequest =
     isAdvanceWindowOpen &&
+    !solicitudActiva &&
     maxAmount >= ADVANCE_MIN_AMOUNT &&
     amount >= ADVANCE_MIN_AMOUNT &&
     amount <= maxAmount;
@@ -162,6 +163,8 @@ export default function Adelanto() {
       >
         {!isAdvanceWindowOpen ? (
           "No puedes adelantar hoy"
+        ) : solicitudActiva ? (
+          "Tienes una solicitud en curso"
         ) : canRequest ? (
           <>
             Solicitar{" "}

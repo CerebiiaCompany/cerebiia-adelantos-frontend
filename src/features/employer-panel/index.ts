@@ -1,4 +1,5 @@
 export { useEmpleadosList } from "./model/useEmpleadosList";
+export { useEmployerConfig } from "./model/useEmployerConfig";
 export { useCreateEmpleado } from "./model/useCreateEmpleado";
 export { useEmpleadoFormCatalogs } from "./model/useEmpleadoFormCatalogs";
 export {
