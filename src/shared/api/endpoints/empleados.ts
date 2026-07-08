@@ -1,6 +1,7 @@
 // ⚠️ AGNOSTIC — no react-router-dom, no react-dom, no UI imports
 
 import { normalizeBancosList } from "../bancosMappers";
+import { normalizeVerificarPreRegistroResponse } from "../verificarPreRegistroMappers";
 import {
   buildEmpleadosListPath,
   type EmpleadosListParams,
@@ -35,10 +36,9 @@ export const empleadosEndpoints = {
     http.put<EmpleadoDTO>(`/empleados/${empleadoId}/`, data),
   login: (data: EmpleadoLoginRequest) =>
     http.post<EmpleadoLoginResponse>("/empleados/login/", data),
-  verificarPreRegistro: (data: VerificarPreRegistroRequest) =>
-    http.post<VerificarPreRegistroResponse>(
-      "/empleados/verificar-pre-registro/",
-      data,
+  verificarPreRegistro: async (data: VerificarPreRegistroRequest) =>
+    normalizeVerificarPreRegistroResponse(
+      await http.post<unknown>("/empleados/verificar-pre-registro/", data),
     ),
   activar: (data: ActivarEmpleadoRequest) =>
     http.post<ActivarEmpleadoResponse>("/empleados/activar/", data),
