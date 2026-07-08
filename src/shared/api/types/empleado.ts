@@ -1,6 +1,6 @@
 // ⚠️ AGNOSTIC — employee onboarding API types
 
-export type EmpleadoEstado = "pre_registrado" | "activo";
+export type EmpleadoEstado = "pre_registrado" | "activo" | "inactivo";
 
 export type TipoDocumento = "cc" | "ce" | "ti" | "pas";
 
@@ -61,6 +61,9 @@ export interface CreateEmpleadoRequest {
 }
 
 export type CreateEmpleadoResponse = EmpleadoDTO;
+
+/** Mismos campos que crear empleado (todos requeridos en PUT). */
+export type UpdateEmpleadoRequest = CreateEmpleadoRequest;
 
 export interface VerificarPreRegistroRequest {
   documento: string;

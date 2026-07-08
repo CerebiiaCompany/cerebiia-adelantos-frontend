@@ -34,16 +34,23 @@ export type {
   TipoCuentaEmpleado,
   TipoDocumento,
   UpdateEmpleadoMeRequest,
+  UpdateEmpleadoRequest,
   VerificarPreRegistroRequest,
   VerificarPreRegistroResponse,
 } from "./empleado";
 
 export type {
   CrearSolicitudAdelantoRequest,
+  CuotaAdelantoDTO,
   EmpleadoMeDTO,
   EstadoSolicitud,
+  MiSituacionFinancieraDTO,
   SolicitudAdelantoDTO,
+  SolicitudDetalleDTO,
+  TendenciaMensualDTO,
 } from "./adelanto";
+
+export type { PaginatedResponse } from "./pagination";
 
 export type { AdelantoConfiguracionDTO } from "./configuracion";
 
