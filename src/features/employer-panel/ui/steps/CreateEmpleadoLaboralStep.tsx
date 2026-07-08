@@ -1,4 +1,5 @@
 import type { Control } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import {
   FormControl,
   FormField,
@@ -33,8 +34,15 @@ export function CreateEmpleadoLaboralStep({
   control,
   disabled = false,
 }: CreateEmpleadoLaboralStepProps) {
-  const { contractTypes, accountTypes, banks, isLoading } =
-    useEmpleadoFormCatalogs();
+  const {
+    contractTypes,
+    accountTypes,
+    banks,
+    isLoading,
+    isError,
+    isEmpty,
+    refetchBancos,
+  } = useEmpleadoFormCatalogs();
 
   return (
     <div className="space-y-4">
@@ -131,18 +139,24 @@ export function CreateEmpleadoLaboralStep({
                 modal={false}
                 onValueChange={field.onChange}
                 value={field.value || undefined}
-                disabled={disabled || isLoading}
+                disabled={disabled || isLoading || isError || isEmpty}
               >
                 <FormControl>
                   <SelectTrigger className={selectTriggerClassName}>
                     <SelectValue
                       placeholder={
-                        isLoading ? "Cargando bancos..." : "Selecciona el banco"
+                        isLoading
+                          ? "Cargando bancos..."
+                          : isError
+                            ? "Error al cargar bancos"
+                            : isEmpty
+                              ? "Sin bancos disponibles"
+                              : "Selecciona el banco"
                       }
                     />
                   </SelectTrigger>
                 </FormControl>
-                <FormModalSelectContent className="max-h-72">
+                <FormModalSelectContent>
                   {banks.map((option) => (
                     <SelectItem
                       key={option.value}
@@ -154,6 +168,28 @@ export function CreateEmpleadoLaboralStep({
                   ))}
                 </FormModalSelectContent>
               </Select>
+              {isError ? (
+                <p className="text-sm text-destructive">
+                  No se pudieron cargar los bancos.{" "}
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto p-0 text-destructive underline"
+                    onClick={() => void refetchBancos()}
+                  >
+                    Reintentar
+                  </Button>
+                </p>
+              ) : null}
+              {isEmpty ? (
+                <p className="text-sm text-muted-foreground">
+                  No hay bancos en el catálogo. Ejecuta{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                    python manage.py seed_bancos
+                  </code>{" "}
+                  en el backend.
+                </p>
+              ) : null}
               <FormMessage />
             </FormItem>
           )}

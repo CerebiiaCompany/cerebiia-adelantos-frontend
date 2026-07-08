@@ -5,6 +5,7 @@ import {
   buildApiImportRowError,
   mapEmpleadoImportMatrix,
   parseEmpleadoImportFile,
+  prepareEmpleadoImportFileForUpload,
   type EmpleadoImportRowError,
 } from "@/shared/lib/empleadoImport";
 import { EMPLEADOS_QUERY_KEY } from "./useEmpleadosList";
@@ -34,7 +35,8 @@ export function useImportEmpleados() {
     mutationFn: async (file: File): Promise<ImportEmpleadosResult> => {
       if (env.apiUrl) {
         try {
-          const result = await empleadosEndpoints.cargarNomina(file);
+          const uploadFile = await prepareEmpleadoImportFileForUpload(file);
+          const result = await empleadosEndpoints.cargarNomina(uploadFile);
           return {
             createdCount: result.exitosos,
             failedCount: result.fallidos,
@@ -42,6 +44,10 @@ export function useImportEmpleados() {
             importErrors: mapCargaNominaErrors(result.errores),
           };
         } catch (error) {
+          if (error instanceof Error && !(error instanceof ApiError)) {
+            throw error;
+          }
+
           if (
             error instanceof ApiError &&
             error.message.includes("El archivo debe tener las columnas")
@@ -50,6 +56,17 @@ export function useImportEmpleados() {
               "La plantilla no tiene las columnas requeridas. Descarga la plantilla actualizada y usa la hoja «Nomina» sin modificar los encabezados.",
             );
           }
+
+          if (
+            error instanceof ApiError &&
+            error.status >= 500 &&
+            error.path.includes("cargar-nomina")
+          ) {
+            throw new Error(
+              "El servidor no pudo procesar el archivo de nómina. Verifica que el backend esté activo y que cada fila tenga datos válidos en la hoja «Nomina».",
+            );
+          }
+
           throw error;
         }
       }

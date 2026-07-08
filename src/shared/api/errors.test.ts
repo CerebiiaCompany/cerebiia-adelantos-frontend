@@ -18,4 +18,10 @@ describe("ApiError", () => {
 
     expect(error.message).toBe("Enter a valid email address.");
   });
+
+  it("detects proxy ECONNREFUSED as backend unreachable", () => {
+    const error = new ApiError(500, "/auth/login/", null);
+
+    expect(error.message).toContain("No se pudo conectar con el backend");
+  });
 });

@@ -6,19 +6,20 @@ export type EmpleadoImportField = keyof CreateEmpleadoFormValues;
 
 /**
  * Encabezados oficiales alineados con el parser del backend (POST /empleados/cargar-nomina/).
+ * Orden igual al formulario «Nuevo empleado»: datos personales y luego laborales.
  */
 export const EMPLEADO_IMPORT_TEMPLATE_HEADERS = [
+  "tipo_documento",
   "documento",
   "nombre",
-  "salario",
-  "banco",
-  "numero_cuenta",
-  "tipo_documento",
   "email",
   "celular",
+  "salario",
   "tipo_contrato",
   "fecha_ingreso",
+  "banco",
   "tipo_cuenta",
+  "numero_cuenta",
 ] as const;
 
 export type EmpleadoImportTemplateHeader =
