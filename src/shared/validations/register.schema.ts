@@ -135,6 +135,8 @@ export const basicInfoSchema = z.object({
 });
 
 // Validación de correo electrónico
+export const EMAIL_MAX_LENGTH = 254;
+
 const EMAIL_REGEX =
   /^[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+$/;
 
@@ -144,7 +146,7 @@ export function normalizeEmail(email: string): string {
 
 export function isValidEmail(email: string): boolean {
   const normalized = normalizeEmail(email);
-  if (!normalized || normalized.length > 254) return false;
+  if (!normalized || normalized.length > EMAIL_MAX_LENGTH) return false;
   if (normalized.includes("..")) return false;
   return EMAIL_REGEX.test(normalized);
 }

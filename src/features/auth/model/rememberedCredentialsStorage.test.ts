@@ -49,4 +49,19 @@ describe("rememberedCredentialsStorage", () => {
       "NuevaClave456",
     );
   });
+
+  it("loadForType solo devuelve credenciales del tipo solicitado", async () => {
+    await rememberedCredentialsStorage.save(
+      "empresa",
+      "admin@empresa.com",
+      "clave",
+    );
+
+    expect(await rememberedCredentialsStorage.loadForType("empresa")).toEqual({
+      loginType: "empresa",
+      identifier: "admin@empresa.com",
+      password: "clave",
+    });
+    expect(await rememberedCredentialsStorage.loadForType("empleado")).toBeNull();
+  });
 });

@@ -30,8 +30,10 @@ import {
   loginSchema,
   type LoginFormValues,
 } from "@/shared/validations/auth.schema";
+import { EMAIL_MAX_LENGTH } from "@/shared/validations/register.schema";
 import { ROUTES } from "@/shared/config/routes";
 import { ApiError } from "@/shared/api";
+import type { RememberedCredentials } from "../model/rememberedCredentialsStorage";
 
 const LOGIN_BOOTSTRAP_MS = 450;
 
@@ -72,10 +74,40 @@ function getDefaultValues(loginType: LoginType): LoginFormValues {
   };
 }
 
+function buildFormValuesForLoginType(
+  loginType: LoginType,
+  savedCredentials: RememberedCredentials | null,
+): LoginFormValues {
+  if (
+    savedCredentials &&
+    savedCredentials.loginType === loginType
+  ) {
+    if (loginType === "empresa") {
+      return {
+        loginType: "empresa",
+        email: savedCredentials.identifier,
+        password: savedCredentials.password,
+        rememberMe: true,
+      };
+    }
+
+    return {
+      loginType: "empleado",
+      documento: savedCredentials.identifier,
+      password: savedCredentials.password,
+      rememberMe: true,
+    };
+  }
+
+  return getDefaultValues(loginType);
+}
+
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [loginType, setLoginType] = useState<LoginType>("empleado");
+  const [savedCredentials, setSavedCredentials] =
+    useState<RememberedCredentials | null>(null);
   const { mutate: login, isPending, error } = useLogin();
 
   const form = useForm<LoginFormValues>({
@@ -96,24 +128,12 @@ export function LoginForm() {
 
       if (cancelled) return;
 
-      if (savedCredentials) {
-        setLoginType(savedCredentials.loginType);
-        if (savedCredentials.loginType === "empresa") {
-          form.reset({
-            loginType: "empresa",
-            email: savedCredentials.identifier,
-            password: savedCredentials.password,
-            rememberMe: true,
-          });
-        } else {
-          form.reset({
-            loginType: "empleado",
-            documento: savedCredentials.identifier,
-            password: savedCredentials.password,
-            rememberMe: true,
-          });
-        }
-      }
+      setSavedCredentials(savedCredentials);
+
+      const initialLoginType = savedCredentials?.loginType ?? "empleado";
+      setLoginType(initialLoginType);
+      form.reset(buildFormValuesForLoginType(initialLoginType, savedCredentials));
+      form.clearErrors();
 
       setIsReady(true);
     }
@@ -126,9 +146,12 @@ export function LoginForm() {
   }, [form]);
 
   function handleLoginTypeChange(nextType: LoginType) {
+    if (nextType === loginType) return;
+
     setLoginType(nextType);
-    form.reset(getDefaultValues(nextType));
-    form.setValue("loginType", nextType, { shouldValidate: true });
+    setShowPassword(false);
+    form.reset(buildFormValuesForLoginType(nextType, savedCredentials));
+    form.clearErrors();
   }
 
   function onSubmit(values: LoginFormValues) {
@@ -257,6 +280,7 @@ export function LoginForm() {
                           type="email"
                           inputMode="email"
                           autoComplete="email"
+                          maxLength={EMAIL_MAX_LENGTH}
                           disabled={isPending}
                           className="h-11 rounded-xl border-border/80 bg-background/80 pl-10 transition-all duration-300 focus-visible:ring-primary/30 disabled:opacity-60"
                           {...field}

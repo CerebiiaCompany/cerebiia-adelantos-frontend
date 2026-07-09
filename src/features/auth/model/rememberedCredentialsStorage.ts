@@ -166,6 +166,16 @@ export const rememberedCredentialsStorage = {
     }
   },
 
+  async loadForType(
+    loginType: RememberedLoginType,
+  ): Promise<RememberedCredentials | null> {
+    const saved = await this.load();
+    if (!saved || saved.loginType !== loginType) {
+      return null;
+    }
+    return saved;
+  },
+
   clear(): void {
     if (!isBrowser()) return;
     window.localStorage.removeItem(CREDENTIALS_STORAGE_KEY);
