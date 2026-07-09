@@ -27,8 +27,8 @@ export function SidebarNavLink({ item, collapsed = false }: SidebarNavLinkProps)
       className={cn(
         "app-sidebar-nav-link group relative flex items-center text-muted-foreground",
         collapsed
-          ? "app-sidebar-nav-link--collapsed mx-auto h-10 w-10 shrink-0 justify-center p-0"
-          : "w-full gap-3 px-3 py-2.5",
+          ? "app-sidebar-nav-link--collapsed mx-auto h-11 w-11 shrink-0 justify-center p-0"
+          : "w-full gap-3.5 px-3.5 py-3",
         isActive && "app-sidebar-nav-link--active",
       )}
     >
@@ -39,7 +39,7 @@ export function SidebarNavLink({ item, collapsed = false }: SidebarNavLinkProps)
       />
 
       {!collapsed && (
-        <span className="truncate text-[0.8125rem] tracking-tight">{item.title}</span>
+        <span className="truncate text-sm tracking-tight">{item.title}</span>
       )}
     </NavLink>
   );

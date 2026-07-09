@@ -70,7 +70,7 @@ function AppSidebarContent({
   return (
     <>
       {layout === "panel" && <SidebarRail />}
-      <SidebarHeader className="shrink-0 px-3 pb-0 pt-4">
+      <SidebarHeader className="shrink-0 px-4 pb-0 pt-5">
         <div
           className={cn(
             "flex items-center",
@@ -87,7 +87,7 @@ function AppSidebarContent({
                 <p className="app-sidebar-brand-title text-gradient">
                   AdeCerebiia
                 </p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/90">
+                <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/90">
                   {brandSubtitle}
                 </p>
               </div>
@@ -106,13 +106,13 @@ function AppSidebarContent({
             </Button>
           )}
         </div>
-        <div className="app-sidebar-header-divider mx-1.5 mt-4" aria-hidden />
+        <div className="app-sidebar-header-divider mx-2 mt-5" aria-hidden />
       </SidebarHeader>
 
       <SidebarContent
         className={cn(
-          "min-h-0 flex-1 pt-3",
-          collapsed ? "!overflow-visible px-2" : "px-3",
+          "min-h-0 flex-1 pt-4",
+          collapsed ? "!overflow-visible px-2.5" : "px-4",
         )}
       >
         <SidebarGroup className="gap-2">
@@ -122,7 +122,7 @@ function AppSidebarContent({
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
-            <SidebarMenu className={cn("gap-0.5", collapsed && "items-center")}>
+            <SidebarMenu className={cn("gap-1", collapsed && "items-center")}>
               {visibleNavItems.map((item) => {
                 const isActive = Boolean(
                   location.pathname === item.url ||
@@ -175,10 +175,10 @@ function AppSidebarContent({
 
       <SidebarFooter
         className={cn(
-          "app-sidebar-footer sticky bottom-0 z-10 px-3 pb-4 pt-3",
+          "app-sidebar-footer sticky bottom-0 z-10 px-4 pb-5 pt-4",
         )}
       >
-        <SidebarMenu className={cn("gap-0.5", collapsed && "items-center")}>
+        <SidebarMenu className={cn("gap-1", collapsed && "items-center")}>
           <SidebarLogoutButton collapsed={collapsed} />
         </SidebarMenu>
       </SidebarFooter>

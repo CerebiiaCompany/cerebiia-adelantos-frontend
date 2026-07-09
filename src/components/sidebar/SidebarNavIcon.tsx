@@ -17,7 +17,7 @@ export function SidebarNavIcon({
     <Icon
       className={cn(
         "relative shrink-0 will-change-transform transition-all duration-300",
-        isActive ? "h-[19px] w-[19px]" : "h-[18px] w-[18px]",
+        isActive ? "h-5 w-5" : "h-[19px] w-[19px]",
         isActive
           ? cn("text-primary", `sidebar-icon-motion-${animation}`)
           : "text-muted-foreground/90 group-hover:text-primary",

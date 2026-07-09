@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   getPasswordRequirementChecks,
   isValidEmail,
+  EMAIL_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
   contactEmailSchema,
   contactPhoneSchema,
@@ -25,6 +26,10 @@ export const loginSchema = z.discriminatedUnion("loginType", [
     email: z
       .string()
       .min(1, "Ingresa tu correo electrónico")
+      .max(
+        EMAIL_MAX_LENGTH,
+        `El correo no puede superar ${EMAIL_MAX_LENGTH} caracteres`,
+      )
       .transform((value) => value.trim().toLowerCase())
       .refine(isValidEmail, "Ingresa un correo electrónico válido"),
     password: z.string().min(1, "Ingresa tu contraseña"),
@@ -38,6 +43,10 @@ export const forgotPasswordSchema = z.object({
   email: z
     .string()
     .min(1, "Ingresa tu correo electrónico")
+    .max(
+      EMAIL_MAX_LENGTH,
+      `El correo no puede superar ${EMAIL_MAX_LENGTH} caracteres`,
+    )
     .refine(isValidEmail, "Ingresa un correo electrónico válido"),
 });
 
