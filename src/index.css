@@ -45,9 +45,9 @@
     --sidebar-border: 220 14% 92%;
     --sidebar-ring: 220 90% 55%;
 
-    --sidebar-width: 19rem;
-    --sidebar-width-mobile: 19rem;
-    --sidebar-width-icon: 4.25rem;
+    --sidebar-width: 18rem;
+    --sidebar-width-mobile: 18rem;
+    --sidebar-width-icon: 4.125rem;
 
     --shell-surface: 220 72% 95%;
     --shell-border: 220 32% 91%;
@@ -322,7 +322,7 @@
 
   .app-sidebar-brand-title {
     font-family: inherit;
-    font-size: 1.05rem;
+    font-size: 1.125rem;
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.03em;
@@ -330,15 +330,15 @@
 
   .app-sidebar-brand-mark {
     display: flex;
-    height: 2.25rem;
-    width: 2.25rem;
+    height: 2.5rem;
+    width: 2.5rem;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
     border-radius: 0.75rem;
     background-image: var(--gradient-primary);
     color: hsl(var(--primary-foreground));
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: -0.04em;
     box-shadow:
@@ -643,6 +643,18 @@
     opacity: 0.88 !important;
   }
 
+  .btn-login:disabled.animate-pulse-glow::before {
+    display: none;
+  }
+
+  .btn-login:not(:disabled):not(.animate-pulse-glow)::before {
+    animation: btn-login-shine 6.5s ease-in-out infinite;
+  }
+
+  .btn-login:not(:disabled):not(.animate-pulse-glow):hover::before {
+    animation-duration: 5.5s;
+  }
+
   .btn-login:hover:not(:disabled) {
     transform: translateY(-2px) scale(1.01);
     box-shadow: 0 10px 28px hsl(var(--primary) / 0.22);
@@ -664,11 +676,13 @@
       transparent 60%
     );
     transform: translateX(-120%);
-    transition: transform 0.65s ease;
     pointer-events: none;
   }
 
-  .btn-login:hover:not(:disabled)::before,
+  .shine-hover::before {
+    transition: transform 0.65s ease;
+  }
+
   .shine-hover:hover::before {
     transform: translateX(120%);
   }
@@ -1706,6 +1720,18 @@
   }
   28% {
     transform: translateX(130%);
+  }
+}
+
+@keyframes btn-login-shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  28% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(120%);
   }
 }
 

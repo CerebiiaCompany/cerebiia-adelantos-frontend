@@ -32,6 +32,17 @@ describe("loginSchema", () => {
       expect(valid.data.email).toBe("admin@empresa.com");
     }
   });
+
+  it("rechaza correos de empresa que superan el máximo permitido", () => {
+    const tooLong = `${"a".repeat(246)}@test.com`;
+    const result = loginSchema.safeParse({
+      loginType: "empresa",
+      email: tooLong,
+      password: "secret",
+      rememberMe: false,
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("forgotPasswordSchema", () => {
