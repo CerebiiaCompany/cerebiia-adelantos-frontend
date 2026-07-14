@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 import { ChangePasswordForm } from "@/components/header/profile/ChangePasswordForm";
 import { UpdateProfileDataForm } from "@/components/header/profile/UpdateProfileDataForm";
 import { ProfileLogoutButton } from "@/components/header/profile/ProfileLogoutButton";
-import { useProfileView } from "@/features/auth";
+import { useAuth, useProfileView } from "@/features/auth";
+import { isEmpleadoSession } from "@/shared/api";
 import { sanitizeColombianPhone } from "@/shared/validations/register.schema";
 
 type SettingsSection = "update-data" | "change-password" | null;
@@ -18,32 +19,37 @@ interface UserProfileSettingsPanelProps {
   onBack: () => void;
 }
 
-const SETTINGS_SECTIONS = [
-  {
-    id: "update-data" as const,
-    label: "Actualizar datos",
-    description: "Correo y teléfono de contacto",
-    icon: UserRound,
-  },
-  {
-    id: "change-password" as const,
-    label: "Cambiar contraseña",
-    description: "Actualiza tu clave de acceso",
-    icon: KeyRound,
-  },
-];
-
 export function UserProfileSettingsPanel({
   onBack,
 }: UserProfileSettingsPanelProps) {
   const [openSection, setOpenSection] = useState<SettingsSection>(null);
   const profile = useProfileView();
+  const { session } = useAuth();
+  const isEmployee = Boolean(session && isEmpleadoSession(session));
 
-  const handleSectionChange = (section: Exclude<SettingsSection, null>) => (
-    open: boolean,
-  ) => {
-    setOpenSection(open ? section : null);
-  };
+  const settingsSections = [
+    ...(isEmployee
+      ? [
+          {
+            id: "update-data" as const,
+            label: "Actualizar datos",
+            description: "Correo y teléfono de contacto",
+            icon: UserRound,
+          },
+          {
+            id: "change-password" as const,
+            label: "Cambiar contraseña",
+            description: "Actualiza tu clave de acceso",
+            icon: KeyRound,
+          },
+        ]
+      : []),
+  ];
+
+  const handleSectionChange =
+    (section: Exclude<SettingsSection, null>) => (open: boolean) => {
+      setOpenSection(open ? section : null);
+    };
 
   return (
     <div className="flex max-h-[min(85dvh,640px)] min-w-0 flex-col overflow-hidden">
@@ -60,12 +66,21 @@ export function UserProfileSettingsPanel({
           Configuración
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Administra tu información personal y seguridad de la cuenta.
+          {isEmployee
+            ? "Administra tu información personal y seguridad de la cuenta."
+            : "Administra la sesión de tu cuenta de empresa."}
         </p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
-        {SETTINGS_SECTIONS.map((section) => {
+        {!isEmployee ? (
+          <div className="border-b border-border/60 px-4 py-4 text-sm text-muted-foreground">
+            El cambio de contraseña para cuentas de empresa aún no está
+            disponible en el servidor. Contacta al administrador del sistema.
+          </div>
+        ) : null}
+
+        {settingsSections.map((section) => {
           const isOpen = openSection === section.id;
           const Icon = section.icon;
 

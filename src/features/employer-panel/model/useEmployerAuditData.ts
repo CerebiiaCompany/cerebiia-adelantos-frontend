@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import {
   loadCompanyAdvances,
-  mapSolicitudesToRegisteredCompanyAdvances,
+  mapHistorialEmpresaToRegisteredCompanyAdvances,
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
   mapToMovementRecords,
@@ -39,11 +39,15 @@ async function fetchEmployerAdvances(
     };
   }
 
-  const solicitudes = await adelantosEndpoints.listSolicitudesEmpresa();
+  const historial = await adelantosEndpoints.listHistorialSolicitudesEmpresa();
   return {
     empleados,
     empresaId,
-    advances: mapSolicitudesToRegisteredCompanyAdvances(solicitudes, empleados),
+    advances: mapHistorialEmpresaToRegisteredCompanyAdvances(
+      historial,
+      empleados,
+      empresaId,
+    ),
   };
 }
 

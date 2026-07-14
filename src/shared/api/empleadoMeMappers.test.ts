@@ -14,12 +14,9 @@ describe("parseApiDecimalAmount", () => {
 });
 
 describe("isSolicitudCancellable", () => {
-  it("permite cancelar solicitudes pendientes", () => {
-    expect(isSolicitudCancellable("solicitado")).toBe(true);
-    expect(isSolicitudCancellable("en_revision")).toBe(true);
-  });
-
-  it("no permite cancelar solicitudes finalizadas", () => {
+  it("nunca permite cancelar: el backend no expone el endpoint", () => {
+    expect(isSolicitudCancellable("solicitado")).toBe(false);
+    expect(isSolicitudCancellable("en_revision")).toBe(false);
     expect(isSolicitudCancellable("aprobado")).toBe(false);
     expect(isSolicitudCancellable("pagado")).toBe(false);
     expect(isSolicitudCancellable("rechazado")).toBe(false);

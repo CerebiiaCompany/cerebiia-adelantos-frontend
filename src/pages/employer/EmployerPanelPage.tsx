@@ -1,37 +1,47 @@
-import { useMemo } from "react";
-import { Building2, Users } from "lucide-react";
+import { Building2, Percent, UserPlus, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth";
 import {
   EmployerPanelUnavailableNotice,
-  useEmpleadosList,
+  useEmpleadosMetricas,
+  useEmployerConfig,
 } from "@/features/employer-panel";
 import { isSystemUserSession } from "@/shared/api";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import { AnimatedNumber } from "@/components/ui/animated-number";
+import { formatCOP } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 
 export default function EmployerPanelPage() {
   const { session } = useAuth();
   const {
-    data: empleados,
-    isLoading: isLoadingEmpleados,
-    isError: isEmpleadosError,
-  } = useEmpleadosList();
-
-  const empleadosActivos = useMemo(    () => empleados?.filter((empleado) => empleado.estado === "activo").length ?? 0,
-    [empleados],
-  );
+    data: metricas,
+    isLoading: isLoadingMetricas,
+    isError: isMetricasError,
+  } = useEmpleadosMetricas();
+  const {
+    data: adelantoConfig,
+    isLoading: isLoadingConfig,
+    isError: isConfigError,
+  } = useEmployerConfig();
 
   const stats = [
     {
       label: "Empleados activos",
-      value: empleadosActivos,
+      value: metricas?.activos ?? 0,
       icon: Users,
       accent: "text-primary",
-      isLoading: isLoadingEmpleados,
-      hasError: isEmpleadosError,
+      isLoading: isLoadingMetricas,
+      hasError: isMetricasError,
+    },
+    {
+      label: "Usuarios pendientes por activarse",
+      value: metricas?.pre_registrados ?? 0,
+      icon: UserPlus,
+      accent: "text-primary",
+      isLoading: isLoadingMetricas,
+      hasError: isMetricasError,
     },
   ] as const;
 
@@ -48,7 +58,7 @@ export default function EmployerPanelPage() {
         title={greeting.title}
         description="Gestiona adelantos, empleados y solicitudes de tu empresa"
       />
-      <div className="grid gap-4 sm:max-w-xs">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat) => (
           <div
             key={stat.label}
@@ -74,9 +84,56 @@ export default function EmployerPanelPage() {
             )}
           </div>
         ))}
+
+        <div className="glass-card glow-border rounded-xl p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">
+              Reglas de adelanto
+            </p>
+            <Percent className="h-4 w-4 text-primary" strokeWidth={2.25} />
+          </div>
+          {isLoadingConfig ? (
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-40 rounded-md" />
+              <Skeleton className="h-4 w-52 rounded-md" />
+            </div>
+          ) : isConfigError || !adelantoConfig ? (
+            <p className="text-sm text-muted-foreground">
+              Configuración global no disponible temporalmente.
+            </p>
+          ) : (
+            <ul className="space-y-1.5 text-sm text-foreground">
+              <li>
+                Tope:{" "}
+                <span className="font-semibold">
+                  {adelantoConfig.porcentajeMaximoAdelanto}%
+                </span>{" "}
+                del salario
+              </li>
+              <li>
+                Cuotas máximas:{" "}
+                <span className="font-semibold">
+                  {adelantoConfig.numeroMaximoCuotas}
+                </span>
+              </li>
+              <li>
+                Tarifa por cuota:{" "}
+                <span className="font-semibold">
+                  {formatCOP(adelantoConfig.tarifaFijaPorCuota)}
+                </span>
+              </li>
+              <li>
+                Plazo máximo:{" "}
+                <span className="font-semibold">
+                  {adelantoConfig.plazoMaximoDias} días
+                </span>
+              </li>
+            </ul>
+          )}
+        </div>
       </div>
 
-      {isEmpleadosError ? (
+      {isMetricasError ? (
         <EmployerPanelUnavailableNotice
           layout="inline"
           message="Información de empleados no disponible temporalmente."
@@ -84,15 +141,15 @@ export default function EmployerPanelPage() {
         />
       ) : null}
 
-      <div className="glass-card glow-border rounded-xl p-6">        <h2 className="font-display text-lg font-semibold text-foreground">
+      <div className="glass-card glow-border rounded-xl p-6">
+        <h2 className="font-display text-lg font-semibold text-foreground">
           Resumen operativo
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Bienvenido al panel de empresa. Desde aquí puedes auditar adelantos,
           supervisar cuotas de préstamos, consultar el libro contable y generar
-          los reportes de retención para nómina. El listado de empleados ya está
-          conectado al backend desde{" "}
-          <span className="font-medium text-foreground">Mis empleados</span>.
+          los reportes de retención para nómina. El monitoreo usa el historial
+          oficial de solicitudes de plantilla.
         </p>
       </div>
     </div>

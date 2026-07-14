@@ -86,9 +86,11 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
           setShowConfirm(false);
           onSuccess?.();
         },
-        onError: () => {
+        onError: (error) => {
           toast.error(
-            "No pudimos actualizar tu contraseña. Verifica tu contraseña actual e inténtalo de nuevo.",
+            error instanceof Error && error.message
+              ? error.message
+              : "No pudimos actualizar tu contraseña. Verifica tu contraseña actual e inténtalo de nuevo.",
           );
         },
       },

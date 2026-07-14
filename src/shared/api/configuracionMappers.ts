@@ -40,8 +40,8 @@ export function mapAdelantoConfiguracion(
 }
 
 /**
- * Configuración de adelantos expuesta en GET /empleados/me/ para el empleado.
- * El endpoint /configuracion/ requiere super admin; el empleado no puede consumirlo.
+ * Fallback de config desde GET /empleados/me/ cuando no hay mi-situacion-financiera.
+ * Preferir GET /adelantos/mi-situacion-financiera/ o GET /configuracion/ (lectura).
  */
 export function resolveAdelantoConfigFromEmpleadoMe(
   nomina: EmpleadoMeDTO,

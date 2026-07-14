@@ -29,6 +29,7 @@ export type {
   CreateEmpleadoResponse,
   EmpleadoDTO,
   EmpleadoEstado,
+  MetricasEmpresaEmpleadosDTO,
   ResultadoCargaNominaDTO,
   TipoContratoEmpleado,
   TipoCuentaEmpleado,
@@ -44,6 +45,8 @@ export type {
   CuotaAdelantoDTO,
   EmpleadoMeDTO,
   EstadoSolicitud,
+  HistorialSolicitudEmpresaDTO,
+  HistorialSolicitudesEmpresaParams,
   MiSituacionFinancieraDTO,
   SolicitudAdelantoDTO,
   SolicitudDetalleDTO,
@@ -53,6 +56,12 @@ export type {
 export type { PaginatedResponse } from "./pagination";
 
 export type { AdelantoConfiguracionDTO } from "./configuracion";
+
+export type {
+  EmpresaEstadoDTO,
+  EmpresaListItemDTO,
+  EmpresasListParams,
+} from "./empresa";
 
 export interface ForgotPasswordRequest {
   email: string;

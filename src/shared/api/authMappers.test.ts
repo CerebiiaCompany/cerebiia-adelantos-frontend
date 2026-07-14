@@ -63,6 +63,15 @@ describe("mapEmpleadoLoginResponseToSession", () => {
     expect(resolveAppRole(session)).toBe("employee");
   });
 
+  it("rechaza empleados suspendidos con mensaje claro", () => {
+    expect(() =>
+      mapEmpleadoLoginResponseToSession({
+        empleado: { ...empleadoProfile, estado: "inactivo" },
+        tokens: { access: "access", refresh: "refresh" },
+      }),
+    ).toThrow(/suspendida/i);
+  });
+
   it("normaliza banco_nombre del backend al campo banco de sesión", () => {
     const session = mapEmpleadoLoginResponseToSession({
       empleado: {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Loader2, Search, Users } from "lucide-react";
+import { Loader2, Pencil, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EmpleadoDTO } from "@/shared/api/types";
@@ -15,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useEmpleadosList } from "../model/useEmpleadosList";
 import { DeactivateEmpleadoButton } from "./DeactivateEmpleadoButton";
+import { EditEmpleadoDialog } from "./EditEmpleadoDialog";
 import { EmployerPanelUnavailableNotice } from "./EmployerPanelUnavailableNotice";
 
 const TABLE_COLUMNS = [
@@ -93,6 +95,7 @@ function TableSkeleton() {
 
 export function EmpleadosTable() {
   const [search, setSearch] = useState("");
+  const [empleadoToEdit, setEmpleadoToEdit] = useState<EmpleadoDTO | null>(null);
   const { data, isLoading, isError, refetch, isFetching } =
     useEmpleadosList();
 
@@ -199,7 +202,19 @@ export function EmpleadosTable() {
                       <EstadoBadge estado={empleado.estado} />
                     </td>
                     <td className="whitespace-nowrap px-3 py-3.5">
-                      <DeactivateEmpleadoButton empleado={empleado} />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-1.5 rounded-lg px-2 text-xs font-medium text-primary hover:bg-primary/5"
+                          onClick={() => setEmpleadoToEdit(empleado)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Editar
+                        </Button>
+                        <DeactivateEmpleadoButton empleado={empleado} />
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -208,6 +223,14 @@ export function EmpleadosTable() {
           </table>
         </div>
       ) : null}
+
+      <EditEmpleadoDialog
+        empleado={empleadoToEdit}
+        open={empleadoToEdit !== null}
+        onOpenChange={(open) => {
+          if (!open) setEmpleadoToEdit(null);
+        }}
+      />
 
       {isFetching && !isLoading ? (
         <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">

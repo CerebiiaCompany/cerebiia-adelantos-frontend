@@ -14,6 +14,16 @@ export class ApiError extends Error {
   }
 }
 
+function localizeApiDetail(detail: string): string {
+  const normalized = detail.trim().toLowerCase();
+
+  if (normalized === "invalid email or password") {
+    return "Credenciales incorrectas. Verifica tus datos e intenta de nuevo.";
+  }
+
+  return detail;
+}
+
 function isBackendUnreachable(body: unknown, status: number): boolean {
   if (status !== 500 && status !== 502 && status !== 503) {
     return false;
@@ -51,7 +61,7 @@ function parseApiErrorMessage(body: unknown, status: number): string {
     const record = body as Record<string, unknown>;
 
     if (typeof record.detail === "string") {
-      return record.detail;
+      return localizeApiDetail(record.detail);
     }
 
     const fieldMessages = Object.values(record)
@@ -59,12 +69,12 @@ function parseApiErrorMessage(body: unknown, status: number): string {
       .filter((value): value is string => typeof value === "string");
 
     if (fieldMessages.length > 0) {
-      return fieldMessages[0];
+      return localizeApiDetail(fieldMessages[0]);
     }
   }
 
   if (status === 401) {
-    return "Invalid email or password";
+    return "Credenciales incorrectas. Verifica tus datos e intenta de nuevo.";
   }
 
   if (status === 403) {

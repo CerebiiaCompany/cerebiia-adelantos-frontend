@@ -18,6 +18,7 @@ export {
 } from "./model/calculations";
 export {
   buildMonthlyAdvancesFromHistory,
+  countsTowardAdvanceLimit,
   deriveAdvanceMetricsFromHistory,
   getAdvanceMonthKey,
 } from "./model/advanceMetricsFromHistory";

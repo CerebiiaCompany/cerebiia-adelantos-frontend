@@ -19,6 +19,7 @@ import type {
   CreateEmpleadoRequest,
   CreateEmpleadoResponse,
   EmpleadoDTO,
+  MetricasEmpresaEmpleadosDTO,
   ResultadoCargaNominaDTO,
   UpdateEmpleadoMeRequest,
   UpdateEmpleadoRequest,
@@ -30,6 +31,8 @@ import type { EmpleadoMeDTO } from "../types/adelanto";
 export const empleadosEndpoints = {
   list: (params?: EmpleadosListParams) =>
     http.get<PaginatedResponse<EmpleadoDTO>>(buildEmpleadosListPath(params)),
+  metricas: () =>
+    http.get<MetricasEmpresaEmpleadosDTO>("/empleados/metricas/"),
   create: (data: CreateEmpleadoRequest) =>
     http.post<CreateEmpleadoResponse>("/empleados/", data),
   update: (empleadoId: string, data: UpdateEmpleadoRequest) =>
@@ -56,8 +59,15 @@ export const empleadosEndpoints = {
     );
   },
   /**
-   * @deprecated El backend aún no expone desactivación de empleados.
+   * Suspende (desactiva) la cuenta del empleado.
+   * POST /empleados/{id}/suspender/ → estado `inactivo`.
    */
-  deactivate: (empleadoId: string) =>
-    http.post<EmpleadoDTO>(`/empleados/${empleadoId}/desactivar/`),
+  suspender: (empleadoId: string) =>
+    http.post<EmpleadoDTO>(`/empleados/${empleadoId}/suspender/`),
+  /**
+   * Reactiva un empleado suspendido.
+   * POST /empleados/{id}/reactivar/ → `activo` o `pre_registrado`.
+   */
+  reactivar: (empleadoId: string) =>
+    http.post<EmpleadoDTO>(`/empleados/${empleadoId}/reactivar/`),
 };

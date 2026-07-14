@@ -18,7 +18,7 @@ describe("adelantoMappers", () => {
     expect(record.status).toBe("en_curso");
     expect(record.receiptStatus).toBe("en_curso");
     expect(record.installments).toBe(3);
-    expect(record.canCancel).toBe(true);
+    expect(record.canCancel).toBe(false);
   });
 
   it("usa monto_neto del backend para calcular la tarifa", () => {
@@ -58,6 +58,27 @@ describe("adelantoMappers", () => {
     expect(record.paymentEvidenceUrl).toContain("transferencia.jpg");
   });
 
+  it("prioriza comprobante_pago_url sobre el FileField path", () => {
+    const record = mapSolicitudToHistoryRecord({
+      id: "550e8400-e29b-41d4-a716-446655440004",
+      empleado_id: "emp-1",
+      empresa_id: "empresa-1",
+      monto: "200000.00",
+      monto_neto: "184000.00",
+      numero_cuotas_snapshot: 2,
+      plazo_dias_snapshot: 90,
+      estado: "pagado",
+      created_at: "2026-07-14T12:00:00Z",
+      comprobante_pago: "comprobantes/legacy/path.jpg",
+      comprobante_pago_url:
+        "https://api.example.com/media/comprobantes/x/transferencia.pdf",
+    });
+
+    expect(record.paymentEvidenceUrl).toBe(
+      "https://api.example.com/media/comprobantes/x/transferencia.pdf",
+    );
+  });
+
   it("mapea motivo_rechazo para solicitudes no aprobadas", () => {
     const record = mapSolicitudToHistoryRecord({
       id: "550e8400-e29b-41d4-a716-446655440003",
@@ -69,11 +90,13 @@ describe("adelantoMappers", () => {
       estado: "rechazado",
       created_at: "2026-06-26T16:00:00Z",
       motivo_rechazo: "Documentación incompleta en la solicitud",
+      comprobante_pago_url: null,
     });
 
     expect(record.status).toBe("no_aprobado");
     expect(record.rejectionReason).toBe(
       "Documentación incompleta en la solicitud",
     );
+    expect(record.paymentEvidenceUrl).toBeNull();
   });
 });

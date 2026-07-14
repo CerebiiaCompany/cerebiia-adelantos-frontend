@@ -2,13 +2,24 @@ import { describe, expect, it } from "vitest";
 import { ApiError } from "./errors";
 
 describe("ApiError", () => {
-  it("uses DRF detail message when available", () => {
+  it("traduce credenciales inválidas del backend a español", () => {
     const error = new ApiError(401, "/auth/login/", {
       detail: "Invalid email or password",
     });
 
-    expect(error.message).toBe("Invalid email or password");
+    expect(error.message).toBe(
+      "Credenciales incorrectas. Verifica tus datos e intenta de nuevo.",
+    );
     expect(error.status).toBe(401);
+  });
+
+  it("muestra mensaje de cuenta suspendida sin alterarlo", () => {
+    const error = new ApiError(403, "/empleados/login/", {
+      detail:
+        "Tu cuenta ha sido suspendida por la empresa. Contacta a Recursos Humanos.",
+    });
+
+    expect(error.message).toMatch(/suspendida/i);
   });
 
   it("uses first field validation message for 400 responses", () => {
