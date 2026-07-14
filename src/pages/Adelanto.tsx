@@ -35,6 +35,11 @@ import {
 } from "@/components/ui/dialog";
 import { ADVANCE_MIN_AMOUNT } from "@/entities/advance";
 import { cn } from "@/lib/utils";
+import {
+  buildInstallmentCutoffDates,
+  formatDate,
+  formatIsoDateLocal,
+} from "@/shared/lib";
 
 const COUNT_DURATION = 450;
 
@@ -97,6 +102,8 @@ export default function Adelanto() {
         <AdvanceReceipt
           amount={amount}
           transactionFeeAmount={fee}
+          tarifaFijaPorCuota={tarifaFijaPorCuota}
+          installments={installments}
           onBack={() => {
             setShowReceipt(false);
             setAmount(0);
@@ -238,23 +245,62 @@ export default function Adelanto() {
               </dl>
             </div>
 
-            <div className="mb-5 text-center">
-              <p className="mb-2 text-sm text-muted-foreground">
-                Monto a solicitar
-              </p>
-              <AnimatedCurrency
-                value={amount}
-                className="font-display text-3xl font-bold text-gradient"
-                duration={COUNT_DURATION}
-              />
-              <p className="mt-2 text-sm text-muted-foreground">
-                {installments} {installments === 1 ? "cuota" : "cuotas"} de{" "}
+            <div className="mb-5 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-3 text-center">
+                  <p className="mb-1 text-xs text-muted-foreground">
+                    Monto a solicitar
+                  </p>
+                  <AnimatedCurrency
+                    value={amount}
+                    className="font-display text-lg font-semibold text-foreground"
+                    duration={COUNT_DURATION}
+                  />
+                </div>
+                <div className="rounded-xl border border-primary/20 bg-primary/[0.04] px-3 py-3 text-center">
+                  <p className="mb-1 text-xs text-muted-foreground">A recibir</p>
+                  <AnimatedCurrency
+                    value={total}
+                    className="font-display text-lg font-bold text-gradient"
+                    duration={COUNT_DURATION}
+                  />
+                </div>
+              </div>
+
+              <p className="text-center text-xs text-muted-foreground">
+                Comisión{" "}
                 <AnimatedCurrency
-                  value={installmentValue}
+                  value={fee}
                   className="inline font-medium text-foreground"
                   duration={COUNT_DURATION}
                 />
               </p>
+
+              <dl className="rounded-xl border border-border/60 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-muted-foreground">
+                    {installments === 1 ? "Cuota" : "Cuotas"}
+                  </dt>
+                  <dd className="font-medium text-foreground">
+                    {installments} ×{" "}
+                    <AnimatedCurrency
+                      value={installmentValue}
+                      className="inline"
+                      duration={COUNT_DURATION}
+                    />
+                  </dd>
+                </div>
+                <div className="mt-2 flex items-center justify-between gap-3 border-t border-border/50 pt-2">
+                  <dt className="text-muted-foreground">Primer corte</dt>
+                  <dd className="text-right font-medium text-foreground">
+                    {formatDate(
+                      formatIsoDateLocal(
+                        buildInstallmentCutoffDates(new Date(), installments)[0],
+                      ),
+                    )}
+                  </dd>
+                </div>
+              </dl>
             </div>
 
             <div className="flex gap-3">

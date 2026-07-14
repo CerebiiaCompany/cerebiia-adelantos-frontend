@@ -3,7 +3,7 @@ import {
   calculateAdvanceTotalFee,
   DEFAULT_TARIFA_FIJA_POR_CUOTA,
 } from "@/shared/config/advanceFees";
-import { resolveComprobantePagoUrl } from "@/shared/lib/comprobantePago";
+import { resolveSolicitudComprobanteUrl } from "@/shared/lib/comprobantePago";
 import { isSolicitudCancellable } from "./solicitudAdelanto";
 import type { SolicitudAdelantoDTO, EstadoSolicitud } from "./types/adelanto";
 
@@ -76,9 +76,7 @@ export function mapSolicitudToHistoryRecord(
     estadoApi: solicitud.estado,
     canCancel: isSolicitudCancellable(solicitud.estado),
     rejectionReason: solicitud.motivo_rechazo?.trim() || null,
-    paymentEvidenceUrl: resolveComprobantePagoUrl(
-      solicitud.comprobante_pago ?? solicitud.comprobante_pago_url,
-    ),
+    paymentEvidenceUrl: resolveSolicitudComprobanteUrl(solicitud),
   };
 }
 

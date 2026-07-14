@@ -2,6 +2,10 @@
 
 import type { EstadoSolicitud } from "./types/adelanto";
 
-export function isSolicitudCancellable(estado: EstadoSolicitud): boolean {
-  return estado === "solicitado" || estado === "en_revision";
+/**
+ * El backend no expone POST /adelantos/solicitudes/{id}/cancelar/.
+ * Mantener siempre false hasta que exista el endpoint.
+ */
+export function isSolicitudCancellable(_estado: EstadoSolicitud): boolean {
+  return false;
 }

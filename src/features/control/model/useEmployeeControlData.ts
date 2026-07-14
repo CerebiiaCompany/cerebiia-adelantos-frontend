@@ -1,18 +1,12 @@
 import { useMemo } from "react";
-import { calculateMaxAdvanceLimit, getAdvanceMonthKey } from "@/entities/employee-dashboard";
+import {
+  calculateMaxAdvanceLimit,
+  countsTowardAdvanceLimit,
+  getAdvanceMonthKey,
+} from "@/entities/employee-dashboard";
 import { useEmployeeDashboard } from "@/features/dashboard";
 import { useEmployeeAdvanceHistory } from "@/features/advance/model/useEmployeeAdvanceHistory";
-
-function formatControlMonthLabel(date: Date): string {
-  const label = date.toLocaleDateString("es-CO", { month: "short" });
-  const normalized = label.replace(/\./g, "");
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-}
-
-function getMonthKey(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${date.getFullYear()}-${month}`;
-}
+import { buildControlMonthlyAdvanceData } from "./buildControlMonthlyAdvanceData";
 
 export function useEmployeeControlData() {
   const dashboard = useEmployeeDashboard();
@@ -26,33 +20,12 @@ export function useEmployeeControlData() {
     const usedAmount = advanceHistory
       .filter(
         (record) =>
-          record.status !== "no_aprobado" &&
+          countsTowardAdvanceLimit(record.status) &&
           getAdvanceMonthKey(record.requestedAt) === currentMonthKey,
       )
       .reduce((sum, record) => sum + record.amount, 0);
     const usedPercent =
       limitAmount > 0 ? Math.round((usedAmount / limitAmount) * 100) : 0;
-
-    const monthlyAdvanceData = Array.from({ length: 4 }, (_, index) => {
-      const date = new Date();
-      date.setDate(1);
-      date.setMonth(date.getMonth() - (3 - index));
-      const monthKey = getMonthKey(date);
-      const adelantos = advanceHistory
-        .filter((record) => getMonthKey(record.requestedAt) === monthKey)
-        .reduce((sum, record) => sum + record.amount, 0);
-
-      return {
-        name: formatControlMonthLabel(date),
-        adelantos,
-        limite: limitAmount,
-        count: advanceHistory.filter(
-          (record) => getMonthKey(record.requestedAt) === monthKey,
-        ).length,
-        sortKey: monthKey,
-        disponible: Math.max(limitAmount - adelantos, 0),
-      };
-    });
 
     return {
       limitAmount,
@@ -60,7 +33,10 @@ export function useEmployeeControlData() {
       usedPercent,
       nextPaymentNet: Math.max(dashboard.salary - usedAmount, 0),
       limitDelta: 0,
-      monthlyAdvanceData,
+      monthlyAdvanceData: buildControlMonthlyAdvanceData(
+        advanceHistory,
+        limitAmount,
+      ),
     };
   }, [dashboard, advanceHistory]);
 }

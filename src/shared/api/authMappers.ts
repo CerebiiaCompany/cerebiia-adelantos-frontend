@@ -47,6 +47,13 @@ export function assertSystemLoginAllowed(user: AuthUser): void {
 export function assertEmpleadoLoginAllowed(
   response: EmpleadoLoginResponse,
 ): void {
+  if (response.empleado.estado === "inactivo") {
+    throw new ApiError(403, "/empleados/login/", {
+      detail:
+        "Tu cuenta ha sido suspendida por la empresa. Contacta a Recursos Humanos.",
+    });
+  }
+
   if (response.empleado.estado !== "activo") {
     throw new ApiError(403, "/empleados/login/", {
       detail:

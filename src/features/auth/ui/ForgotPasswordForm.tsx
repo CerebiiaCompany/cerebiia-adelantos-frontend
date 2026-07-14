@@ -47,7 +47,7 @@ function ForgotPasswordSkeleton() {
 
 export function ForgotPasswordForm() {
   const [isReady, setIsReady] = useState(false);
-  const { mutate: requestReset, isPending, isSuccess, isError, reset } =
+  const { mutate: requestReset, isPending, isSuccess, isError, error, reset } =
     useForgotPassword();
 
   const form = useForm<ForgotPasswordFormValues>({
@@ -207,8 +207,9 @@ export function ForgotPasswordForm() {
                   role="alert"
                   className="animate-shake rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive"
                 >
-                  No pudimos procesar tu solicitud en este momento. Intenta
-                  nuevamente en unos minutos.
+                  {error instanceof Error
+                    ? error.message
+                    : "No pudimos procesar tu solicitud en este momento. Intenta nuevamente en unos minutos."}
                 </div>
               )}
 

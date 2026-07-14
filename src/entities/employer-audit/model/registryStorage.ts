@@ -20,6 +20,10 @@ export interface RegisteredCompanyAdvance {
   status: CompanyAdvanceStatus;
   requestedAt: string;
   transferId: string;
+  /** URL usable del comprobante de transferencia (GET evidencia). */
+  paymentEvidenceUrl: string | null;
+  /** Motivo ingresado al rechazar (solo aplica si status = rechazado). */
+  rejectionReason: string | null;
 }
 
 export interface RegisterCompanyAdvanceInput {
@@ -88,6 +92,16 @@ function isRegisteredCompanyAdvance(value: unknown): value is RegisteredCompanyA
   );
 }
 
+function normalizeRegisteredAdvance(
+  record: RegisteredCompanyAdvance,
+): RegisteredCompanyAdvance {
+  return {
+    ...record,
+    paymentEvidenceUrl: record.paymentEvidenceUrl ?? null,
+    rejectionReason: record.rejectionReason ?? null,
+  };
+}
+
 export function subscribeCompanyAdvances(listener: RegistryListener): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
@@ -102,7 +116,9 @@ export function loadCompanyAdvances(empresaId: string): RegisteredCompanyAdvance
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isRegisteredCompanyAdvance);
+    return parsed
+      .filter(isRegisteredCompanyAdvance)
+      .map(normalizeRegisteredAdvance);
   } catch {
     return [];
   }
@@ -143,6 +159,8 @@ export function registerCompanyAdvance(
     status: input.status ?? "en_curso",
     requestedAt,
     transferId: buildTransferId(requestedAt),
+    paymentEvidenceUrl: null,
+    rejectionReason: null,
   };
 
   const current = loadCompanyAdvances(input.empresaId);

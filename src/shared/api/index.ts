@@ -17,6 +17,8 @@ export {
 } from "./authMappers";
 export {
   mapCreateEmpleadoFormToRequest,
+  mapEmpleadoDtoToFormValues,
+  mapTipoDocumentoFromApi,
   mapTipoDocumentoToApi,
 } from "./empleadoMappers";
 export {
