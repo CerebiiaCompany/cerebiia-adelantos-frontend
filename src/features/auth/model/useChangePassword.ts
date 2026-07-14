@@ -1,11 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 import {
+  ApiError,
   authStorage,
   empleadosEndpoints,
   isEmpleadoSession,
   mapEmpleadoDtoToProfile,
 } from "@/shared/api";
-import { authEndpoints } from "@/shared/api/endpoints";
 import type { ChangePasswordRequest } from "@/shared/api/types";
 import { env } from "@/shared/config/env";
 import { useAuth } from "./AuthProvider";
@@ -34,7 +34,11 @@ export function useChangePassword() {
             login({ ...session, empleado: profile });
           }
         } else {
-          await authEndpoints.changePassword(payload);
+          // Backend aún no expone POST /auth/password/change/
+          throw new ApiError(501, "/auth/password/change/", {
+            detail:
+              "El cambio de contraseña para cuentas de empresa aún no está disponible. Contacta al administrador.",
+          });
         }
       }
 

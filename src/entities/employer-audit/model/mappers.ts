@@ -1,7 +1,6 @@
 // ⚠️ AGNOSTIC — maps registered advances to employer audit views
 
-import type { SolicitudAdelantoDTO, EstadoSolicitud } from "@/shared/api/types/adelanto";
-import type { EmpleadoDTO } from "@/shared/api/types";
+import { resolveSolicitudComprobanteUrl } from "@/shared/lib/comprobantePago";
 import type {
   EmployerAdvanceAuditRecord,
   EmployerLoanInstallmentRecord,
@@ -14,7 +13,17 @@ import {
   type CompanyAdvanceStatus,
   type RegisteredCompanyAdvance,
 } from "./registryStorage";
-import { calculateAdvanceFee } from "./calculations";
+import {
+  calculateAdvanceFee,
+  isRecoverableCompanyAdvance,
+} from "./calculations";
+import { DEFAULT_TARIFA_FIJA_POR_CUOTA } from "@/shared/config/advanceFees";
+import type {
+  HistorialSolicitudEmpresaDTO,
+  SolicitudAdelantoDTO,
+  EstadoSolicitud,
+} from "@/shared/api/types/adelanto";
+import type { EmpleadoDTO } from "@/shared/api/types";
 
 function parseSalary(salario: string): number {
   const amount = Number.parseFloat(salario);
@@ -46,53 +55,123 @@ function mapEstadoToCompanyAdvanceStatus(
   return "en_curso";
 }
 
-/** Convierte solicitudes API a la estructura interna de auditoría empresa. */
+function buildRegisteredAdvanceFromAmounts(input: {
+  id: string;
+  empresaId: string;
+  employeeId: string;
+  employeeName: string;
+  employeeDocument: string;
+  baseSalary: number;
+  monto: string;
+  montoNeto?: string | null;
+  tarifaTotal?: string | null;
+  installments: number;
+  estado: EstadoSolicitud;
+  requestedAt: string;
+  paymentEvidenceUrl?: string | null;
+  rejectionReason?: string | null;
+}): RegisteredCompanyAdvance {
+  const advancedAmount = Number.parseFloat(input.monto);
+  const safeAmount = Number.isNaN(advancedAmount) ? 0 : advancedAmount;
+  const parsedTarifaTotal = input.tarifaTotal
+    ? Number.parseFloat(input.tarifaTotal)
+    : Number.NaN;
+  const parsedNet = input.montoNeto
+    ? Number.parseFloat(input.montoNeto)
+    : Number.NaN;
+  const feeAmount =
+    !Number.isNaN(parsedTarifaTotal) && parsedTarifaTotal >= 0
+      ? Math.round(parsedTarifaTotal)
+      : calculateAdvanceFee(safeAmount, DEFAULT_TARIFA_FIJA_POR_CUOTA, input.installments);
+  const netDisbursedAmount =
+    !Number.isNaN(parsedNet) && parsedNet >= 0
+      ? Math.round(parsedNet)
+      : safeAmount - feeAmount;
+
+  return {
+    id: input.id,
+    empresaId: input.empresaId,
+    employeeId: input.employeeId,
+    employeeName: input.employeeName,
+    employeeDocument: input.employeeDocument,
+    baseSalary: input.baseSalary,
+    advancedAmount: safeAmount,
+    installments: input.installments,
+    feeAmount,
+    netDisbursedAmount,
+    status: mapEstadoToCompanyAdvanceStatus(input.estado),
+    requestedAt: input.requestedAt,
+    transferId: input.id.slice(0, 8).toUpperCase(),
+    paymentEvidenceUrl: input.paymentEvidenceUrl?.trim() || null,
+    rejectionReason: input.rejectionReason?.trim() || null,
+  };
+}
+
+/** Convierte el historial empresa API a la estructura interna de auditoría. */
+export function mapHistorialEmpresaToRegisteredCompanyAdvances(
+  historial: HistorialSolicitudEmpresaDTO[],
+  empleados: EmpleadoDTO[],
+  empresaId?: string | null,
+): RegisteredCompanyAdvance[] {
+  const empleadoById = new Map(
+    empleados.map((empleado) => [empleado.id, empleado]),
+  );
+  const resolvedEmpresaId = empresaId ?? resolveEmpresaId(empleados) ?? "";
+
+  return historial.map((item) => {
+    const empleado = empleadoById.get(item.empleado_id);
+
+    return buildRegisteredAdvanceFromAmounts({
+      id: item.id,
+      empresaId: resolvedEmpresaId,
+      employeeId: item.empleado_id,
+      employeeName: item.empleado_nombre || empleado?.nombre || "Empleado",
+      employeeDocument:
+        item.empleado_documento || empleado?.documento || "—",
+      baseSalary: empleado ? parseSalary(empleado.salario) : 0,
+      monto: item.monto,
+      montoNeto: item.monto_neto,
+      tarifaTotal: item.tarifa_total,
+      installments: item.numero_cuotas_snapshot,
+      estado: item.estado,
+      requestedAt: item.created_at,
+      paymentEvidenceUrl: resolveSolicitudComprobanteUrl(item),
+      rejectionReason: item.motivo_rechazo,
+    });
+  });
+}
+
+/** @deprecated Prefer mapHistorialEmpresaToRegisteredCompanyAdvances */
 export function mapSolicitudesToRegisteredCompanyAdvances(
   solicitudes: SolicitudAdelantoDTO[],
   empleados: EmpleadoDTO[],
 ): RegisteredCompanyAdvance[] {
-  const empleadoById = new Map(empleados.map((empleado) => [empleado.id, empleado]));
+  const empleadoById = new Map(
+    empleados.map((empleado) => [empleado.id, empleado]),
+  );
 
   return solicitudes.map((solicitud) => {
     const empleado = empleadoById.get(solicitud.empleado_id);
-    const advancedAmount = Number.parseFloat(solicitud.monto);
-    const safeAmount = Number.isNaN(advancedAmount) ? 0 : advancedAmount;
-    const parsedTarifaTotal = solicitud.tarifa_total
-      ? Number.parseFloat(solicitud.tarifa_total)
-      : Number.NaN;
-    const parsedNet = solicitud.monto_a_recibir
-      ? Number.parseFloat(solicitud.monto_a_recibir)
-      : solicitud.monto_neto
-        ? Number.parseFloat(solicitud.monto_neto)
-        : Number.NaN;
-    const feeAmount =
-      !Number.isNaN(parsedTarifaTotal) && parsedTarifaTotal >= 0
-        ? Math.round(parsedTarifaTotal)
-        : calculateAdvanceFee(safeAmount);
-    const netDisbursedAmount =
-      !Number.isNaN(parsedNet) && parsedNet >= 0
-        ? Math.round(parsedNet)
-        : safeAmount - feeAmount;
 
-    return {
+    return buildRegisteredAdvanceFromAmounts({
       id: solicitud.id,
       empresaId: solicitud.empresa_id,
       employeeId: solicitud.empleado_id,
       employeeName: empleado?.nombre ?? "Empleado",
       employeeDocument: empleado?.documento ?? "—",
       baseSalary: empleado ? parseSalary(empleado.salario) : 0,
-      advancedAmount: safeAmount,
+      monto: solicitud.monto,
+      montoNeto: solicitud.monto_a_recibir ?? solicitud.monto_neto,
+      tarifaTotal: solicitud.tarifa_total,
       installments: solicitud.numero_cuotas_snapshot,
-      feeAmount,
-      netDisbursedAmount,
-      status: mapEstadoToCompanyAdvanceStatus(solicitud.estado),
+      estado: solicitud.estado,
       requestedAt: solicitud.created_at,
-      transferId: solicitud.id.slice(0, 8).toUpperCase(),
-    };
+      paymentEvidenceUrl: resolveSolicitudComprobanteUrl(solicitud),
+      rejectionReason: solicitud.motivo_rechazo,
+    });
   });
 }
 
-/** Mapea solicitudes del backend (rol empresa) a registros de monitoreo. */
 export function mapSolicitudesToAdvanceAuditRecords(
   solicitudes: SolicitudAdelantoDTO[],
   empleados: EmpleadoDTO[],
@@ -126,6 +205,7 @@ export function mapToAdvanceAuditRecords(
     employeeDocument: advance.employeeDocument,
     baseSalary: salaryByEmployeeId.get(advance.employeeId) ?? advance.baseSalary,
     advancedAmount: advance.advancedAmount,
+    feeAmount: advance.feeAmount,
     installments: advance.installments,
     status: advance.status,
     processedAt: advance.requestedAt,
@@ -136,7 +216,11 @@ export function mapToLoanInstallmentRecords(
   advances: RegisteredCompanyAdvance[],
 ): EmployerLoanInstallmentRecord[] {
   return sortAdvancesByDate(advances)
-    .filter((advance) => advance.installments > 1)
+    .filter(
+      (advance) =>
+        isRecoverableCompanyAdvance(advance.status) &&
+        advance.installments > 1,
+    )
     .map((advance) => {
       const totalToRecover = advance.advancedAmount;
       const installmentValue = Math.round(
@@ -168,8 +252,11 @@ export function mapToMovementRecords(
     transferId: advance.transferId,
     occurredAt: advance.requestedAt,
     type: "adelanto",
+    status: advance.status,
     netDisbursedAmount: advance.netDisbursedAmount,
     employeeName: advance.employeeName,
+    paymentEvidenceUrl: advance.paymentEvidenceUrl ?? null,
+    rejectionReason: advance.rejectionReason ?? null,
   }));
 }
 
@@ -205,8 +292,11 @@ export function buildPayrollClosureSnapshot(
   referenceDate: Date = new Date(),
 ): EmployerPayrollClosureSnapshot {
   const monthKey = getMonthKey(referenceDate);
+  // Solo aprobados/pagados: un rechazado nunca genera retención ni reembolso.
   const monthAdvances = advances.filter(
-    (advance) => getMonthKey(new Date(advance.requestedAt)) === monthKey,
+    (advance) =>
+      isRecoverableCompanyAdvance(advance.status) &&
+      getMonthKey(new Date(advance.requestedAt)) === monthKey,
   );
 
   const summaryMap = new Map<string, EmployerPayrollDeductionSummary>();

@@ -77,7 +77,7 @@ export function PayrollClosureView() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="glass-card glow-border rounded-xl p-5 sm:p-6">
+        <div className="rounded-xl border border-border/80 bg-background p-5 shadow-sm sm:p-6">
           <div className="mb-4 flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -97,7 +97,7 @@ export function PayrollClosureView() {
           />
         </div>
 
-        <div className="glass-card glow-border rounded-xl p-5 sm:p-6">
+        <div className="rounded-xl border border-border/80 bg-background p-5 shadow-sm sm:p-6">
           <div className="mb-4 flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -121,7 +121,7 @@ export function PayrollClosureView() {
         </div>
       </div>
 
-      <div className="glass-card glow-border rounded-xl p-4 sm:p-5">
+      <div className="rounded-xl border border-border/80 bg-background p-4 shadow-sm sm:p-5">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="font-display text-lg font-semibold text-foreground">

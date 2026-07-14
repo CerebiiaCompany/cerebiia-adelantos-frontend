@@ -104,3 +104,11 @@ export interface ResultadoCargaNominaDTO {
     errores: string[];
   }>;
 }
+
+/** KPIs de nómina de la empresa autenticada (`GET /empleados/metricas/`). */
+export interface MetricasEmpresaEmpleadosDTO {
+  total: number;
+  activos: number;
+  pre_registrados: number;
+  inactivos: number;
+}

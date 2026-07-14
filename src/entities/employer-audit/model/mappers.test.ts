@@ -20,9 +20,11 @@ const sampleAdvances: RegisteredCompanyAdvance[] = [
     installments: 1,
     feeAmount: 8_000,
     netDisbursedAmount: 392_000,
-    status: "en_curso",
+    status: "procesado",
     requestedAt: "2026-06-19T10:00:00-05:00",
     transferId: "TRF-1",
+    paymentEvidenceUrl: null,
+    rejectionReason: null,
   },
   {
     id: "adv-2",
@@ -35,9 +37,48 @@ const sampleAdvances: RegisteredCompanyAdvance[] = [
     installments: 3,
     feeAmount: 8_000,
     netDisbursedAmount: 892_000,
-    status: "en_curso",
+    status: "procesado",
     requestedAt: "2026-06-19T11:00:00-05:00",
     transferId: "TRF-2",
+    paymentEvidenceUrl: "https://cdn.example.com/comprobante.pdf",
+    rejectionReason: null,
+  },
+];
+
+const melannyCase: RegisteredCompanyAdvance[] = [
+  {
+    id: "adv-rechazado",
+    empresaId: "empresa-1",
+    employeeId: "emp-m",
+    employeeName: "Melanny Guate",
+    employeeDocument: "1005026054",
+    baseSalary: 1_700_000,
+    advancedAmount: 500_000,
+    installments: 2,
+    feeAmount: 16_000,
+    netDisbursedAmount: 484_000,
+    status: "rechazado",
+    requestedAt: "2026-07-14T10:00:00-05:00",
+    transferId: "TRF-R",
+    paymentEvidenceUrl: null,
+    rejectionReason: "No se puede",
+  },
+  {
+    id: "adv-aprobado",
+    empresaId: "empresa-1",
+    employeeId: "emp-m",
+    employeeName: "Melanny Guate",
+    employeeDocument: "1005026054",
+    baseSalary: 1_700_000,
+    advancedAmount: 100_000,
+    installments: 1,
+    feeAmount: 12_000,
+    netDisbursedAmount: 88_000,
+    status: "procesado",
+    requestedAt: "2026-07-14T13:00:00-05:00",
+    transferId: "TRF-A",
+    paymentEvidenceUrl: "http://localhost:9000/media/x.jpe",
+    rejectionReason: null,
   },
 ];
 
@@ -121,10 +162,19 @@ describe("employer audit mappers", () => {
     expect(loans[0].installmentValue).toBe(300_000);
   });
 
+  it("excluye rechazados del seguimiento de cuotas", () => {
+    const loans = mapToLoanInstallmentRecords(melannyCase);
+    expect(loans).toHaveLength(0);
+  });
+
   it("genera movimientos desde adelantos reales", () => {
     const movements = mapToMovementRecords(sampleAdvances);
     expect(movements).toHaveLength(2);
     expect(movements[0].netDisbursedAmount).toBe(892_000);
+    expect(movements[0].status).toBeDefined();
+    expect(movements[0].paymentEvidenceUrl).toBe(
+      "https://cdn.example.com/comprobante.pdf",
+    );
   });
 
   it("consolida retenciones del mes actual", () => {
@@ -136,5 +186,18 @@ describe("employer audit mappers", () => {
     expect(closure.employeeSummaries).toHaveLength(2);
     expect(closure.totalPayrollDeductions).toBe(700_000);
     expect(closure.providerReimbursement).toBe(392_000 + 892_000);
+  });
+
+  it("retenciones ignoran el adelanto rechazado (caso Melanny)", () => {
+    const closure = buildPayrollClosureSnapshot(
+      melannyCase,
+      new Date("2026-07-14T15:00:00-05:00"),
+    );
+
+    expect(closure.employeeSummaries).toHaveLength(1);
+    expect(closure.employeeSummaries[0].advancesTotal).toBe(100_000);
+    expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(0);
+    expect(closure.totalPayrollDeductions).toBe(100_000);
+    expect(closure.providerReimbursement).toBe(88_000);
   });
 });

@@ -5,6 +5,11 @@ import {
 } from "@/components/ui/animated-number";
 import { cn } from "@/lib/utils";
 import { formatAdvanceTransactionFeeLabel } from "@/shared/config/advanceFees";
+import {
+  buildInstallmentCutoffDates,
+  formatDate,
+  formatIsoDateLocal,
+} from "@/shared/lib";
 import { AdvanceAmountSelector } from "./AdvanceAmountSelector";
 import {
   AdvanceTimelineCenterLine,
@@ -26,6 +31,8 @@ type AdvanceSimulatorCardProps = {
   total: number;
   installmentValue: number;
   disabled?: boolean;
+  /** Fecha base para el plan de cortes (por defecto hoy). */
+  requestedAt?: Date;
 };
 
 export function AdvanceSimulatorCard({
@@ -41,12 +48,16 @@ export function AdvanceSimulatorCard({
   total,
   installmentValue,
   disabled = false,
+  requestedAt = new Date(),
 }: AdvanceSimulatorCardProps) {
   const hasAmount = !disabled && amount >= minAmount;
   const installmentOptions = Array.from(
     { length: Math.max(1, maxInstallments) },
     (_, index) => index + 1,
   );
+  const cutoffDates = hasAmount
+    ? buildInstallmentCutoffDates(requestedAt, installments)
+    : [];
 
   return (
     <AdvanceTimelineShell
@@ -177,6 +188,28 @@ export function AdvanceSimulatorCard({
                 />
               </div>
             )}
+
+            {cutoffDates.length > 0 ? (
+              <div className="space-y-1.5 border-t border-border/60 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Fechas de corte
+                </p>
+                {cutoffDates.map((date, index) => (
+                  <div
+                    key={formatIsoDateLocal(date)}
+                    className="flex justify-between text-sm text-muted-foreground"
+                  >
+                    <span>
+                      Cuota {index + 1}
+                      {index === 0 ? " (mes de solicitud)" : ""}
+                    </span>
+                    <span className="font-medium text-foreground">
+                      {formatDate(formatIsoDateLocal(date))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
       </div>

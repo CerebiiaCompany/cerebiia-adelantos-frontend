@@ -15,6 +15,7 @@ export {
   calculateSalaryPercentage,
   calculateTotalWithholding,
   exceedsSalaryCap,
+  isRecoverableCompanyAdvance,
 } from "./model/calculations";
 export {
   MAX_ADVANCE_INSTALLMENTS,
@@ -28,6 +29,7 @@ export {
 } from "./model/registryStorage";
 export {
   buildPayrollClosureSnapshot,
+  mapHistorialEmpresaToRegisteredCompanyAdvances,
   mapSolicitudesToAdvanceAuditRecords,
   mapSolicitudesToRegisteredCompanyAdvances,
   mapToAdvanceAuditRecords,

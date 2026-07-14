@@ -8,6 +8,8 @@ export interface EmployerAdvanceAuditRecord {
   employeeDocument: string;
   baseSalary: number;
   advancedAmount: number;
+  /** Comisión/tarifa total de la solicitud (desde API, no inventada). */
+  feeAmount: number;
   installments: number;
   status: EmployerAdvanceAuditStatus;
   processedAt: string;
@@ -37,8 +39,11 @@ export interface EmployerMovementRecord {
   transferId: string;
   occurredAt: string;
   type: EmployerMovementType;
+  status: EmployerAdvanceAuditStatus;
   netDisbursedAmount: number;
   employeeName: string;
+  paymentEvidenceUrl: string | null;
+  rejectionReason: string | null;
 }
 
 export interface EmployerPayrollDeductionSummary {

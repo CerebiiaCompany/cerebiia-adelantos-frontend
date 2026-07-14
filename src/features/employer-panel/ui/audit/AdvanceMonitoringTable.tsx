@@ -3,7 +3,6 @@ import { ClipboardCheck, Search, ShieldAlert } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  calculateAdvanceFee,
   calculateSalaryPercentage,
   calculateTotalWithholding,
   exceedsSalaryCap,
@@ -12,9 +11,11 @@ import {
 import { formatCOP, formatDate } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 import { useEmployerAdvanceAudit } from "../../model/useEmployerAuditData";
+import { useEmployerConfig } from "../../model/useEmployerConfig";
 import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { AuditComplianceBadge } from "./AuditComplianceBadge";
 import { AuditStatusBadge } from "./AuditStatusBadge";
+import { EmployerSolicitudDetalleDialog } from "./EmployerSolicitudDetalleDialog";
 
 function filterRecords(
   records: EmployerAdvanceAuditRecord[],
@@ -56,7 +57,12 @@ function TableSkeleton() {
 
 export function AdvanceMonitoringTable() {
   const [search, setSearch] = useState("");
+  const [selectedSolicitud, setSelectedSolicitud] = useState<{
+    id: string;
+    employeeName: string;
+  } | null>(null);
   const { data, isLoading, isError } = useEmployerAdvanceAudit();
+  const { data: adelantoConfig } = useEmployerConfig();
 
   const filteredRecords = useMemo(
     () => filterRecords(data ?? [], search),
@@ -70,6 +76,10 @@ export function AdvanceMonitoringTable() {
       ).length,
     [filteredRecords],
   );
+
+  const tarifaPorCuotaLabel = adelantoConfig
+    ? formatCOP(adelantoConfig.tarifaFijaPorCuota)
+    : null;
 
   return (
     <div className="glass-card glow-border rounded-xl p-4 sm:p-5">
@@ -122,7 +132,7 @@ export function AdvanceMonitoringTable() {
                   % usado del salario
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Comisión fija
+                  Comisión
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Total a descontar en nómina
@@ -136,12 +146,15 @@ export function AdvanceMonitoringTable() {
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Fecha de solicitud
                 </th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">
+                  Detalle
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-10 text-center">
+                  <td colSpan={10} className="px-4 py-10 text-center">
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
                       <ClipboardCheck className="h-8 w-8 opacity-60" />
                       <p className="text-sm">
@@ -162,9 +175,9 @@ export function AdvanceMonitoringTable() {
                     record.advancedAmount,
                     record.baseSalary,
                   );
-                  const fee = calculateAdvanceFee(record.advancedAmount);
                   const totalWithholding = calculateTotalWithholding(
                     record.advancedAmount,
+                    record.status,
                   );
 
                   return (
@@ -207,7 +220,7 @@ export function AdvanceMonitoringTable() {
                         </span>
                       </td>
                       <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
-                        {formatCOP(fee)}
+                        {formatCOP(record.feeAmount)}
                         <p className="mt-0.5 text-[11px] text-muted-foreground/80">
                           Descontada al empleado
                         </p>
@@ -228,6 +241,20 @@ export function AdvanceMonitoringTable() {
                       <td className="px-4 py-3.5 text-muted-foreground">
                         {formatDate(record.processedAt)}
                       </td>
+                      <td className="px-4 py-3.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedSolicitud({
+                              id: record.id,
+                              employeeName: record.employeeName,
+                            })
+                          }
+                          className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+                        >
+                          Ver detalle
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
@@ -237,13 +264,28 @@ export function AdvanceMonitoringTable() {
         </div>
       ) : null}
 
+      <EmployerSolicitudDetalleDialog
+        solicitudId={selectedSolicitud?.id ?? null}
+        employeeName={selectedSolicitud?.employeeName}
+        open={selectedSolicitud !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSolicitud(null);
+        }}
+      />
+
       {!isLoading && !isError && data ? (
         <p className="mt-4 text-xs text-muted-foreground">
           {filteredRecords.length} de {data.length} registro
           {data.length === 1 ? "" : "s"} mostrado
-          {filteredRecords.length === 1 ? "" : "s"}. La comisión fija de $8.000 se
-          descuenta al empleado en el desembolso; la empresa solo retiene el
-          valor solicitado. Tope permitido: 30% del salario mensual.
+          {filteredRecords.length === 1 ? "" : "s"}.{" "}
+          {tarifaPorCuotaLabel
+            ? `La comisión fija de ${tarifaPorCuotaLabel} por cuota se descuenta al empleado en el desembolso`
+            : "La comisión configurada se descuenta al empleado en el desembolso"}
+          ; la empresa solo retiene el valor solicitado. Tope permitido:{" "}
+          {adelantoConfig
+            ? `${adelantoConfig.porcentajeMaximoAdelanto}%`
+            : "30%"}{" "}
+          del salario mensual.
         </p>
       ) : null}
     </div>

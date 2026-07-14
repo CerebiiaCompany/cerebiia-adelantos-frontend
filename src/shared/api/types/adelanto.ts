@@ -21,11 +21,46 @@ export interface SolicitudAdelantoDTO {
   estado: EstadoSolicitud;
   created_at: string;
   updated_at?: string;
-  /** Motivo ingresado por el super admin al rechazar la solicitud. */
+  decidido_por_id?: string | null;
+  decidido_en?: string | null;
+  pagado_en?: string | null;
+  /** Motivo ingresado por el super admin al rechazar (null si no está rechazada). */
   motivo_rechazo?: string | null;
-  /** Ruta relativa del comprobante de transferencia (solo cuando estado = pagado). */
+  /** Path del FileField (legacy / admin). Preferir comprobante_pago_url. */
   comprobante_pago?: string | null;
+  /** URL usable de evidencia (absoluta o /media/...). Fuente de verdad para el front. */
   comprobante_pago_url?: string | null;
+}
+
+/** Item de GET /adelantos/empresa/historial-solicitudes/ */
+export interface HistorialSolicitudEmpresaDTO {
+  id: string;
+  empleado_id: string;
+  empleado_nombre: string;
+  empleado_documento: string;
+  monto: string;
+  monto_neto: string;
+  tarifa_total: string;
+  numero_cuotas_snapshot: number;
+  estado: EstadoSolicitud;
+  created_at: string;
+  decidido_por_id: string | null;
+  decidido_por_nombre: string | null;
+  decidido_en: string | null;
+  /** Opcional: el historial empresa no lo requiere en UI. */
+  motivo_rechazo?: string | null;
+  comprobante_pago?: string | null;
+  /** URL usable; nunca null si hay evidencia (FileField o URL externa). */
+  comprobante_pago_url: string | null;
+  pagado_en: string | null;
+}
+
+export interface HistorialSolicitudesEmpresaParams {
+  estado?: EstadoSolicitud;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  page?: number;
+  page_size?: number;
 }
 
 export interface CuotaAdelantoDTO {
@@ -83,25 +118,28 @@ export interface EmpleadoEmpresaSummaryDTO {
   razon_social?: string;
 }
 
+/**
+ * Contrato real de GET /empleados/me/ (7 campos core).
+ * Campos opcionales pueden venir de futuros enriquecimientos;
+ * banco/documento/fecha: preferir sesión de login o mi-situacion-financiera.
+ */
 export interface EmpleadoMeDTO {
   empleado_id: string;
   nombre: string;
   salario: string;
   empresa_id: string;
-  /** Monto que aún puede solicitar en adelantos (fuente de verdad del backend). */
-  saldo_disponible?: string;
-  /** Nombre comercial o razón social de la empresa del empleado. */
-  empresa_nombre?: string;
-  empresa?: EmpleadoEmpresaSummaryDTO;
   porcentaje_maximo_adelanto: string;
   monto_maximo_adelanto: string;
-  /** Tarifa fija por cuota (misma fuente que GET /configuracion/ del super admin). */
+  /** Monto que aún puede solicitar (fuente de verdad del backend). */
+  saldo_disponible?: string;
+  empresa_nombre?: string;
+  empresa?: EmpleadoEmpresaSummaryDTO;
   tarifa_fija_por_cuota?: string;
   numero_maximo_cuotas?: number;
   plazo_maximo_dias?: number;
-  documento: string;
-  banco_nombre: string;
-  numero_cuenta: string;
-  tipo_cuenta: string;
-  fecha_ingreso: string;
+  documento?: string;
+  banco_nombre?: string;
+  numero_cuenta?: string;
+  tipo_cuenta?: string;
+  fecha_ingreso?: string;
 }

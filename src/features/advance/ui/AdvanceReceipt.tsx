@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { useProfileView } from "@/features/auth";
 import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
+import { useAdelantoConfig } from "@/features/advance/model/useAdelantoConfig";
 import {
   calculateAdvanceTransactionFee,
+  DEFAULT_TARIFA_FIJA_POR_CUOTA,
   formatAdvanceTransactionFeeLabel,
 } from "@/shared/config/advanceFees";
 import {
@@ -46,7 +48,12 @@ function formatDisbursementDate(date: Date): string {
 type AdvanceReceiptProps = {
   amount: number;
   status?: AdvanceReceiptStatus;
+  /** Comisión total (todas las cuotas). Preferir valor del backend. */
   transactionFeeAmount?: number;
+  /** Tarifa fija por cuota (configuración / snapshot). Define el texto de la comisión. */
+  tarifaFijaPorCuota?: number;
+  /** Número de cuotas; ayuda a inferir tarifa si solo hay comisión total. */
+  installments?: number;
   paymentMethod?: string;
   issuedAt?: Date;
   folio?: string;
@@ -59,6 +66,8 @@ export function AdvanceReceipt({
   amount,
   status = "en_curso",
   transactionFeeAmount,
+  tarifaFijaPorCuota: tarifaFijaPorCuotaProp,
+  installments = 1,
   paymentMethod = "Transferencia bancaria",
   issuedAt: issuedAtProp,
   folio: folioProp,
@@ -69,6 +78,7 @@ export function AdvanceReceipt({
   const receiptRef = useRef<HTMLDivElement>(null);
   const profile = useProfileView();
   const { data: empleadoMe } = useEmpleadoMe();
+  const { data: adelantoConfig } = useAdelantoConfig();
   const bankName = resolveEmpleadoBankName(empleadoMe, profile);
   const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
   const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
@@ -90,9 +100,44 @@ export function AdvanceReceipt({
     () => folioProp ?? buildAdvanceReceiptFolio(issuedAt),
     [folioProp, issuedAt],
   );
+
+  const resolvedTarifaFijaPorCuota = useMemo(() => {
+    if (
+      typeof tarifaFijaPorCuotaProp === "number" &&
+      tarifaFijaPorCuotaProp > 0
+    ) {
+      return Math.round(tarifaFijaPorCuotaProp);
+    }
+
+    if (
+      typeof transactionFeeAmount === "number" &&
+      transactionFeeAmount > 0 &&
+      installments > 0
+    ) {
+      return Math.round(transactionFeeAmount / installments);
+    }
+
+    if (adelantoConfig?.tarifaFijaPorCuota) {
+      return adelantoConfig.tarifaFijaPorCuota;
+    }
+
+    return DEFAULT_TARIFA_FIJA_POR_CUOTA;
+  }, [
+    tarifaFijaPorCuotaProp,
+    transactionFeeAmount,
+    installments,
+    adelantoConfig?.tarifaFijaPorCuota,
+  ]);
+
   const transactionFee = useMemo(
-    () => transactionFeeAmount ?? calculateAdvanceTransactionFee(amount),
-    [transactionFeeAmount, amount],
+    () =>
+      transactionFeeAmount ??
+      calculateAdvanceTransactionFee(
+        amount,
+        installments,
+        resolvedTarifaFijaPorCuota,
+      ),
+    [transactionFeeAmount, amount, installments, resolvedTarifaFijaPorCuota],
   );
   const netAmount = useMemo(
     () => amount - transactionFee,
@@ -108,7 +153,9 @@ export function AdvanceReceipt({
   );
   const statusConfig = ADVANCE_RECEIPT_STATUS_CONFIG[status];
   const concept = `Adelanto de nómina correspondiente al periodo ${periodLabel}`;
-  const transactionFeeConcept = formatAdvanceTransactionFeeLabel();
+  const transactionFeeConcept = formatAdvanceTransactionFeeLabel(
+    resolvedTarifaFijaPorCuota,
+  );
   const disbursementLabel =
     status === "en_curso"
       ? "Pendiente de aprobación"
