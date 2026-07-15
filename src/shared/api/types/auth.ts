@@ -15,6 +15,11 @@ export interface AuthUser {
   full_name: string;
   is_active: boolean;
   role: BackendUserRole;
+  /**
+   * true = el usuario empresa debe cambiar la contraseña por defecto
+   * en el primer inicio de sesión (solo aplica a role === "empresa").
+   */
+  must_change_password?: boolean;
   created_at: string;
   updated_at: string;
 }

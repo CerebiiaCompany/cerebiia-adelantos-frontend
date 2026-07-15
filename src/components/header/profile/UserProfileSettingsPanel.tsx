@@ -36,14 +36,14 @@ export function UserProfileSettingsPanel({
             description: "Correo y teléfono de contacto",
             icon: UserRound,
           },
-          {
-            id: "change-password" as const,
-            label: "Cambiar contraseña",
-            description: "Actualiza tu clave de acceso",
-            icon: KeyRound,
-          },
         ]
       : []),
+    {
+      id: "change-password" as const,
+      label: "Cambiar contraseña",
+      description: "Actualiza tu clave de acceso",
+      icon: KeyRound,
+    },
   ];
 
   const handleSectionChange =
@@ -68,18 +68,11 @@ export function UserProfileSettingsPanel({
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           {isEmployee
             ? "Administra tu información personal y seguridad de la cuenta."
-            : "Administra la sesión de tu cuenta de empresa."}
+            : "Administra la seguridad de tu cuenta de empresa."}
         </p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
-        {!isEmployee ? (
-          <div className="border-b border-border/60 px-4 py-4 text-sm text-muted-foreground">
-            El cambio de contraseña para cuentas de empresa aún no está
-            disponible en el servidor. Contacta al administrador del sistema.
-          </div>
-        ) : null}
-
         {settingsSections.map((section) => {
           const isOpen = openSection === section.id;
           const Icon = section.icon;
