@@ -1,10 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import {
-  ApiError,
+  authEndpoints,
   authStorage,
   empleadosEndpoints,
   isEmpleadoSession,
+  isSystemUserSession,
   mapEmpleadoDtoToProfile,
+  normalizeAuthUser,
+  passwordChangeCompletionStorage,
 } from "@/shared/api";
 import type { ChangePasswordRequest } from "@/shared/api/types";
 import { env } from "@/shared/config/env";
@@ -34,11 +37,29 @@ export function useChangePassword() {
             login({ ...session, empleado: profile });
           }
         } else {
-          // Backend aún no expone POST /auth/password/change/
-          throw new ApiError(501, "/auth/password/change/", {
-            detail:
-              "El cambio de contraseña para cuentas de empresa aún no está disponible. Contacta al administrador.",
-          });
+          await authEndpoints.changePassword(payload);
+
+          if (session && isSystemUserSession(session)) {
+            passwordChangeCompletionStorage.markCompleted(session.user.id);
+
+            let nextUser = normalizeAuthUser({
+              ...session.user,
+              must_change_password: false,
+            });
+
+            try {
+              const me = normalizeAuthUser(await authEndpoints.me());
+              nextUser = {
+                ...me,
+                must_change_password: me.must_change_password ?? false,
+              };
+            } catch {
+              // Si /me falla, limpiamos el flag localmente tras el cambio exitoso.
+            }
+
+            authStorage.updateSystemUser(nextUser);
+            login({ ...session, user: nextUser });
+          }
         }
       }
 

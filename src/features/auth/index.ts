@@ -14,5 +14,6 @@ export {
 } from "./model/useChangePassword";
 export { rememberedCredentialsStorage } from "./model/rememberedCredentialsStorage";
 export { ForgotPasswordForm } from "./ui/ForgotPasswordForm";
+export { ForcePasswordChangeForm } from "./ui/ForcePasswordChangeForm";
 export { useForgotPassword } from "./model/useForgotPassword";
 export { useUpdateProfileData } from "./model/useUpdateProfileData";

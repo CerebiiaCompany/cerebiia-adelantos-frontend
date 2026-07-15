@@ -38,6 +38,8 @@ import {
 
   resolveAppRole,
 
+  normalizeAuthUser,
+
   normalizeEmpleadoProfile,
 
 } from "@/shared/api";
@@ -98,7 +100,7 @@ async function restoreSystemUserSession(
   }
 
   try {
-    const user = await authEndpoints.me();
+    const user = normalizeAuthUser(await authEndpoints.me());
     const session = { ...current, user };
     authStorage.set(session);
     return session;
@@ -107,7 +109,7 @@ async function restoreSystemUserSession(
     if (!refreshed) return null;
 
     try {
-      const user = await authEndpoints.me();
+      const user = normalizeAuthUser(await authEndpoints.me());
       const latest = authStorage.get();
       if (!latest || !isSystemUserSession(latest)) return null;
 

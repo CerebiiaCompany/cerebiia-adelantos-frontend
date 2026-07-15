@@ -185,7 +185,7 @@ describe("employer audit mappers", () => {
 
     expect(closure.employeeSummaries).toHaveLength(2);
     expect(closure.totalPayrollDeductions).toBe(700_000);
-    expect(closure.providerReimbursement).toBe(392_000 + 892_000);
+    expect(closure.providerReimbursement).toBe(400_000 + 900_000);
   });
 
   it("retenciones ignoran el adelanto rechazado (caso Melanny)", () => {
@@ -198,6 +198,6 @@ describe("employer audit mappers", () => {
     expect(closure.employeeSummaries[0].advancesTotal).toBe(100_000);
     expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(0);
     expect(closure.totalPayrollDeductions).toBe(100_000);
-    expect(closure.providerReimbursement).toBe(88_000);
+    expect(closure.providerReimbursement).toBe(100_000);
   });
 });

@@ -35,4 +35,15 @@ describe("ApiError", () => {
 
     expect(error.message).toContain("No se pudo conectar con el backend");
   });
+
+  it("explica 404 HTML de Django como endpoint inexistente", () => {
+    const error = new ApiError(
+      404,
+      "/auth/password/change/",
+      "<!DOCTYPE html><html><title>Page not found</title></html>",
+    );
+
+    expect(error.message).toMatch(/endpoint/i);
+    expect(error.message).toMatch(/404/);
+  });
 });

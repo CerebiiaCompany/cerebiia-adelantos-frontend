@@ -27,10 +27,21 @@ export const authEndpoints = {
   me: () => http.get<AuthUser>("/auth/me/"),
   forgotPassword: (data: ForgotPasswordRequest) =>
     http.post<ForgotPasswordResponse>("/auth/password/forgot/", data),
+  /**
+   * POST /auth/password/change/
+   * body: { current_password, new_password }
+   */
   changePassword: (data: ChangePasswordRequest) =>
-    http.post<ChangePasswordResponse>("/auth/password/change/", data),
+    http.post<ChangePasswordResponse>("/auth/password/change/", {
+      current_password: data.currentPassword,
+      new_password: data.newPassword,
+    }),
   resetPassword: (data: ResetPasswordRequest) =>
-    http.post<void>("/auth/password/reset/", data),
+    http.post<void>("/auth/password/reset/", {
+      email: data.email,
+      token: data.token,
+      new_password: data.newPassword,
+    }),
   verifyDocument: (data: VerifyDocumentRequest) =>
     http.post<VerifyDocumentResponse>("/auth/register/verify/", data),
   register: (data: RegisterUserRequest) =>

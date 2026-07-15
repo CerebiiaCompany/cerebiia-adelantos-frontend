@@ -1,6 +1,7 @@
 // ⚠️ AGNOSTIC — maps backend auth payloads to frontend session
 
 import { ApiError } from "./errors";
+import { passwordChangeCompletionStorage } from "./passwordChangeCompletionStorage";
 import type {
   AppUserRole,
   AuthSession,
@@ -12,6 +13,31 @@ import type {
   SystemUserLoginResponse,
   SystemUserSession,
 } from "./types/auth";
+
+function coerceOptionalBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === 1 || value === "1") return true;
+  if (value === "false" || value === 0 || value === "0") return false;
+  return undefined;
+}
+
+/**
+ * Normaliza aliases del backend (snake/camel) al contrato AuthUser.
+ */
+export function normalizeAuthUser(user: AuthUser): AuthUser {
+  const raw = user as AuthUser & Record<string, unknown>;
+  const flag = coerceOptionalBoolean(
+    raw.must_change_password ??
+      raw.mustChangePassword ??
+      raw.force_password_change ??
+      raw.password_change_required,
+  );
+
+  return {
+    ...user,
+    must_change_password: flag,
+  };
+}
 
 export function isSystemUserSession(
   session: AuthSession,
@@ -89,13 +115,14 @@ export function normalizeEmpleadoProfile(
 export function mapSystemLoginResponseToSession(
   response: SystemUserLoginResponse,
 ): SystemUserSession {
-  assertSystemLoginAllowed(response.user);
+  const user = normalizeAuthUser(response.user);
+  assertSystemLoginAllowed(user);
 
   return {
     actorType: "system_user",
     accessToken: response.tokens.access,
     refreshToken: response.tokens.refresh,
-    user: response.user,
+    user,
   };
 }
 
@@ -122,6 +149,34 @@ export function resolveAppRole(session: AuthSession): AppUserRole | null {
   }
 
   return "employer";
+}
+
+/**
+ * Usuario empresa que aún debe cambiar la contraseña por defecto.
+ * Empleados nunca disparan este flujo.
+ *
+ * Preferencia:
+ * 1) Flag explícito del backend (true/false)
+ * 2) Si el backend aún no envía el flag → obligatorio hasta completar el cambio
+ */
+export function mustChangePassword(session: AuthSession | null | undefined): boolean {
+  if (!session || !isSystemUserSession(session)) return false;
+  if (session.user.role !== "empresa" || session.user.is_active !== true) {
+    return false;
+  }
+
+  const flag = session.user.must_change_password;
+  if (flag === true) {
+    // Admin puede reexigir el cambio: limpia el “ya completé” local.
+    passwordChangeCompletionStorage.clear(session.user.id);
+    return true;
+  }
+  if (flag === false) {
+    return false;
+  }
+
+  // Backend no envía el campo: obligatorio para todas las empresas hasta completar.
+  return !passwordChangeCompletionStorage.hasCompleted(session.user.id);
 }
 
 export function buildDemoEmpleadoSession(): EmpleadoSession {
