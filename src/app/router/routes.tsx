@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";import { AppLayout } from "@/components/AppLayout";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AppLayout } from "@/components/AppLayout";
 import { EmployerLayout } from "@/components/EmployerLayout";
 import Dashboard from "@/pages/Dashboard";
 import Adelanto from "@/pages/Adelanto";
@@ -14,6 +15,7 @@ import EmployerMonitoreoAdelantosPage from "@/pages/employer/EmployerMonitoreoAd
 import EmployerSeguimientoCuotasPage from "@/pages/employer/EmployerSeguimientoCuotasPage";
 import EmployerHistorialMovimientosPage from "@/pages/employer/EmployerHistorialMovimientosPage";
 import EmployerRetencionesCierresPage from "@/pages/employer/EmployerRetencionesCierresPage";
+import EmployerForcePasswordChangePage from "@/pages/employer/EmployerForcePasswordChangePage";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
@@ -22,6 +24,7 @@ import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage";
 import { AuthGuard } from "@/app/router/guards/AuthGuard";
 import { GuestGuard } from "@/app/router/guards/GuestGuard";
 import { ModuleGuard } from "@/app/router/guards/ModuleGuard";
+import { PasswordChangeRequiredGuard } from "@/app/router/guards/PasswordChangeRequiredGuard";
 import { RoleGuard } from "@/app/router/guards/RoleGuard";
 import { ROUTES } from "@/shared/config/routes";
 
@@ -113,58 +116,65 @@ export function AppRouter() {
           </Route>
 
           <Route element={<RoleGuard allowed={["employer"]} />}>
-            <Route path="/empleador" element={<EmployerLayout />}>
-              <Route index element={<Navigate to="panel" replace />} />
-              <Route
-                path="panel"
-                element={
-                  <ModuleGuard moduleId="employer.dashboard">
-                    <EmployerPanelPage />
-                  </ModuleGuard>
-                }
-              />
-              <Route
-                path="mis-empleados"
-                element={
-                  <ModuleGuard moduleId="employer.misEmpleados">
-                    <EmployerMisEmpleadosPage />
-                  </ModuleGuard>
-                }
-              />
-              <Route
-                path="monitoreo-adelantos"
-                element={
-                  <ModuleGuard moduleId="employer.monitoreoAdelantos">
-                    <EmployerMonitoreoAdelantosPage />
-                  </ModuleGuard>
-                }
-              />
-              <Route
-                path="seguimiento-cuotas"
-                element={
-                  <ModuleGuard moduleId="employer.seguimientoCuotas">
-                    <EmployerSeguimientoCuotasPage />
-                  </ModuleGuard>
-                }
-              />
-              <Route
-                path="historial-movimientos"
-                element={
-                  <ModuleGuard moduleId="employer.historialMovimientos">
-                    <EmployerHistorialMovimientosPage />
-                  </ModuleGuard>
-                }
-              />
-              <Route
-                path="retenciones-cierres"
-                element={
-                  <ModuleGuard moduleId="employer.retencionesCierres">
-                    <EmployerRetencionesCierresPage />
-                  </ModuleGuard>
-                }
-              />
+            <Route
+              path={ROUTES.employer.changePasswordRequired}
+              element={<EmployerForcePasswordChangePage />}
+            />
+            <Route element={<PasswordChangeRequiredGuard />}>
+              <Route path="/empleador" element={<EmployerLayout />}>
+                <Route index element={<Navigate to="panel" replace />} />
+                <Route
+                  path="panel"
+                  element={
+                    <ModuleGuard moduleId="employer.dashboard">
+                      <EmployerPanelPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="mis-empleados"
+                  element={
+                    <ModuleGuard moduleId="employer.misEmpleados">
+                      <EmployerMisEmpleadosPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="monitoreo-adelantos"
+                  element={
+                    <ModuleGuard moduleId="employer.monitoreoAdelantos">
+                      <EmployerMonitoreoAdelantosPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="seguimiento-cuotas"
+                  element={
+                    <ModuleGuard moduleId="employer.seguimientoCuotas">
+                      <EmployerSeguimientoCuotasPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="historial-movimientos"
+                  element={
+                    <ModuleGuard moduleId="employer.historialMovimientos">
+                      <EmployerHistorialMovimientosPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="retenciones-cierres"
+                  element={
+                    <ModuleGuard moduleId="employer.retencionesCierres">
+                      <EmployerRetencionesCierresPage />
+                    </ModuleGuard>
+                  }
+                />
+              </Route>
             </Route>
-          </Route>        </Route>
+          </Route>
+        </Route>
 
         <Route path="*" element={<NotFound />} />
       </Routes>

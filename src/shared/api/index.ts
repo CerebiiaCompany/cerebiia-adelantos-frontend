@@ -12,9 +12,12 @@ export {
   mapEmpleadoLoginResponseToSession,
   mapLoginResponseToSession,
   mapSystemLoginResponseToSession,
+  mustChangePassword,
+  normalizeAuthUser,
   normalizeEmpleadoProfile,
   resolveAppRole,
 } from "./authMappers";
+export { passwordChangeCompletionStorage } from "./passwordChangeCompletionStorage";
 export {
   mapCreateEmpleadoFormToRequest,
   mapEmpleadoDtoToFormValues,

@@ -331,7 +331,7 @@ export function buildPayrollClosureSnapshot(
     0,
   );
   const providerReimbursement = monthAdvances.reduce(
-    (sum, advance) => sum + advance.netDisbursedAmount,
+    (sum, advance) => sum + advance.advancedAmount,
     0,
   );
 

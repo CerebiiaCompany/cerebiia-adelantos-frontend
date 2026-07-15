@@ -51,6 +51,9 @@ function parseApiErrorMessage(body: unknown, status: number): string {
   }
   if (typeof body === "string") {
     if (body.includes("<!DOCTYPE") || body.includes("<html")) {
+      if (status === 404) {
+        return "El endpoint de esta acción no existe en el servidor (404). El equipo de backend debe implementarlo.";
+      }
       return `Error interno del servidor (${status}). Revisa la consola del backend.`;
     }
     const trimmed = body.trim();
@@ -71,6 +74,10 @@ function parseApiErrorMessage(body: unknown, status: number): string {
     if (fieldMessages.length > 0) {
       return localizeApiDetail(fieldMessages[0]);
     }
+  }
+
+  if (status === 404) {
+    return "El endpoint de esta acción no existe en el servidor (404). El equipo de backend debe implementarlo.";
   }
 
   if (status === 401) {

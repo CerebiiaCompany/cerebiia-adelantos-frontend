@@ -104,7 +104,7 @@ export function PayrollClosureView() {
                 Monto de reembolso al proveedor
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Transferencia para saldar deuda con el administrador
+                Monto solicitado a reembolsar (la comisión la paga la empresa)
               </p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[hsl(260_70%_50%)]/20 bg-[hsl(260_70%_50%)]/10">

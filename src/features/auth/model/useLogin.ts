@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { flushSync } from "react-dom";
-import { useNavigate } from "react-router-dom";import {
+import { useNavigate } from "react-router-dom";
+import {
   ApiError,
   authEndpoints,
   buildDemoEmpleadoSession,
@@ -13,7 +14,7 @@ import { useNavigate } from "react-router-dom";import {
 import { isEmpleadoLocallyDeactivated } from "@/entities/empleado";
 import type { LoginFormValues } from "@/shared/validations/auth.schema";
 import { env } from "@/shared/config/env";
-import { getHomeRouteForAppRole } from "@/shared/config/roleRoutes";
+import { getPostLoginRoute } from "@/shared/config/roleRoutes";
 import { useAuth } from "./AuthProvider";
 import { rememberedCredentialsStorage } from "./rememberedCredentialsStorage";
 
@@ -90,6 +91,7 @@ export function useLogin() {
       flushSync(() => {
         login(session);
       });
-      navigate(getHomeRouteForAppRole(appRole), { replace: true });    },
+      navigate(getPostLoginRoute(session), { replace: true });
+    },
   });
 }
