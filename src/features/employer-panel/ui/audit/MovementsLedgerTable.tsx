@@ -111,6 +111,7 @@ export function MovementsLedgerTable() {
         "Fecha/Hora",
         "Tipo",
         "Estado",
+        "Cuotas",
         "Evidencia",
         "Motivo",
         "Empleado",
@@ -121,6 +122,7 @@ export function MovementsLedgerTable() {
         formatDateTime(record.occurredAt),
         record.type === "adelanto" ? "Adelanto" : "Cuota",
         getMovementStatusLabel(record.status),
+        record.installments,
         record.paymentEvidenceUrl ?? "",
         record.status === "rechazado" ? (record.rejectionReason ?? "") : "",
         record.employeeName,
@@ -253,7 +255,7 @@ export function MovementsLedgerTable() {
 
         {!isLoading && !isError ? (
           <div className="overflow-x-auto rounded-xl border border-border/80">
-            <table className="w-full min-w-[1080px] text-sm">
+            <table className="w-full min-w-[1160px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-secondary/50 text-left">
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
@@ -267,6 +269,9 @@ export function MovementsLedgerTable() {
                   </th>
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
                     Estado
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-muted-foreground">
+                    Cantidad de cuotas
                   </th>
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
                     Evidencia
@@ -285,7 +290,7 @@ export function MovementsLedgerTable() {
               <tbody>
                 {filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-10 text-center">
+                    <td colSpan={9} className="px-4 py-10 text-center">
                       <div className="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
                         <BookOpen className="h-8 w-8 opacity-60" />
                         <p className="text-sm">{emptyMessage}</p>
@@ -326,6 +331,9 @@ export function MovementsLedgerTable() {
                           label={getMovementStatusLabel(record.status)}
                           tone={getMovementStatusTone(record.status)}
                         />
+                      </td>
+                      <td className="px-4 py-3.5 tabular-nums text-foreground">
+                        {record.installments}
                       </td>
                       <td className="px-4 py-3.5">
                         {record.paymentEvidenceUrl ? (
