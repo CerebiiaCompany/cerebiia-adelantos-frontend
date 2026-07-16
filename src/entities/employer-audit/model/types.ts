@@ -49,6 +49,18 @@ export interface EmployerMovementRecord {
 export interface EmployerPayrollDeductionSummary {
   employeeName: string;
   employeeDocument: string;
+  /** Cantidad de adelantos recuperables del mes. */
+  advancesCount: number;
+  /**
+   * Plan de cuotas homogéneo del mes (null si hay planes distintos
+   * entre adelantos del mismo empleado).
+   */
+  installments: number | null;
+  /**
+   * Valor de cada cuota cuando el plan es multi-cuota y homogéneo
+   * (null si es 1 cuota, planes mixtos o montos distintos).
+   */
+  installmentValue: number | null;
   advancesTotal: number;
   feesTotal: number;
   loanInstallmentsTotal: number;
@@ -56,6 +68,7 @@ export interface EmployerPayrollDeductionSummary {
 }
 
 export interface EmployerPayrollClosureSnapshot {
+  monthKey: string;
   monthLabel: string;
   totalPayrollDeductions: number;
   providerReimbursement: number;

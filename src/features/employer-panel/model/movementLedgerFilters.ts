@@ -22,7 +22,7 @@ export const MOVEMENT_LEDGER_STATUS_FILTER_OPTIONS: {
   label: string;
 }[] = [
   { value: "all", label: "Todos los estados" },
-  { value: "procesado", label: "Transferido" },
+  { value: "procesado", label: "Pagado" },
   { value: "en_curso", label: "En curso" },
   { value: "rechazado", label: "Rechazado" },
 ];

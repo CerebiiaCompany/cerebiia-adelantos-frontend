@@ -24,7 +24,7 @@ export const ADVANCE_STATUS_STYLES = {
     stampClassName: "border-emerald-300/90 text-emerald-700",
   },
   transferido: {
-    label: "Transferido",
+    label: "Pagado",
     badgeClassName:
       "rounded-none border-emerald-100/90 bg-emerald-50/70 px-2.5 py-1 font-medium text-emerald-700/75 hover:bg-emerald-50/70",
     stampClassName: "border-emerald-300/90 text-emerald-700",

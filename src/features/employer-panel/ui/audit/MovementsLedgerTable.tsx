@@ -10,6 +10,13 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -51,7 +58,7 @@ function formatDateTime(iso: string): string {
 }
 
 function getMovementStatusLabel(status: EmployerAdvanceAuditStatus): string {
-  if (status === "procesado") return "Transferido";
+  if (status === "procesado") return "Pagado";
   if (status === "en_curso") return "En curso";
   return "Rechazado";
 }
@@ -80,6 +87,8 @@ export function MovementsLedgerTable() {
     DEFAULT_MOVEMENT_LEDGER_FILTERS,
   );
   const [evidenceRecord, setEvidenceRecord] =
+    useState<EmployerMovementRecord | null>(null);
+  const [reasonRecord, setReasonRecord] =
     useState<EmployerMovementRecord | null>(null);
   const { data, isLoading, isError } = useEmployerMovementsLedger();
 
@@ -334,14 +343,14 @@ export function MovementsLedgerTable() {
                         )}
                       </td>
                       <td className="px-4 py-3.5">
-                        {record.status === "rechazado" &&
-                        record.rejectionReason ? (
-                          <p
-                            className="max-w-[14rem] text-sm leading-snug text-foreground"
-                            title={record.rejectionReason}
+                        {record.status === "rechazado" ? (
+                          <button
+                            type="button"
+                            onClick={() => setReasonRecord(record)}
+                            className="text-sm font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
                           >
-                            {record.rejectionReason}
-                          </p>
+                            Ver motivo
+                          </button>
                         ) : (
                           <span className="text-sm text-muted-foreground/60">
                             —
@@ -383,6 +392,32 @@ export function MovementsLedgerTable() {
           evidenceRecord ? new Date(evidenceRecord.occurredAt) : undefined
         }
       />
+
+      <Dialog
+        open={Boolean(reasonRecord)}
+        onOpenChange={(open) => {
+          if (!open) setReasonRecord(null);
+        }}
+      >
+        <DialogContent className="max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              Motivo del rechazo
+            </DialogTitle>
+            <DialogDescription>
+              {reasonRecord
+                ? `Solicitud de ${reasonRecord.employeeName} · ${reasonRecord.transferId}`
+                : "Detalle del motivo indicado por el administrador."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-border/80 bg-secondary/30 p-4">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              {reasonRecord?.rejectionReason?.trim() ||
+                "No se registró un motivo para este rechazo."}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

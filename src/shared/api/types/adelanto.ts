@@ -47,7 +47,7 @@ export interface HistorialSolicitudEmpresaDTO {
   decidido_por_id: string | null;
   decidido_por_nombre: string | null;
   decidido_en: string | null;
-  /** Opcional: el historial empresa no lo requiere en UI. */
+  /** Motivo del rechazo (presente cuando estado = rechazado). */
   motivo_rechazo?: string | null;
   comprobante_pago?: string | null;
   /** URL usable; nunca null si hay evidencia (FileField o URL externa). */
