@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Calculator, Receipt } from "lucide-react";
+import { ArrowRightLeft, Calculator, Eye, Receipt } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/select";
 import {
   buildPayrollClosureSnapshot,
+  listPayrollClosureEmployeeAdvances,
   listPayrollClosureMonthOptions,
   monthKeyToReferenceDate,
   type EmployerPayrollDeductionSummary,
+  type RegisteredCompanyAdvance,
 } from "@/entities/employer-audit";
 import { formatCOP } from "@/shared/lib";
 import { downloadCsvFile } from "@/shared/lib/csv";
@@ -25,6 +27,7 @@ import { toast } from "sonner";
 import { useEmployerPayrollClosure } from "../../model/useEmployerAuditData";
 import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { ExportReportButton } from "./ExportReportButton";
+import { PayrollEmployeeAdvancesDialog } from "./PayrollEmployeeAdvancesDialog";
 
 function currentMonthKey(): string {
   const now = new Date();
@@ -34,23 +37,6 @@ function currentMonthKey(): string {
 
 function toDayKey(isoDate: string): string {
   return isoDate.slice(0, 10);
-}
-
-function formatInstallmentsPlan(
-  summary: EmployerPayrollDeductionSummary,
-): string {
-  if (summary.advancesCount === 0) return "—";
-  if (summary.installments == null) return "Varias";
-  return String(summary.installments);
-}
-
-function formatInstallmentValue(
-  summary: EmployerPayrollDeductionSummary,
-): string {
-  if (summary.installments == null) return "Varias";
-  if (summary.installments <= 1) return "—";
-  if (summary.installmentValue == null) return "Varias";
-  return formatCOP(summary.installmentValue);
 }
 
 function TableSkeleton() {
@@ -68,6 +54,10 @@ export function PayrollClosureView() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [detailEmployee, setDetailEmployee] = useState<{
+    name: string;
+    document: string;
+  } | null>(null);
 
   const monthOptions = useMemo(
     () => listPayrollClosureMonthOptions(advances ?? [], new Date()),
@@ -95,6 +85,15 @@ export function PayrollClosureView() {
     [filteredAdvances, selectedMonth],
   );
 
+  const detailAdvances = useMemo((): RegisteredCompanyAdvance[] => {
+    if (!detailEmployee) return [];
+    return listPayrollClosureEmployeeAdvances(
+      filteredAdvances,
+      detailEmployee.document,
+      monthKeyToReferenceDate(selectedMonth),
+    );
+  }, [detailEmployee, filteredAdvances, selectedMonth]);
+
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
     setDateFrom("");
@@ -104,6 +103,13 @@ export function PayrollClosureView() {
   const handleClearDateFilters = () => {
     setDateFrom("");
     setDateTo("");
+  };
+
+  const openEmployeeDetail = (summary: EmployerPayrollDeductionSummary) => {
+    setDetailEmployee({
+      name: summary.employeeName,
+      document: summary.employeeDocument,
+    });
   };
 
   const handleExport = () => {
@@ -117,8 +123,6 @@ export function PayrollClosureView() {
         "Empleado",
         "Documento",
         "Cantidad de adelantos",
-        "Cuotas",
-        "Valor por cuota",
         "Adelantos",
         "Comisiones",
         "Cuotas del mes",
@@ -128,8 +132,6 @@ export function PayrollClosureView() {
         summary.employeeName,
         summary.employeeDocument,
         summary.advancesCount,
-        formatInstallmentsPlan(summary),
-        formatInstallmentValue(summary),
         summary.advancesTotal,
         summary.feesTotal,
         summary.loanInstallmentsTotal,
@@ -138,8 +140,6 @@ export function PayrollClosureView() {
       [],
       [
         "Total acumulado nómina",
-        "",
-        "",
         "",
         "",
         "",
@@ -154,16 +154,11 @@ export function PayrollClosureView() {
         "",
         "",
         "",
-        "",
-        "",
         snapshot.providerReimbursement,
       ],
     ];
 
-    downloadCsvFile(
-      `retenciones-nomina-${snapshot.monthKey}`,
-      rows,
-    );
+    downloadCsvFile(`retenciones-nomina-${snapshot.monthKey}`, rows);
     toast.success("Reporte de nómina exportado correctamente.");
   };
 
@@ -327,7 +322,7 @@ export function PayrollClosureView() {
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[1100px] text-sm">
+          <table className="w-full min-w-[860px] text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50 text-left">
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
@@ -335,12 +330,6 @@ export function PayrollClosureView() {
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Cantidad de adelantos
-                </th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Cuotas
-                </th>
-                <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Valor por cuota
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Valor de adelantos
@@ -360,7 +349,7 @@ export function PayrollClosureView() {
               {snapshot.employeeSummaries.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={6}
                     className="px-4 py-10 text-center text-sm text-muted-foreground"
                   >
                     No hay adelantos registrados en {snapshot.monthLabel}
@@ -376,21 +365,29 @@ export function PayrollClosureView() {
                     className="border-b border-border/70 last:border-0"
                   >
                     <td className="px-4 py-3.5">
-                      <div className="font-medium text-foreground">
-                        {summary.employeeName}
-                      </div>
-                      <div className="font-mono text-xs text-muted-foreground">
-                        {summary.employeeDocument}
+                      <div className="flex items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-foreground">
+                            {summary.employeeName}
+                          </div>
+                          <div className="font-mono text-xs text-muted-foreground">
+                            {summary.employeeDocument}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-primary"
+                          onClick={() => openEmployeeDetail(summary)}
+                          aria-label={`Ver detalle de adelantos de ${summary.employeeName}`}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </td>
                     <td className="px-4 py-3.5 tabular-nums text-foreground">
                       {summary.advancesCount}
-                    </td>
-                    <td className="px-4 py-3.5 tabular-nums text-foreground">
-                      {formatInstallmentsPlan(summary)}
-                    </td>
-                    <td className="px-4 py-3.5 tabular-nums text-foreground">
-                      {formatInstallmentValue(summary)}
                     </td>
                     <td className="px-4 py-3.5 tabular-nums text-foreground">
                       {formatCOP(summary.advancesTotal)}
@@ -411,7 +408,7 @@ export function PayrollClosureView() {
             <tfoot>
               <tr className="border-t border-border bg-primary/[0.03]">
                 <td
-                  colSpan={7}
+                  colSpan={5}
                   className="px-4 py-3.5 font-semibold text-foreground"
                 >
                   <span className="inline-flex items-center gap-2">
@@ -427,6 +424,17 @@ export function PayrollClosureView() {
           </table>
         </div>
       </div>
+
+      <PayrollEmployeeAdvancesDialog
+        open={Boolean(detailEmployee)}
+        onOpenChange={(open) => {
+          if (!open) setDetailEmployee(null);
+        }}
+        employeeName={detailEmployee?.name ?? ""}
+        employeeDocument={detailEmployee?.document ?? ""}
+        monthLabel={snapshot.monthLabel}
+        advances={detailAdvances}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPayrollClosureSnapshot,
+  listPayrollClosureEmployeeAdvances,
   mapSolicitudesToAdvanceAuditRecords,
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
@@ -289,5 +290,17 @@ describe("employer audit mappers", () => {
     expect(closure.employeeSummaries[0].advancesCount).toBe(2);
     expect(closure.employeeSummaries[0].installments).toBeNull();
     expect(closure.employeeSummaries[0].installmentValue).toBeNull();
+  });
+
+  it("lista adelantos del empleado para el detalle del mes", () => {
+    const detail = listPayrollClosureEmployeeAdvances(
+      sampleAdvances,
+      "456",
+      new Date("2026-06-20T12:00:00-05:00"),
+    );
+
+    expect(detail).toHaveLength(1);
+    expect(detail[0].employeeName).toBe("Luis Gómez");
+    expect(detail[0].advancedAmount).toBe(900_000);
   });
 });

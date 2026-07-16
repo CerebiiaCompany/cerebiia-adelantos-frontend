@@ -353,6 +353,23 @@ export function monthKeyToReferenceDate(monthKey: string): Date {
   return new Date(year, month - 1, 15, 12, 0, 0, 0);
 }
 
+/** Adelantos del empleado que impactan retenciones/reembolso del mes. */
+export function listPayrollClosureEmployeeAdvances(
+  advances: RegisteredCompanyAdvance[],
+  employeeDocument: string,
+  referenceDate: Date = new Date(),
+): RegisteredCompanyAdvance[] {
+  const monthKey = getMonthKey(referenceDate);
+  return sortAdvancesByDate(
+    advances.filter(
+      (advance) =>
+        advance.employeeDocument === employeeDocument &&
+        isRecoverableCompanyAdvance(advance.status) &&
+        getAdvanceInstallmentMonthOffset(advance, monthKey) !== null,
+    ),
+  );
+}
+
 export function buildPayrollClosureSnapshot(
   advances: RegisteredCompanyAdvance[],
   referenceDate: Date = new Date(),

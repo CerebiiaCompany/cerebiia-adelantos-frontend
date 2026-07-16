@@ -29,6 +29,7 @@ export {
 } from "./model/registryStorage";
 export {
   buildPayrollClosureSnapshot,
+  listPayrollClosureEmployeeAdvances,
   listPayrollClosureMonthOptions,
   mapHistorialEmpresaToRegisteredCompanyAdvances,
   mapSolicitudesToAdvanceAuditRecords,
