@@ -1,9 +1,10 @@
 // ⚠️ AGNOSTIC — normaliza Excel/CSV para POST /empleados/cargar-nomina/
 
 import * as XLSX from "xlsx";
+import { normalizeSalaryInput } from "@/shared/lib/currency";
 import { EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER } from "./empleadoImportCatalogs";
 import {
-  EMPLEADO_IMPORT_REQUIRED_BACKEND_HEADERS,
+  EMPLEADO_IMPORT_BACKEND_HEADERS,
   EMPLEADO_IMPORT_TEMPLATE_HEADERS,
   resolveEmpleadoImportField,
   type EmpleadoImportField,
@@ -23,23 +24,6 @@ const REQUIRED_IMPORT_FIELDS: EmpleadoImportField[] = [
   "tipo_cuenta",
   "numero_cuenta",
 ];
-
-const FIELD_TO_BACKEND_HEADER: Record<
-  EmpleadoImportField,
-  (typeof EMPLEADO_IMPORT_TEMPLATE_HEADERS)[number]
-> = {
-  tipo_documento: "tipo_documento",
-  documento: "documento",
-  nombre: "nombre",
-  correo: "email",
-  celular: "celular",
-  salario: "salario",
-  tipo_contrato: "tipo_contrato",
-  fecha_ingreso: "fecha_ingreso",
-  banco_id: "banco",
-  tipo_cuenta: "tipo_cuenta",
-  numero_cuenta: "numero_cuenta",
-};
 
 function buildFieldIndexMap(headerRow: string[]): Map<EmpleadoImportField, number> {
   const fieldIndexes = new Map<EmpleadoImportField, number>();
@@ -62,7 +46,7 @@ function validateImportFieldHeaders(
   if (missing.length === 0) return;
 
   throw new Error(
-    `La plantilla no tiene las columnas requeridas (${EMPLEADO_IMPORT_REQUIRED_BACKEND_HEADERS.join(", ")}). Descarga la plantilla actualizada y usa la hoja «Nomina» sin modificar los encabezados.`,
+    `La plantilla no tiene las columnas requeridas (${EMPLEADO_IMPORT_TEMPLATE_HEADERS.join(", ")}). Descarga la plantilla actualizada y usa la hoja «Nomina» sin modificar los encabezados.`,
   );
 }
 
@@ -75,9 +59,13 @@ function isTemplatePlaceholderCell(header: string, value: string): boolean {
 
 function rowHasImportableData(headerRow: string[], row: string[]): boolean {
   return row.some((cell, index) => {
+    const header = headerRow[index] ?? "";
+    // Ignora columnas auxiliares (catálogos ocultos de desplegables, etc.).
+    if (!resolveEmpleadoImportField(header)) return false;
+
     const trimmed = cell.trim();
     if (!trimmed) return false;
-    if (isTemplatePlaceholderCell(headerRow[index] ?? "", trimmed)) return false;
+    if (isTemplatePlaceholderCell(header, trimmed)) return false;
     return true;
   });
 }
@@ -91,7 +79,7 @@ export function buildBackendNominaUploadMatrix(matrix: string[][]): string[][] {
   const fieldIndexes = buildFieldIndexMap(headerRow);
   validateImportFieldHeaders(fieldIndexes);
 
-  const uploadRows: string[][] = [[...EMPLEADO_IMPORT_TEMPLATE_HEADERS]];
+  const uploadRows: string[][] = [[...EMPLEADO_IMPORT_BACKEND_HEADERS]];
 
   dataRows
     .filter((row) => rowHasImportableData(headerRow, row))
@@ -99,7 +87,11 @@ export function buildBackendNominaUploadMatrix(matrix: string[][]): string[][] {
       uploadRows.push(
         REQUIRED_IMPORT_FIELDS.map((field) => {
           const columnIndex = fieldIndexes.get(field);
-          return columnIndex === undefined ? "" : (row[columnIndex] ?? "").trim();
+          const raw =
+            columnIndex === undefined ? "" : (row[columnIndex] ?? "").trim();
+          // Backend Decimal() no acepta separadores de miles (2.000.000 / 2,000,000).
+          if (field === "salario") return normalizeSalaryInput(raw);
+          return raw;
         }),
       );
     });

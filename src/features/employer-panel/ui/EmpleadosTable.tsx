@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EmpleadoDTO } from "@/shared/api/types";
-import { formatCOP } from "@/shared/lib";
+import { formatCOP, normalizeSalaryInput } from "@/shared/lib";
 import {
   formatEmpleadoCell,
   formatFechaIngreso,
@@ -36,8 +36,9 @@ const TABLE_COLUMNS = [
 ] as const;
 
 function formatSalario(salario: string): string {
-  const amount = Number.parseFloat(salario);
-  if (Number.isNaN(amount)) return salario;
+  const normalized = normalizeSalaryInput(salario);
+  const amount = Number(normalized);
+  if (!normalized || Number.isNaN(amount)) return salario;
   return formatCOP(amount);
 }
 

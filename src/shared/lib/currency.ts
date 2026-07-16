@@ -14,6 +14,9 @@ export function parseCOP(value: string): number {
 /**
  * Normaliza un salario digitado a formato canónico: "1500000" o "1500000.50".
  * Acepta separadores es-CO (1.500.000,50) y en-US (1,500,000.50).
+ *
+ * Importante: "2,000,000" son miles (en-US), no decimales. Excel/SheetJS suele
+ * devolver ese formato aunque en pantalla se vea "2.000.000".
  */
 export function normalizeSalaryInput(input: string): string {
   const trimmed = input.trim().replace(/\s/g, "");
@@ -21,22 +24,58 @@ export function normalizeSalaryInput(input: string): string {
 
   const lastComma = trimmed.lastIndexOf(",");
   const lastDot = trimmed.lastIndexOf(".");
-  const commaDecimalMatch = trimmed.match(/,(\d+)$/);
-  const endsWithDotDec = /\.\d{1,2}$/.test(trimmed);
 
-  if (
-    commaDecimalMatch &&
-    (!endsWithDotDec || lastComma > lastDot)
-  ) {
-    const intPart = trimmed.slice(0, lastComma).replace(/\D/g, "");
-    const decPart = commaDecimalMatch[1].slice(0, 2);
-    return decPart.length > 0 ? `${intPart}.${decPart}` : intPart;
-  }
+  // Ambos separadores: el último es el decimal.
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      // 1.500.000,50 (es-CO)
+      const intPart = trimmed.slice(0, lastComma).replace(/\D/g, "");
+      const decPart = trimmed.slice(lastComma + 1).replace(/\D/g, "").slice(0, 2);
+      return decPart.length > 0 ? `${intPart}.${decPart}` : intPart;
+    }
 
-  if (endsWithDotDec) {
+    // 1,500,000.50 (en-US)
     const intPart = trimmed.slice(0, lastDot).replace(/\D/g, "");
     const decPart = trimmed.slice(lastDot + 1).replace(/\D/g, "").slice(0, 2);
     return decPart.length > 0 ? `${intPart}.${decPart}` : intPart;
+  }
+
+  // Solo comas
+  if (lastComma !== -1) {
+    const after = trimmed.slice(lastComma + 1);
+    const commaCount = (trimmed.match(/,/g) ?? []).length;
+
+    // 2,000,000 o 2,000 → miles
+    if (commaCount > 1 || /^\d{3}$/.test(after)) {
+      return trimmed.replace(/\D/g, "");
+    }
+
+    // 1500,50 o 1,5 → decimal
+    if (/^\d{1,2}$/.test(after)) {
+      const intPart = trimmed.slice(0, lastComma).replace(/\D/g, "");
+      return `${intPart}.${after}`;
+    }
+
+    return trimmed.replace(/\D/g, "");
+  }
+
+  // Solo puntos
+  if (lastDot !== -1) {
+    const after = trimmed.slice(lastDot + 1);
+    const dotCount = (trimmed.match(/\./g) ?? []).length;
+
+    // 2.000.000 o 2.000 → miles
+    if (dotCount > 1 || /^\d{3}$/.test(after)) {
+      return trimmed.replace(/\D/g, "");
+    }
+
+    // 1500.50 → decimal
+    if (/^\d{1,2}$/.test(after)) {
+      const intPart = trimmed.slice(0, lastDot).replace(/\D/g, "");
+      return `${intPart}.${after}`;
+    }
+
+    return trimmed.replace(/\D/g, "");
   }
 
   return trimmed.replace(/\D/g, "");

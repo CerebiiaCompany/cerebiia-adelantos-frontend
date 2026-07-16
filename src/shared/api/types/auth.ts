@@ -20,6 +20,8 @@ export interface AuthUser {
    * en el primer inicio de sesión (solo aplica a role === "empresa").
    */
   must_change_password?: boolean;
+  /** Nombre comercial de la empresa (registro). Solo role empresa. */
+  empresa_nombre?: string;
   created_at: string;
   updated_at: string;
 }
@@ -40,6 +42,8 @@ export interface EmpleadoProfile {
   celular?: string;
   estado: EmpleadoEstado;
   empresa_id: string;
+  /** Nombre comercial de la empresa vinculada. */
+  empresa_nombre?: string;
   created_at: string;
   updated_at: string;
 }

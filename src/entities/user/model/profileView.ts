@@ -71,7 +71,7 @@ export function mapEmpleadoToProfileView(empleado: EmpleadoProfile): ProfileView
     accountNumber: empleado.numero_cuenta,
     accountType: empleado.tipo_cuenta,
     employeeNumber: empleado.id,
-    company: empleado.empresa_id,
+    company: empleado.empresa_nombre?.trim() || undefined,
     status:
       empleado.estado === "activo" ? "Activo" : "Pre-registrado",
     memberSince: formatDate(empleado.created_at),
@@ -89,7 +89,7 @@ export function mapSystemUserToProfileView(user: AuthUser): ProfileView {
     roleLabel,
     isVerified: user.is_active,
     email: user.email,
-    company: user.full_name,
+    company: user.empresa_nombre?.trim() || undefined,
     memberSince: formatDate(user.created_at),
   };
 }

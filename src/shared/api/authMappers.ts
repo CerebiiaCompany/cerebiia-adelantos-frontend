@@ -36,6 +36,12 @@ export function normalizeAuthUser(user: AuthUser): AuthUser {
   return {
     ...user,
     must_change_password: flag,
+    empresa_nombre:
+      typeof raw.empresa_nombre === "string" && raw.empresa_nombre.trim()
+        ? raw.empresa_nombre.trim()
+        : typeof raw.empresaNombre === "string" && raw.empresaNombre.trim()
+          ? raw.empresaNombre.trim()
+          : undefined,
   };
 }
 
@@ -107,6 +113,7 @@ export function normalizeEmpleadoProfile(
     celular: empleado.celular,
     estado: empleado.estado,
     empresa_id: empleado.empresa_id,
+    empresa_nombre: empleado.empresa_nombre?.trim() || undefined,
     created_at: empleado.created_at,
     updated_at: empleado.updated_at,
   };

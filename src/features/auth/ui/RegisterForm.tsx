@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/shared/config/routes";
 import { env } from "@/shared/config/env";
+import { mapTipoDocumentoToApi } from "@/shared/api";
 import type {
   UserProfileData,
 } from "@/shared/api/types";
@@ -416,27 +417,33 @@ export function RegisterForm({
     setDocumentData(values);
 
     if (env.isApiConfigured) {
-      verifyPreRegistro(values.documentNumber, {
-        onSuccess: (response) => {
-          if (response.ya_activo) {
-            setFlowType("new");
-            setVerificationStatus("already-active");
-            setProfile(null);
-            return;
-          }
-
-          if (response.existe) {
-            setFlowType("activation");
-            setVerificationStatus("verified-existing");
-            setProfile(null);
-            goToStep("password");
-            return;
-          }
-
-          setFlowType("new");
-          setVerificationStatus("verified-new");
+      verifyPreRegistro(
+        {
+          documento: values.documentNumber,
+          tipo_documento: mapTipoDocumentoToApi(values.documentType),
         },
-      });
+        {
+          onSuccess: (response) => {
+            if (response.ya_activo) {
+              setFlowType("new");
+              setVerificationStatus("already-active");
+              setProfile(null);
+              return;
+            }
+
+            if (response.existe) {
+              setFlowType("activation");
+              setVerificationStatus("verified-existing");
+              setProfile(null);
+              goToStep("password");
+              return;
+            }
+
+            setFlowType("new");
+            setVerificationStatus("verified-new");
+          },
+        },
+      );
       return;
     }
 
@@ -536,6 +543,7 @@ export function RegisterForm({
     if (flowType === "activation") {
       activateEmpleado({
         documento: documentData.documentNumber,
+        tipo_documento: mapTipoDocumentoToApi(documentData.documentType),
         password: values.password,
       });
       return;

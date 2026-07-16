@@ -18,6 +18,7 @@ export function mapEmpleadoDtoToProfile(empleado: EmpleadoDTO): EmpleadoProfile 
     celular: empleado.celular,
     estado: empleado.estado,
     empresa_id: empleado.empresa_id,
+    empresa_nombre: empleado.empresa_nombre,
     created_at: empleado.created_at,
     updated_at: empleado.updated_at,
   });

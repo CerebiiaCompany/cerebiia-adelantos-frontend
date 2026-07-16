@@ -180,9 +180,13 @@ function isTemplatePlaceholderCell(header: string, value: string): boolean {
 
 function rowHasImportableData(headerRow: string[], row: string[]): boolean {
   return row.some((cell, index) => {
+    const header = headerRow[index] ?? "";
+    // Ignora columnas auxiliares (catálogos ocultos de desplegables, etc.).
+    if (!resolveEmpleadoImportField(header)) return false;
+
     const trimmed = cell.trim();
     if (!trimmed) return false;
-    if (isTemplatePlaceholderCell(headerRow[index] ?? "", trimmed)) return false;
+    if (isTemplatePlaceholderCell(header, trimmed)) return false;
     return true;
   });
 }
