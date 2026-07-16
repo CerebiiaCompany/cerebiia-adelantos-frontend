@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPayrollClosureSnapshot,
+  listPayrollClosureEmployeeAdvances,
   mapSolicitudesToAdvanceAuditRecords,
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
@@ -183,9 +184,62 @@ describe("employer audit mappers", () => {
       new Date("2026-06-20T12:00:00-05:00"),
     );
 
+    expect(closure.monthKey).toBe("2026-06");
     expect(closure.employeeSummaries).toHaveLength(2);
+    // Ana 400k (1 cuota) + Luis 300k (cuota 1 de 900k/3)
     expect(closure.totalPayrollDeductions).toBe(700_000);
-    expect(closure.providerReimbursement).toBe(400_000 + 900_000);
+    expect(closure.providerReimbursement).toBe(700_000);
+
+    const ana = closure.employeeSummaries.find(
+      (item) => item.employeeDocument === "123",
+    );
+    expect(ana?.advancesCount).toBe(1);
+    expect(ana?.installments).toBe(1);
+    expect(ana?.installmentValue).toBeNull();
+
+    const luis = closure.employeeSummaries.find(
+      (item) => item.employeeDocument === "456",
+    );
+    expect(luis?.advancesCount).toBe(1);
+    expect(luis?.installments).toBe(3);
+    expect(luis?.installmentValue).toBe(300_000);
+  });
+
+  it("reembolsa al proveedor solo la cuota del mes en planes multi-cuota", () => {
+    const advance: RegisteredCompanyAdvance[] = [
+      {
+        ...sampleAdvances[1],
+        id: "adv-2cuotas",
+        advancedAmount: 200_000,
+        installments: 2,
+        requestedAt: "2026-06-10T10:00:00-05:00",
+      },
+    ];
+
+    const june = buildPayrollClosureSnapshot(
+      advance,
+      new Date("2026-06-20T12:00:00-05:00"),
+    );
+    expect(june.providerReimbursement).toBe(100_000);
+    expect(june.totalPayrollDeductions).toBe(100_000);
+    expect(june.employeeSummaries[0].advancesCount).toBe(1);
+
+    const july = buildPayrollClosureSnapshot(
+      advance,
+      new Date("2026-07-15T12:00:00-05:00"),
+    );
+    expect(july.providerReimbursement).toBe(100_000);
+    expect(july.totalPayrollDeductions).toBe(100_000);
+    expect(july.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
+    // No se “realizó” en julio: solo se cobra la cuota 2.
+    expect(july.employeeSummaries[0].advancesCount).toBe(0);
+
+    const august = buildPayrollClosureSnapshot(
+      advance,
+      new Date("2026-08-15T12:00:00-05:00"),
+    );
+    expect(august.employeeSummaries).toHaveLength(0);
+    expect(august.providerReimbursement).toBe(0);
   });
 
   it("retenciones ignoran el adelanto rechazado (caso Melanny)", () => {
@@ -195,9 +249,58 @@ describe("employer audit mappers", () => {
     );
 
     expect(closure.employeeSummaries).toHaveLength(1);
+    expect(closure.employeeSummaries[0].advancesCount).toBe(1);
+    expect(closure.employeeSummaries[0].installments).toBe(1);
     expect(closure.employeeSummaries[0].advancesTotal).toBe(100_000);
     expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(0);
     expect(closure.totalPayrollDeductions).toBe(100_000);
     expect(closure.providerReimbursement).toBe(100_000);
+  });
+
+  it("marca cuotas mixtas cuando un empleado tiene planes distintos", () => {
+    const mixed: RegisteredCompanyAdvance[] = [
+      {
+        ...sampleAdvances[0],
+        id: "adv-a",
+        employeeId: "emp-x",
+        employeeName: "Carlos Mixed",
+        employeeDocument: "999",
+        installments: 1,
+        advancedAmount: 200_000,
+        requestedAt: "2026-06-10T10:00:00-05:00",
+      },
+      {
+        ...sampleAdvances[1],
+        id: "adv-b",
+        employeeId: "emp-x",
+        employeeName: "Carlos Mixed",
+        employeeDocument: "999",
+        installments: 2,
+        advancedAmount: 400_000,
+        requestedAt: "2026-06-12T10:00:00-05:00",
+      },
+    ];
+
+    const closure = buildPayrollClosureSnapshot(
+      mixed,
+      new Date("2026-06-20T12:00:00-05:00"),
+    );
+
+    expect(closure.employeeSummaries).toHaveLength(1);
+    expect(closure.employeeSummaries[0].advancesCount).toBe(2);
+    expect(closure.employeeSummaries[0].installments).toBeNull();
+    expect(closure.employeeSummaries[0].installmentValue).toBeNull();
+  });
+
+  it("lista adelantos del empleado para el detalle del mes", () => {
+    const detail = listPayrollClosureEmployeeAdvances(
+      sampleAdvances,
+      "456",
+      new Date("2026-06-20T12:00:00-05:00"),
+    );
+
+    expect(detail).toHaveLength(1);
+    expect(detail[0].employeeName).toBe("Luis Gómez");
+    expect(detail[0].advancedAmount).toBe(900_000);
   });
 });

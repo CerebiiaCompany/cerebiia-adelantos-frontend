@@ -29,12 +29,15 @@ export {
 } from "./model/registryStorage";
 export {
   buildPayrollClosureSnapshot,
+  listPayrollClosureEmployeeAdvances,
+  listPayrollClosureMonthOptions,
   mapHistorialEmpresaToRegisteredCompanyAdvances,
   mapSolicitudesToAdvanceAuditRecords,
   mapSolicitudesToRegisteredCompanyAdvances,
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
   mapToMovementRecords,
+  monthKeyToReferenceDate,
   resolveEmpresaId,
   sortAdvancesByDate,
 } from "./model/mappers";

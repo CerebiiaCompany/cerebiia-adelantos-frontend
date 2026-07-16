@@ -260,18 +260,44 @@ export function mapToMovementRecords(
   }));
 }
 
+function monthKeyDiff(fromKey: string, toKey: string): number {
+  const [fromYear, fromMonth] = fromKey.split("-").map(Number);
+  const [toYear, toMonth] = toKey.split("-").map(Number);
+  return (toYear - fromYear) * 12 + (toMonth - fromMonth);
+}
+
+/**
+ * Meses en los que el adelanto genera retención/reembolso:
+ * 1 cuota → solo el mes de solicitud; N cuotas → N meses consecutivos.
+ */
+function getAdvanceInstallmentMonthOffset(
+  advance: RegisteredCompanyAdvance,
+  monthKey: string,
+): number | null {
+  const requestKey = getMonthKey(new Date(advance.requestedAt));
+  const offset = monthKeyDiff(requestKey, monthKey);
+  if (offset < 0) return null;
+
+  const planMonths = Math.max(1, advance.installments);
+  if (offset >= planMonths) return null;
+  return offset;
+}
+
 function computeMonthlyDeduction(advance: RegisteredCompanyAdvance): {
   advancesTotal: number;
   feesTotal: number;
   loanInstallmentsTotal: number;
   grandTotal: number;
+  installmentValue: number | null;
 } {
   if (advance.installments === 1) {
     return {
       advancesTotal: advance.advancedAmount,
       feesTotal: advance.feeAmount,
       loanInstallmentsTotal: 0,
+      /** Principal del mes: lo que la empresa reembolsa al proveedor. */
       grandTotal: advance.advancedAmount,
+      installmentValue: null,
     };
   }
 
@@ -283,8 +309,65 @@ function computeMonthlyDeduction(advance: RegisteredCompanyAdvance): {
     advancesTotal: 0,
     feesTotal: 0,
     loanInstallmentsTotal: installmentValue,
+    /** Solo la cuota del mes, no el monto total del adelanto. */
     grandTotal: installmentValue,
+    installmentValue,
   };
+}
+
+export function listPayrollClosureMonthOptions(
+  advances: RegisteredCompanyAdvance[],
+  referenceDate: Date = new Date(),
+): Array<{ value: string; label: string }> {
+  const keys = new Set<string>();
+  keys.add(getMonthKey(referenceDate));
+
+  advances.forEach((advance) => {
+    if (!isRecoverableCompanyAdvance(advance.status)) return;
+    const start = new Date(advance.requestedAt);
+    const planMonths = Math.max(1, advance.installments);
+    for (let offset = 0; offset < planMonths; offset += 1) {
+      keys.add(
+        getMonthKey(
+          new Date(start.getFullYear(), start.getMonth() + offset, 1),
+        ),
+      );
+    }
+  });
+
+  return [...keys]
+    .sort((a, b) => b.localeCompare(a))
+    .map((value) => {
+      const [year, month] = value.split("-").map(Number);
+      const date = new Date(year, month - 1, 1);
+      return {
+        value,
+        label: capitalizeMonth(getMonthLabel(date)),
+      };
+    });
+}
+
+export function monthKeyToReferenceDate(monthKey: string): Date {
+  const [year, month] = monthKey.split("-").map(Number);
+  if (!year || !month) return new Date();
+  return new Date(year, month - 1, 15, 12, 0, 0, 0);
+}
+
+/** Adelantos del empleado que impactan retenciones/reembolso del mes. */
+export function listPayrollClosureEmployeeAdvances(
+  advances: RegisteredCompanyAdvance[],
+  employeeDocument: string,
+  referenceDate: Date = new Date(),
+): RegisteredCompanyAdvance[] {
+  const monthKey = getMonthKey(referenceDate);
+  return sortAdvancesByDate(
+    advances.filter(
+      (advance) =>
+        advance.employeeDocument === employeeDocument &&
+        isRecoverableCompanyAdvance(advance.status) &&
+        getAdvanceInstallmentMonthOffset(advance, monthKey) !== null,
+    ),
+  );
 }
 
 export function buildPayrollClosureSnapshot(
@@ -293,49 +376,99 @@ export function buildPayrollClosureSnapshot(
 ): EmployerPayrollClosureSnapshot {
   const monthKey = getMonthKey(referenceDate);
   // Solo aprobados/pagados: un rechazado nunca genera retención ni reembolso.
+  // Multi-cuota: también entra en los meses siguientes (cuota 2, 3, …).
   const monthAdvances = advances.filter(
     (advance) =>
       isRecoverableCompanyAdvance(advance.status) &&
-      getMonthKey(new Date(advance.requestedAt)) === monthKey,
+      getAdvanceInstallmentMonthOffset(advance, monthKey) !== null,
   );
 
-  const summaryMap = new Map<string, EmployerPayrollDeductionSummary>();
+  type SummaryAcc = EmployerPayrollDeductionSummary & {
+    installmentPlans: number[];
+    installmentValues: Array<number | null>;
+  };
+
+  const summaryMap = new Map<string, SummaryAcc>();
 
   monthAdvances.forEach((advance) => {
+    const offset = getAdvanceInstallmentMonthOffset(advance, monthKey);
+    if (offset === null) return;
+
     const deduction = computeMonthlyDeduction(advance);
+    const isRequestMonth = offset === 0;
     const current = summaryMap.get(advance.employeeId) ?? {
       employeeName: advance.employeeName,
       employeeDocument: advance.employeeDocument,
+      advancesCount: 0,
+      installments: null,
+      installmentValue: null,
       advancesTotal: 0,
       feesTotal: 0,
       loanInstallmentsTotal: 0,
       grandTotal: 0,
+      installmentPlans: [],
+      installmentValues: [],
     };
 
     summaryMap.set(advance.employeeId, {
       ...current,
+      // Solo cuenta como “realizado en el mes” en el mes de solicitud.
+      advancesCount: current.advancesCount + (isRequestMonth ? 1 : 0),
       advancesTotal: current.advancesTotal + deduction.advancesTotal,
-      feesTotal: current.feesTotal + deduction.feesTotal,
+      feesTotal:
+        current.feesTotal + (isRequestMonth ? deduction.feesTotal : 0),
       loanInstallmentsTotal:
         current.loanInstallmentsTotal + deduction.loanInstallmentsTotal,
       grandTotal: current.grandTotal + deduction.grandTotal,
+      installmentPlans: [...current.installmentPlans, advance.installments],
+      installmentValues: [
+        ...current.installmentValues,
+        deduction.installmentValue,
+      ],
     });
   });
 
-  const employeeSummaries = [...summaryMap.values()].sort((a, b) =>
-    a.employeeName.localeCompare(b.employeeName, "es"),
-  );
+  const employeeSummaries = [...summaryMap.values()]
+    .map((summary) => {
+      const uniquePlans = [...new Set(summary.installmentPlans)];
+      const multiCuotaValues = summary.installmentValues.filter(
+        (value): value is number => value !== null,
+      );
+      const uniqueValues = [...new Set(multiCuotaValues)];
+
+      const installments =
+        uniquePlans.length === 1 ? uniquePlans[0] : null;
+      const installmentValue =
+        installments !== null &&
+        installments > 1 &&
+        uniqueValues.length === 1
+          ? uniqueValues[0]
+          : null;
+
+      return {
+        employeeName: summary.employeeName,
+        employeeDocument: summary.employeeDocument,
+        advancesCount: summary.advancesCount,
+        installments,
+        installmentValue,
+        advancesTotal: summary.advancesTotal,
+        feesTotal: summary.feesTotal,
+        loanInstallmentsTotal: summary.loanInstallmentsTotal,
+        grandTotal: summary.grandTotal,
+      };
+    })
+    .sort((a, b) => a.employeeName.localeCompare(b.employeeName, "es"));
 
   const totalPayrollDeductions = employeeSummaries.reduce(
     (sum, item) => sum + item.grandTotal,
     0,
   );
-  const providerReimbursement = monthAdvances.reduce(
-    (sum, advance) => sum + advance.advancedAmount,
-    0,
-  );
+  // Reembolso = mismo principal del mes que se descuenta al empleado
+  // (monto completo si 1 cuota; solo la cuota del mes si es 2+).
+  const providerReimbursement = totalPayrollDeductions;
 
   return {
+    monthKey,
     monthLabel: capitalizeMonth(getMonthLabel(referenceDate)),
     totalPayrollDeductions,
     providerReimbursement,
