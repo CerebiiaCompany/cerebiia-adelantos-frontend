@@ -16,15 +16,20 @@ export function toExcelColumnLetter(columnIndex: number): string {
 }
 
 export function buildExcelListRange(
-  sheetName: string,
+  sheetName: string | null | undefined,
   columnIndex: number,
   itemCount: number,
 ): string {
   if (itemCount <= 0) return `""`;
 
   const column = toExcelColumnLetter(columnIndex);
+  const absoluteRange = `$${column}$1:$${column}$${itemCount}`;
+
+  // Misma hoja: Excel Online no soporta listas que apunten a otra hoja.
+  if (!sheetName) return absoluteRange;
+
   const escapedSheet = sheetName.replace(/'/g, "''");
-  return `'${escapedSheet}'!$${column}$1:$${column}$${itemCount}`;
+  return `'${escapedSheet}'!${absoluteRange}`;
 }
 
 export function applyExcelColumnInputHint(
@@ -64,6 +69,8 @@ export function applyExcelListValidation(
     type: "list",
     allowBlank: true,
     formulae: [listRange],
+    // OOXML: showDropDown=true OCULTA la flecha; false la muestra.
+    showDropDown: false,
     showErrorMessage: true,
     errorStyle: "stop",
     errorTitle: "Valor no permitido",

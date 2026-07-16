@@ -18,7 +18,8 @@ import {
 } from "./empleadoImportExcelValidation";
 import {
   EMPLEADO_IMPORT_TEMPLATE_HEADERS,
-  type EmpleadoImportTemplateHeader,
+  getEmpleadoImportColumnIndexByField,
+  type EmpleadoImportField,
 } from "./empleadoImportHeaders";
 
 export { getEmpleadoImportListSheetName, EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER } from "./empleadoImportCatalogs";
@@ -28,8 +29,8 @@ export type { EmpleadoImportTemplateOptions } from "./empleadoImportCatalogs";
 export const EMPLEADO_IMPORT_TEXT_COLUMN_INDEXES = [1, 4, 10] as const;
 
 /**
- * Encabezados alineados con POST /empleados/cargar-nomina/ (backend Django).
- * Orden estable para lectura humana; el parser del backend usa nombres, no posición.
+ * Encabezados humanizados de la plantilla Excel.
+ * Al subir, se normalizan a snake_case del backend (ver prepareEmpleadoImportFileForUpload).
  */
 export { EMPLEADO_IMPORT_TEMPLATE_HEADERS };
 
@@ -37,8 +38,10 @@ export { EMPLEADO_IMPORT_TEMPLATE_HEADERS };
 export const EMPLEADO_IMPORT_BLANK_ROW_COUNT = 50;
 
 function buildBlankImportRow(): string[] {
-  return EMPLEADO_IMPORT_TEMPLATE_HEADERS.map((header) =>
-    header === "fecha_ingreso" ? EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER : "",
+  const fechaIngresoIndex = getEmpleadoImportColumnIndexByField("fecha_ingreso");
+
+  return EMPLEADO_IMPORT_TEMPLATE_HEADERS.map((_, index) =>
+    index === fechaIngresoIndex ? EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER : "",
   );
 }
 
@@ -51,7 +54,7 @@ const ALT_ROW_BG = "FFF8FAFC";
 const BORDER_COLOR = "FFE2E8F0";
 
 const COLUMN_GUIDE: Array<{
-  field: EmpleadoImportTemplateHeader;
+  field: EmpleadoImportField;
   label: string;
   required: string;
   example: string;
@@ -79,7 +82,7 @@ const COLUMN_GUIDE: Array<{
     notes: "Nombre y apellidos del empleado.",
   },
   {
-    field: "email",
+    field: "correo",
     label: "Correo electrónico",
     required: "Sí",
     example: "empleado@empresa.com",
@@ -96,8 +99,9 @@ const COLUMN_GUIDE: Array<{
     field: "salario",
     label: "Salario mensual",
     required: "Sí",
-    example: "2500000",
-    notes: "Valor numérico en pesos colombianos, sin separadores.",
+    example: "2.500.000",
+    notes:
+      "Pesos colombianos. La columna formatea miles/millones al digitar (ej. 2500000 → 2.500.000).",
   },
   {
     field: "tipo_contrato",
@@ -114,7 +118,7 @@ const COLUMN_GUIDE: Array<{
     notes: "Reemplace AAAA-MM-DD por la fecha real (ej. 2025-03-01).",
   },
   {
-    field: "banco",
+    field: "banco_id",
     label: "Entidad financiera",
     required: "Sí",
     example: "BBVA Colombia",
@@ -169,6 +173,25 @@ function applyTextFormatToColumns(
       applyTextFormat(worksheet, rowIndex, [columnIndex]);
     }
   });
+}
+
+/** Miles/millones (Excel usa #,##0; en es-CO se ve como 2.000.000). */
+const SALARIO_COLUMN_NUM_FMT = "#,##0";
+
+function applySalarioNumberFormat(
+  worksheet: ExcelJS.Worksheet,
+  rowCount: number,
+) {
+  const columnIndex = columnIndexForField("salario");
+  const column = worksheet.getColumn(columnIndex);
+  column.numFmt = SALARIO_COLUMN_NUM_FMT;
+  column.alignment = { horizontal: "right", vertical: "middle" };
+
+  for (let rowIndex = 2; rowIndex <= rowCount; rowIndex += 1) {
+    const cell = worksheet.getCell(rowIndex, columnIndex);
+    cell.numFmt = SALARIO_COLUMN_NUM_FMT;
+    cell.alignment = { horizontal: "right", vertical: "middle" };
+  }
 }
 
 function styleHeaderRow(worksheet: ExcelJS.Worksheet, columnCount: number) {
@@ -232,31 +255,62 @@ function styleDataRow(
   }
 }
 
-function columnIndexForHeader(header: EmpleadoImportTemplateHeader): number {
-  return EMPLEADO_IMPORT_TEMPLATE_HEADERS.indexOf(header) + 1;
+function columnIndexForField(field: EmpleadoImportField): number {
+  return getEmpleadoImportColumnIndexByField(field) + 1;
 }
 
-function computeEmpleadoImportListRanges(
+/**
+ * Columnas ocultas en «Nomina» con las fuentes de los desplegables.
+ * Excel Online no resuelve validaciones que apuntan a otra hoja (p.ej. Listas).
+ */
+const NOMINA_LIST_SOURCE_START_COLUMN = 40;
+
+function writeNominaCatalogListSources(
+  worksheet: ExcelJS.Worksheet,
   options?: EmpleadoImportTemplateOptions,
 ): EmpleadoImportListRanges {
-  const sheetName = getEmpleadoImportListSheetName();
   const bancos = resolveEmpleadoImportBancoNames(options);
+  const bancosCol = NOMINA_LIST_SOURCE_START_COLUMN;
+  const tipoDocumentoCol = NOMINA_LIST_SOURCE_START_COLUMN + 1;
+  const tipoContratoCol = NOMINA_LIST_SOURCE_START_COLUMN + 2;
+  const tipoCuentaCol = NOMINA_LIST_SOURCE_START_COLUMN + 3;
+
+  bancos.forEach((nombre, index) => {
+    worksheet.getCell(index + 1, bancosCol).value = nombre;
+  });
+
+  EMPLEADO_IMPORT_DOCUMENT_TYPES.forEach((value, index) => {
+    worksheet.getCell(index + 1, tipoDocumentoCol).value = value;
+  });
+
+  EMPLEADO_IMPORT_CONTRACT_TYPES.forEach((value, index) => {
+    worksheet.getCell(index + 1, tipoContratoCol).value = value;
+  });
+
+  EMPLEADO_IMPORT_ACCOUNT_TYPES.forEach((value, index) => {
+    worksheet.getCell(index + 1, tipoCuentaCol).value = value;
+  });
+
+  for (let column = bancosCol; column <= tipoCuentaCol; column += 1) {
+    worksheet.getColumn(column).hidden = true;
+    worksheet.getColumn(column).width = 18;
+  }
 
   return {
-    bancos: buildExcelListRange(sheetName, 1, bancos.length),
+    bancos: buildExcelListRange(null, bancosCol, bancos.length),
     tipoDocumento: buildExcelListRange(
-      sheetName,
-      2,
+      null,
+      tipoDocumentoCol,
       EMPLEADO_IMPORT_DOCUMENT_TYPES.length,
     ),
     tipoContrato: buildExcelListRange(
-      sheetName,
-      3,
+      null,
+      tipoContratoCol,
       EMPLEADO_IMPORT_CONTRACT_TYPES.length,
     ),
     tipoCuenta: buildExcelListRange(
-      sheetName,
-      4,
+      null,
+      tipoCuentaCol,
       EMPLEADO_IMPORT_ACCOUNT_TYPES.length,
     ),
   };
@@ -296,7 +350,7 @@ function applyNominaCatalogValidations(
 
   applyExcelListValidation(
     worksheet,
-    columnIndexForHeader("banco"),
+    columnIndexForField("banco_id"),
     listRanges.bancos,
     "Seleccione el banco o plataforma de la lista (nombre exacto).",
     firstDataRow,
@@ -305,7 +359,7 @@ function applyNominaCatalogValidations(
 
   applyExcelListValidation(
     worksheet,
-    columnIndexForHeader("tipo_documento"),
+    columnIndexForField("tipo_documento"),
     listRanges.tipoDocumento,
     "Seleccione el tipo de documento: cc, ce, ti o pas.",
     firstDataRow,
@@ -314,7 +368,7 @@ function applyNominaCatalogValidations(
 
   applyExcelListValidation(
     worksheet,
-    columnIndexForHeader("tipo_contrato"),
+    columnIndexForField("tipo_contrato"),
     listRanges.tipoContrato,
     "Seleccione el tipo de contrato de la lista.",
     firstDataRow,
@@ -323,7 +377,7 @@ function applyNominaCatalogValidations(
 
   applyExcelListValidation(
     worksheet,
-    columnIndexForHeader("tipo_cuenta"),
+    columnIndexForField("tipo_cuenta"),
     listRanges.tipoCuenta,
     "Seleccione ahorros o corriente.",
     firstDataRow,
@@ -332,7 +386,7 @@ function applyNominaCatalogValidations(
 
   applyExcelColumnInputHint(
     worksheet,
-    columnIndexForHeader("fecha_ingreso"),
+    columnIndexForField("fecha_ingreso"),
     `Reemplace ${EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER} por la fecha real (ej. 2025-03-01).`,
     firstDataRow,
     lastDataRow,
@@ -344,7 +398,7 @@ function applyFechaIngresoPlaceholderStyle(
   firstDataRow: number,
   lastDataRow: number,
 ) {
-  const columnIndex = columnIndexForHeader("fecha_ingreso");
+  const columnIndex = columnIndexForField("fecha_ingreso");
 
   for (let rowIndex = firstDataRow; rowIndex <= lastDataRow; rowIndex += 1) {
     const cell = worksheet.getCell(rowIndex, columnIndex);
@@ -361,7 +415,7 @@ function applyFechaIngresoPlaceholderStyle(
 
 function buildNominaWorksheet(
   workbook: ExcelJS.Workbook,
-  listRanges: EmpleadoImportListRanges,
+  options?: EmpleadoImportTemplateOptions,
 ) {
   const worksheet = workbook.addWorksheet("Nomina", {
     views: [{ state: "frozen", ySplit: 1 }],
@@ -371,7 +425,7 @@ function buildNominaWorksheet(
   const matrix = buildEmpleadoImportTemplateMatrix();
   worksheet.addRows(matrix);
 
-  const columnWidths = [14, 16, 32, 28, 14, 14, 18, 16, 22, 14, 18];
+  const columnWidths = [18, 18, 32, 28, 14, 18, 18, 16, 22, 14, 18];
   columnWidths.forEach((width, index) => {
     worksheet.getColumn(index + 1).width = width;
   });
@@ -392,6 +446,9 @@ function buildNominaWorksheet(
     EMPLEADO_IMPORT_TEXT_COLUMN_INDEXES,
     matrix.length,
   );
+  applySalarioNumberFormat(worksheet, matrix.length);
+
+  const listRanges = writeNominaCatalogListSources(worksheet, options);
 
   worksheet.autoFilter = {
     from: { row: 1, column: 1 },
@@ -456,30 +513,27 @@ function buildInstructionsWorksheet(
   });
 
   const guideHeaderRow = sheet.getRow(10);
-  ["Campo técnico", "Descripción", "Obligatorio", "Ejemplo", "Notas"].forEach(
-    (label, index) => {
-      const cell = guideHeaderRow.getCell(index + 1);
-      cell.value = label;
-      cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: HEADER_FG } };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: BRAND_PRIMARY },
-      };
-      cell.alignment = { vertical: "middle", horizontal: "center" };
-    },
-  );
+  ["Columna", "Obligatorio", "Ejemplo", "Notas"].forEach((label, index) => {
+    const cell = guideHeaderRow.getCell(index + 1);
+    cell.value = label;
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: HEADER_FG } };
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: BRAND_PRIMARY },
+    };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+  });
   guideHeaderRow.height = 26;
 
   COLUMN_GUIDE.forEach((column, index) => {
     const row = sheet.getRow(11 + index);
-    row.getCell(1).value = column.field;
-    row.getCell(2).value = column.label;
-    row.getCell(3).value = column.required;
-    row.getCell(4).value = column.example;
-    row.getCell(5).value = column.notes;
+    row.getCell(1).value = column.label;
+    row.getCell(2).value = column.required;
+    row.getCell(3).value = column.example;
+    row.getCell(4).value = column.notes;
 
-    for (let col = 1; col <= 5; col += 1) {
+    for (let col = 1; col <= 4; col += 1) {
       const cell = row.getCell(col);
       cell.font = { name: "Calibri", size: 10, color: { argb: "FF334155" } };
       cell.alignment = { vertical: "top", wrapText: true };
@@ -502,11 +556,10 @@ function buildInstructionsWorksheet(
     row.height = 28;
   });
 
-  sheet.getColumn(1).width = 18;
-  sheet.getColumn(2).width = 24;
-  sheet.getColumn(3).width = 12;
-  sheet.getColumn(4).width = 22;
-  sheet.getColumn(5).width = 48;
+  sheet.getColumn(1).width = 24;
+  sheet.getColumn(2).width = 12;
+  sheet.getColumn(3).width = 22;
+  sheet.getColumn(4).width = 48;
 
   const syntaxStartRow = 11 + COLUMN_GUIDE.length + 2;
   sheet.mergeCells(`A${syntaxStartRow}:F${syntaxStartRow}`);
@@ -527,11 +580,12 @@ function buildInstructionsWorksheet(
   sheet.getRow(syntaxStartRow).height = 26;
 
   const syntaxTips = [
-    "• documento, numero_cuenta y celular: use las columnas en formato texto. No pegue números desde calculadora sin formato.",
+    "• Número de documento, Número de cuenta y Celular: use formato texto. No pegue números desde calculadora sin formato.",
     "• Si Excel muestra 1014261059.0 o 3112938473.0, el sistema rechazará la fila. Escriba solo dígitos (ej. 1014261059).",
-    "• tipo_documento en minúsculas: cc, ce, ti, pas.",
-    "• fecha_ingreso en formato AAAA-MM-DD (ej. 2025-03-01).",
-    "• banco: copie el nombre exacto de la lista inferior. «BBVA» no es válido; use «BBVA Colombia».",
+    "• Salario mensual: digite el valor y Excel mostrará miles/millones (ej. 2500000 → 2.500.000).",
+    "• Tipo de documento en minúsculas: cc, ce, ti, pas.",
+    "• Fecha de ingreso en formato AAAA-MM-DD (ej. 2025-03-01).",
+    "• Entidad financiera: copie el nombre exacto de la lista inferior. «BBVA» no es válido; use «BBVA Colombia».",
   ];
 
   syntaxTips.forEach((tip, index) => {
@@ -546,7 +600,8 @@ function buildInstructionsWorksheet(
   const banksStartRow = syntaxStartRow + syntaxTips.length + 3;
   sheet.mergeCells(`A${banksStartRow}:F${banksStartRow}`);
   const banksTitle = sheet.getCell(`A${banksStartRow}`);
-  banksTitle.value = "Bancos y plataformas aceptados (nombre exacto en columna banco)";
+  banksTitle.value =
+    "Bancos y plataformas aceptados (nombre exacto en columna Entidad financiera)";
   banksTitle.font = {
     name: "Calibri",
     size: 12,
@@ -578,8 +633,7 @@ export async function buildEmpleadoImportTemplateBuffer(
   workbook.modified = new Date();
   workbook.company = "Cerebiia";
 
-  const listRanges = computeEmpleadoImportListRanges(options);
-  buildNominaWorksheet(workbook, listRanges);
+  buildNominaWorksheet(workbook, options);
   buildListasWorksheet(workbook, options);
   buildInstructionsWorksheet(workbook, options);
 

@@ -5,25 +5,91 @@ import type { CreateEmpleadoFormValues } from "@/shared/validations/empleado.sch
 export type EmpleadoImportField = keyof CreateEmpleadoFormValues;
 
 /**
- * Encabezados oficiales alineados con el parser del backend (POST /empleados/cargar-nomina/).
- * Orden igual al formulario «Nuevo empleado»: datos personales y luego laborales.
+ * Definición única de columnas: etiqueta humana (Excel) + clave backend (upload).
+ * El cargue convierte display → backend; el parser Django espera snake_case.
  */
-export const EMPLEADO_IMPORT_TEMPLATE_HEADERS = [
-  "tipo_documento",
-  "documento",
-  "nombre",
-  "email",
-  "celular",
-  "salario",
-  "tipo_contrato",
-  "fecha_ingreso",
-  "banco",
-  "tipo_cuenta",
-  "numero_cuenta",
-] as const;
+export const EMPLEADO_IMPORT_COLUMN_DEFS = [
+  {
+    field: "tipo_documento",
+    backend: "tipo_documento",
+    display: "Tipo de documento",
+  },
+  {
+    field: "documento",
+    backend: "documento",
+    display: "Número de documento",
+  },
+  {
+    field: "nombre",
+    backend: "nombre",
+    display: "Nombre completo",
+  },
+  {
+    field: "correo",
+    backend: "email",
+    display: "Correo electrónico",
+  },
+  {
+    field: "celular",
+    backend: "celular",
+    display: "Celular",
+  },
+  {
+    field: "salario",
+    backend: "salario",
+    display: "Salario mensual",
+  },
+  {
+    field: "tipo_contrato",
+    backend: "tipo_contrato",
+    display: "Tipo de contrato",
+  },
+  {
+    field: "fecha_ingreso",
+    backend: "fecha_ingreso",
+    display: "Fecha de ingreso",
+  },
+  {
+    field: "banco_id",
+    backend: "banco",
+    display: "Entidad financiera",
+  },
+  {
+    field: "tipo_cuenta",
+    backend: "tipo_cuenta",
+    display: "Tipo de cuenta",
+  },
+  {
+    field: "numero_cuenta",
+    backend: "numero_cuenta",
+    display: "Número de cuenta",
+  },
+] as const satisfies ReadonlyArray<{
+  field: EmpleadoImportField;
+  backend: string;
+  display: string;
+}>;
 
 export type EmpleadoImportTemplateHeader =
-  (typeof EMPLEADO_IMPORT_TEMPLATE_HEADERS)[number];
+  (typeof EMPLEADO_IMPORT_COLUMN_DEFS)[number]["display"];
+
+export type EmpleadoImportBackendHeader =
+  (typeof EMPLEADO_IMPORT_COLUMN_DEFS)[number]["backend"];
+
+/** Encabezados visibles en la plantilla Excel corporativa. */
+export const EMPLEADO_IMPORT_TEMPLATE_HEADERS: readonly EmpleadoImportTemplateHeader[] =
+  EMPLEADO_IMPORT_COLUMN_DEFS.map((column) => column.display);
+
+/**
+ * Encabezados que exige POST /empleados/cargar-nomina/ (snake_case).
+ * Solo se escriben en el archivo temporal de upload, no en la plantilla descargable.
+ */
+export const EMPLEADO_IMPORT_BACKEND_HEADERS: readonly EmpleadoImportBackendHeader[] =
+  EMPLEADO_IMPORT_COLUMN_DEFS.map((column) => column.backend);
+
+/** Alias de compatibilidad: mismas claves que el parser del backend. */
+export const EMPLEADO_IMPORT_REQUIRED_BACKEND_HEADERS =
+  EMPLEADO_IMPORT_BACKEND_HEADERS;
 
 const HEADER_ALIASES: Record<string, EmpleadoImportField> = {
   tipodocumento: "tipo_documento",
@@ -45,10 +111,12 @@ const HEADER_ALIASES: Record<string, EmpleadoImportField> = {
   movil: "celular",
   salario: "salario",
   sueldo: "salario",
+  salariomensual: "salario",
   tipocontrato: "tipo_contrato",
   tipodecontrato: "tipo_contrato",
   contrato: "tipo_contrato",
   fechaingreso: "fecha_ingreso",
+  fechadeingreso: "fecha_ingreso",
   fechaingresoempresa: "fecha_ingreso",
   ingreso: "fecha_ingreso",
   banco: "banco_id",
@@ -78,5 +146,8 @@ export function resolveEmpleadoImportField(
   return HEADER_ALIASES[normalized] ?? null;
 }
 
-export const EMPLEADO_IMPORT_REQUIRED_BACKEND_HEADERS =
-  EMPLEADO_IMPORT_TEMPLATE_HEADERS;
+export function getEmpleadoImportColumnIndexByField(
+  field: EmpleadoImportField,
+): number {
+  return EMPLEADO_IMPORT_COLUMN_DEFS.findIndex((column) => column.field === field);
+}
