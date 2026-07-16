@@ -32,7 +32,7 @@ function filterRecords(
 }
 
 function getStatusLabel(status: EmployerAdvanceAuditRecord["status"]): string {
-  if (status === "procesado") return "Procesado";
+  if (status === "procesado") return "Pagado";
   if (status === "en_curso") return "En curso";
   return "Rechazado";
 }

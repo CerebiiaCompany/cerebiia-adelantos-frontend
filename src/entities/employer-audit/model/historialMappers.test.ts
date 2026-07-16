@@ -102,4 +102,38 @@ describe("mapHistorialEmpresaToRegisteredCompanyAdvances", () => {
     );
     expect(advances[0].status).toBe("procesado");
   });
+
+  it("mapea motivo_rechazo en solicitudes rechazadas", () => {
+    const historial: HistorialSolicitudEmpresaDTO[] = [
+      {
+        id: "sol-3",
+        empleado_id: "emp-1",
+        empleado_nombre: "Hans Dieter Schmidt",
+        empleado_documento: "857493",
+        monto: "300000.00",
+        monto_neto: "276000.00",
+        tarifa_total: "24000.00",
+        numero_cuotas_snapshot: 1,
+        estado: "rechazado",
+        created_at: "2026-07-16T15:17:00-05:00",
+        decidido_por_id: null,
+        decidido_por_nombre: null,
+        decidido_en: "2026-07-16T15:20:00-05:00",
+        motivo_rechazo: "Documentación incompleta en la solicitud",
+        comprobante_pago_url: null,
+        pagado_en: null,
+      },
+    ];
+
+    const advances = mapHistorialEmpresaToRegisteredCompanyAdvances(
+      historial,
+      [],
+      "empresa-1",
+    );
+
+    expect(advances[0].status).toBe("rechazado");
+    expect(advances[0].rejectionReason).toBe(
+      "Documentación incompleta en la solicitud",
+    );
+  });
 });
