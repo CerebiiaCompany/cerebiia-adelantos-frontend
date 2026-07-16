@@ -35,6 +35,7 @@ export interface EmpleadoDTO {
   tipo_cuenta: TipoCuentaEmpleado;
   estado: EmpleadoEstado;
   empresa_id: string;
+  empresa_nombre?: string;
   saldo_disponible?: string;
   created_at: string;
   updated_at: string;
