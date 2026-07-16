@@ -253,6 +253,7 @@ export function mapToMovementRecords(
     occurredAt: advance.requestedAt,
     type: "adelanto",
     status: advance.status,
+    installments: advance.installments,
     netDisbursedAmount: advance.netDisbursedAmount,
     employeeName: advance.employeeName,
     paymentEvidenceUrl: advance.paymentEvidenceUrl ?? null,
