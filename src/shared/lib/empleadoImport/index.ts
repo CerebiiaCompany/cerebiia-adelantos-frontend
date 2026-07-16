@@ -1,8 +1,12 @@
 export {
+  EMPLEADO_IMPORT_BACKEND_HEADERS,
+  EMPLEADO_IMPORT_COLUMN_DEFS,
   EMPLEADO_IMPORT_REQUIRED_BACKEND_HEADERS,
   EMPLEADO_IMPORT_TEMPLATE_HEADERS,
+  getEmpleadoImportColumnIndexByField,
   normalizeImportHeader,
   resolveEmpleadoImportField,
+  type EmpleadoImportBackendHeader,
   type EmpleadoImportField,
   type EmpleadoImportTemplateHeader,
 } from "./empleadoImportHeaders";

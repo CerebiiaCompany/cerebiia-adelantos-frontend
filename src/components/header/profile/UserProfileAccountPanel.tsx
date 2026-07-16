@@ -70,7 +70,6 @@ export function UserProfileAccountPanel({ onBack }: UserProfileAccountPanelProps
               icon={Building2}
               label="Empresa vinculada"
               value={profile.company ?? "—"}
-              mono
             />
             <ProfileRow
               icon={User}

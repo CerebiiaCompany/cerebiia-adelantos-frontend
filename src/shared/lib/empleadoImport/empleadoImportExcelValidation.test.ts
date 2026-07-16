@@ -14,4 +14,8 @@ describe("empleadoImportExcelValidation", () => {
   it("construye rango con nombre de hoja escapado", () => {
     expect(buildExcelListRange("Listas", 1, 3)).toBe("'Listas'!$A$1:$A$3");
   });
+
+  it("construye rango en la misma hoja cuando no hay nombre", () => {
+    expect(buildExcelListRange(null, 40, 19)).toBe("$AN$1:$AN$19");
+  });
 });

@@ -124,7 +124,8 @@ export function CreateEmpleadoDialog({
   async function handleNextStep() {
     const isValid = await form.trigger([...CREATE_EMPLEADO_STEP1_FIELDS]);
     if (!isValid || documentoExists || isCheckingDocumento) return;
-    setStep(2);
+    // Diferir el cambio de paso para que el click no “aterrice” en Crear (submit).
+    window.setTimeout(() => setStep(2), 0);
   }
 
   function handleSubmit(values: CreateEmpleadoFormValues) {
@@ -151,6 +152,10 @@ export function CreateEmpleadoDialog({
     );
   }
 
+  function handleCreateClick() {
+    void form.handleSubmit(handleSubmit)();
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg rounded-xl">
@@ -166,7 +171,9 @@ export function CreateEmpleadoDialog({
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={(event) => {
+              event.preventDefault();
+            }}
             className="space-y-4"
           >
             {step === 1 ? (
@@ -221,10 +228,11 @@ export function CreateEmpleadoDialog({
                 </PrimaryActionButton>
               ) : (
                 <PrimaryActionButton
-                  type="submit"
+                  type="button"
+                  onClick={handleCreateClick}
                   disabled={!isStep2Complete}
                   loading={isPending}
-                  loadingText="Guardando..."
+                  loadingText="Creando..."
                   showArrow={false}
                   className={cn(
                     "h-11 rounded-xl px-5 text-sm font-semibold shadow-md transition-all duration-500 ease-out",

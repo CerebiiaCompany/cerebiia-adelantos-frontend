@@ -9,6 +9,7 @@ import {
   EMPLEADO_IMPORT_TEMPLATE_HEADERS,
   getEmpleadoImportListSheetName,
 } from "./empleadoImportTemplate";
+import { EMPLEADO_IMPORT_BACKEND_HEADERS } from "./empleadoImportHeaders";
 import { buildBackendNominaUploadMatrix } from "./prepareEmpleadoImportFileForUpload";
 import {
   EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER,
@@ -16,20 +17,25 @@ import {
 import { mapEmpleadoImportMatrix } from "./mapEmpleadoImportRows";
 import { parseCsvText } from "./parseCsvText";
 
+const FECHA_INGRESO_COLUMN_INDEX = EMPLEADO_IMPORT_TEMPLATE_HEADERS.indexOf(
+  "Fecha de ingreso",
+);
+
 describe("empleadoImport", () => {
-  it("genera plantilla solo con encabezados y filas en blanco", () => {
+  it("genera plantilla solo con encabezados humanizados y filas en blanco", () => {
     const matrix = buildEmpleadoImportTemplateMatrix();
 
     expect(matrix[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
     expect(matrix).toHaveLength(1 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
-    expect(matrix[0]).toContain("email");
-    expect(matrix[0][0]).toBe("tipo_documento");
+    expect(matrix[0]).toContain("Correo electrónico");
+    expect(matrix[0][0]).toBe("Tipo de documento");
+    expect(matrix[0]).not.toContain("tipo_documento");
     expect(matrix[0]).not.toContain("correo");
     expect(
       matrix[1].every(
         (cell, index) =>
           cell === "" ||
-          (EMPLEADO_IMPORT_TEMPLATE_HEADERS[index] === "fecha_ingreso" &&
+          (index === FECHA_INGRESO_COLUMN_INDEX &&
             cell === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER),
       ),
     ).toBe(true);
@@ -57,15 +63,19 @@ describe("empleadoImport", () => {
       defval: "",
     });
 
-    expect(rows[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
+    expect(rows[0]?.slice(0, EMPLEADO_IMPORT_TEMPLATE_HEADERS.length)).toEqual([
+      ...EMPLEADO_IMPORT_TEMPLATE_HEADERS,
+    ]);
     expect(rows.length).toBe(1 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
     expect(
-      rows[1]?.every(
-        (cell, index) =>
-          cell === "" ||
-          (EMPLEADO_IMPORT_TEMPLATE_HEADERS[index] === "fecha_ingreso" &&
-            cell === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER),
-      ),
+      rows[1]
+        ?.slice(0, EMPLEADO_IMPORT_TEMPLATE_HEADERS.length)
+        .every(
+          (cell, index) =>
+            cell === "" ||
+            (index === FECHA_INGRESO_COLUMN_INDEX &&
+              cell === EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER),
+        ),
     ).toBe(true);
   });
 
@@ -88,12 +98,19 @@ describe("empleadoImport", () => {
     expect(nomina?.dataValidations?.model?.G2?.type).toBe("list");
     expect(nomina?.dataValidations?.model?.I2?.type).toBe("list");
     expect(nomina?.dataValidations?.model?.J2?.type).toBe("list");
+    // Desplegables apuntan a columnas ocultas de la misma hoja (compat. Excel Online).
+    expect(nomina?.dataValidations?.model?.A2?.formulae?.[0]).toBe("$AO$1:$AO$4");
+    expect(nomina?.dataValidations?.model?.J2?.formulae?.[0]).toBe("$AQ$1:$AQ$2");
+    expect(nomina?.dataValidations?.model?.I2?.formulae?.[0]).toBe("$AN$1:$AN$2");
+    expect(nomina?.getColumn(40).hidden).toBe(true);
+    expect(nomina?.getCell(1, 40).value).toBe("Bancolombia");
+    expect(nomina?.getCell(1, 43).value).toBe("ahorros");
     expect(nomina?.getCell(2, 8).value).toBe(
       EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER,
     );
   });
 
-  it("mapea filas CSV válidas con columna email al esquema de creación", () => {
+  it("mapea filas CSV válidas con encabezados humanizados al esquema de creación", () => {
     const matrix = parseCsvText(`${EMPLEADO_IMPORT_TEMPLATE_HEADERS.join(",")}
 cc,1005026054,Melanny Yilyan Guate Restrepo,empleado@empresa.com,3001234567,1700000,indefinido,2026-01-15,Nequi,ahorros,3001234567`);
 
@@ -221,9 +238,96 @@ ppt,123456789,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_
 
     const uploadMatrix = buildBackendNominaUploadMatrix(sourceMatrix);
 
-    expect(uploadMatrix[0]).toEqual([...EMPLEADO_IMPORT_TEMPLATE_HEADERS]);
+    expect(uploadMatrix[0]).toEqual([...EMPLEADO_IMPORT_BACKEND_HEADERS]);
     expect(uploadMatrix[1]?.[1]).toBe("1002345678");
     expect(uploadMatrix[1]?.[3]).toBe("ana@empresa.com");
     expect(uploadMatrix).toHaveLength(2);
+  });
+
+  it("aplica formato de miles a la columna Salario mensual", async () => {
+    const buffer = await buildEmpleadoImportTemplateBuffer();
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer);
+
+    const nomina = workbook.getWorksheet("Nomina");
+    const salarioColIndex =
+      EMPLEADO_IMPORT_TEMPLATE_HEADERS.indexOf("Salario mensual") + 1;
+
+    expect(nomina?.getColumn(salarioColIndex).numFmt).toBe("#,##0");
+    expect(nomina?.getCell(2, salarioColIndex).numFmt).toBe("#,##0");
+  });
+
+  it("normaliza salario con separadores de miles al preparar upload", () => {
+    const sourceMatrix = [
+      [...EMPLEADO_IMPORT_TEMPLATE_HEADERS],
+      [
+        "cc",
+        "1002345678",
+        "Ana María Restrepo",
+        "ana@empresa.com",
+        "3001234567",
+        "2.500.000",
+        "fijo",
+        "2024-01-15",
+        "Bancolombia",
+        "ahorros",
+        "12345678901",
+      ],
+    ];
+
+    const uploadMatrix = buildBackendNominaUploadMatrix(sourceMatrix);
+
+    expect(uploadMatrix[1]?.[5]).toBe("2500000");
+  });
+
+  it("normaliza salario en-US (2,000,000) sin tratarlo como decimal", () => {
+    const sourceMatrix = [
+      [...EMPLEADO_IMPORT_TEMPLATE_HEADERS],
+      [
+        "cc",
+        "1002345678",
+        "Ana María Restrepo",
+        "ana@empresa.com",
+        "3001234567",
+        "2,000,000",
+        "fijo",
+        "2024-01-15",
+        "Bancolombia",
+        "ahorros",
+        "12345678901",
+      ],
+    ];
+
+    const uploadMatrix = buildBackendNominaUploadMatrix(sourceMatrix);
+
+    expect(uploadMatrix[1]?.[5]).toBe("2000000");
+  });
+
+  it("convierte encabezados humanizados a snake_case del backend al subir", () => {
+    const sourceMatrix = [
+      [...EMPLEADO_IMPORT_TEMPLATE_HEADERS],
+      [
+        "cc",
+        "1002345678",
+        "Ana María Restrepo",
+        "ana@empresa.com",
+        "3001234567",
+        "2500000",
+        "fijo",
+        "2024-01-15",
+        "Bancolombia",
+        "ahorros",
+        "12345678901",
+      ],
+    ];
+
+    const uploadMatrix = buildBackendNominaUploadMatrix(sourceMatrix);
+
+    expect(uploadMatrix[0]).toEqual([...EMPLEADO_IMPORT_BACKEND_HEADERS]);
+    expect(uploadMatrix[0]).toContain("tipo_documento");
+    expect(uploadMatrix[0]).not.toContain("Tipo de documento");
+    expect(uploadMatrix[1]?.[0]).toBe("cc");
+    expect(uploadMatrix[1]?.[3]).toBe("ana@empresa.com");
+    expect(uploadMatrix[1]?.[8]).toBe("Bancolombia");
   });
 });

@@ -127,7 +127,8 @@ export function EditEmpleadoDialog({
   async function handleNextStep() {
     const isValid = await form.trigger([...CREATE_EMPLEADO_STEP1_FIELDS]);
     if (!isValid || documentoExists || isCheckingDocumento) return;
-    setStep(2);
+    // Diferir el cambio de paso para que el click no “aterrice” en Guardar (submit).
+    window.setTimeout(() => setStep(2), 0);
   }
 
   function handleSubmit(values: CreateEmpleadoFormValues) {
@@ -157,6 +158,10 @@ export function EditEmpleadoDialog({
     );
   }
 
+  function handleSaveClick() {
+    void form.handleSubmit(handleSubmit)();
+  }
+
   if (!empleado || !defaultValues) return null;
 
   return (
@@ -174,7 +179,9 @@ export function EditEmpleadoDialog({
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(handleSubmit)}
+            onSubmit={(event) => {
+              event.preventDefault();
+            }}
             className="space-y-4"
           >
             {step === 1 ? (
@@ -229,7 +236,8 @@ export function EditEmpleadoDialog({
                 </PrimaryActionButton>
               ) : (
                 <PrimaryActionButton
-                  type="submit"
+                  type="button"
+                  onClick={handleSaveClick}
                   disabled={!isStep2Complete}
                   loading={isPending}
                   loadingText="Guardando..."
