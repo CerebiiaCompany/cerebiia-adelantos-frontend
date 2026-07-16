@@ -21,7 +21,7 @@ import {
   type RegisteredCompanyAdvance,
 } from "@/entities/employer-audit";
 import { formatCOP } from "@/shared/lib";
-import { downloadCsvFile } from "@/shared/lib/csv";
+import { downloadBrandedExcelReport } from "@/shared/lib/excelReport";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useEmployerPayrollClosure } from "../../model/useEmployerAuditData";
@@ -112,54 +112,61 @@ export function PayrollClosureView() {
     });
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!snapshot.employeeSummaries.length) {
       toast.info("No hay datos de nómina para exportar.");
       return;
     }
 
-    const rows: (string | number)[][] = [
-      [
-        "Empleado",
-        "Documento",
-        "Cantidad de adelantos",
-        "Adelantos",
-        "Comisiones",
-        "Cuotas del mes",
-        "Total a descontar",
-      ],
-      ...snapshot.employeeSummaries.map((summary) => [
-        summary.employeeName,
-        summary.employeeDocument,
-        summary.advancesCount,
-        summary.advancesTotal,
-        summary.feesTotal,
-        summary.loanInstallmentsTotal,
-        summary.grandTotal,
-      ]),
-      [],
-      [
-        "Total acumulado nómina",
-        "",
-        "",
-        "",
-        "",
-        "",
-        snapshot.totalPayrollDeductions,
-      ],
-      [
-        "Reembolso proveedor",
-        "",
-        "",
-        "",
-        "",
-        "",
-        snapshot.providerReimbursement,
-      ],
-    ];
-
-    downloadCsvFile(`retenciones-nomina-${snapshot.monthKey}`, rows);
-    toast.success("Reporte de nómina exportado correctamente.");
+    try {
+      await downloadBrandedExcelReport({
+        filename: `retenciones-nomina-${snapshot.monthKey}`,
+        sheetName: "Retenciones",
+        headers: [
+          "Empleado",
+          "Documento",
+          "Cantidad de adelantos",
+          "Valor de adelantos",
+          "Comisión (descontada al empleado)",
+          "Cuotas del mes",
+          "Total a descontar",
+        ],
+        rows: snapshot.employeeSummaries.map((summary) => [
+          summary.employeeName,
+          summary.employeeDocument,
+          summary.advancesCount,
+          summary.advancesTotal,
+          summary.feesTotal,
+          summary.loanInstallmentsTotal,
+          summary.grandTotal,
+        ]),
+        currencyColumnIndexes: [3, 4, 5, 6],
+        columnWidths: [28, 16, 18, 18, 28, 16, 18],
+        footerRows: [
+          [
+            "Total acumulado nómina",
+            "",
+            "",
+            "",
+            "",
+            "",
+            snapshot.totalPayrollDeductions,
+          ],
+          [
+            "Reembolso proveedor",
+            "",
+            "",
+            "",
+            "",
+            "",
+            snapshot.providerReimbursement,
+          ],
+        ],
+      });
+      toast.success("Reporte Excel de nómina exportado correctamente.");
+    } catch {
+      toast.error("No se pudo exportar el reporte Excel.");
+    }
   };
 
   if (isLoading) {
@@ -243,7 +250,7 @@ export function PayrollClosureView() {
           </div>
           <ExportReportButton
             onClick={handleExport}
-            label="Exportar nómina (CSV)"
+            label="Exportar nómina (Excel)"
           />
         </div>
 

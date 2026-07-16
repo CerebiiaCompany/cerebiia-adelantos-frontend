@@ -40,6 +40,8 @@ export interface EmployerMovementRecord {
   occurredAt: string;
   type: EmployerMovementType;
   status: EmployerAdvanceAuditStatus;
+  /** Cantidad de cuotas de la solicitud. */
+  installments: number;
   netDisbursedAmount: number;
   employeeName: string;
   paymentEvidenceUrl: string | null;

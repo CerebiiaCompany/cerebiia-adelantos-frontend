@@ -172,6 +172,7 @@ describe("employer audit mappers", () => {
     const movements = mapToMovementRecords(sampleAdvances);
     expect(movements).toHaveLength(2);
     expect(movements[0].netDisbursedAmount).toBe(892_000);
+    expect(movements[0].installments).toBe(3);
     expect(movements[0].status).toBeDefined();
     expect(movements[0].paymentEvidenceUrl).toBe(
       "https://cdn.example.com/comprobante.pdf",

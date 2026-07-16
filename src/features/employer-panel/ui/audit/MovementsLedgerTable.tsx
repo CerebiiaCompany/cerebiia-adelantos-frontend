@@ -30,7 +30,7 @@ import type {
 } from "@/entities/employer-audit";
 import { AdvancePaymentEvidenceDialog } from "@/features/advance/ui/AdvancePaymentEvidenceDialog";
 import { formatCOP } from "@/shared/lib";
-import { downloadCsvFile } from "@/shared/lib/csv";
+import { downloadBrandedExcelReport } from "@/shared/lib/excelReport";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_MOVEMENT_LEDGER_FILTERS,
@@ -99,37 +99,47 @@ export function MovementsLedgerTable() {
     [data, search, filters],
   );
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!filteredRecords.length) {
       toast.info("No hay movimientos para exportar.");
       return;
     }
 
-    const rows: (string | number)[][] = [
-      [
-        "ID Transferencia",
-        "Fecha/Hora",
-        "Tipo",
-        "Estado",
-        "Evidencia",
-        "Motivo",
-        "Empleado",
-        "Monto Neto Desembolsado",
-      ],
-      ...filteredRecords.map((record) => [
-        record.transferId,
-        formatDateTime(record.occurredAt),
-        record.type === "adelanto" ? "Adelanto" : "Cuota",
-        getMovementStatusLabel(record.status),
-        record.paymentEvidenceUrl ?? "",
-        record.status === "rechazado" ? (record.rejectionReason ?? "") : "",
-        record.employeeName,
-        record.netDisbursedAmount,
-      ]),
-    ];
-
-    downloadCsvFile("historial-movimientos-cerebiia", rows);
-    toast.success("Reporte exportado correctamente.");
+    try {
+      await downloadBrandedExcelReport({
+        filename: "historial-movimientos-cerebiia",
+        sheetName: "Movimientos",
+        headers: [
+          "Código de transferencia",
+          "Fecha y hora",
+          "Tipo de movimiento",
+          "Estado",
+          "Cantidad de cuotas",
+          "Evidencia",
+          "Motivo",
+          "Empleado",
+          "Valor neto transferido",
+        ],
+        rows: filteredRecords.map((record) => [
+          record.transferId,
+          formatDateTime(record.occurredAt),
+          record.type === "adelanto" ? "Adelanto" : "Cuota",
+          getMovementStatusLabel(record.status),
+          record.installments,
+          record.paymentEvidenceUrl ?? "No disponible",
+          record.status === "rechazado"
+            ? (record.rejectionReason ?? "")
+            : "—",
+          record.employeeName,
+          record.netDisbursedAmount,
+        ]),
+        currencyColumnIndexes: [8],
+        columnWidths: [18, 22, 18, 12, 16, 28, 28, 28, 20],
+      });
+      toast.success("Reporte Excel exportado correctamente.");
+    } catch {
+      toast.error("No se pudo exportar el reporte Excel.");
+    }
   };
 
   const emptyMessage =
@@ -253,7 +263,7 @@ export function MovementsLedgerTable() {
 
         {!isLoading && !isError ? (
           <div className="overflow-x-auto rounded-xl border border-border/80">
-            <table className="w-full min-w-[1080px] text-sm">
+            <table className="w-full min-w-[1160px] text-sm">
               <thead>
                 <tr className="border-b border-border bg-secondary/50 text-left">
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
@@ -267,6 +277,9 @@ export function MovementsLedgerTable() {
                   </th>
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
                     Estado
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-muted-foreground">
+                    Cantidad de cuotas
                   </th>
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
                     Evidencia
@@ -285,7 +298,7 @@ export function MovementsLedgerTable() {
               <tbody>
                 {filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-10 text-center">
+                    <td colSpan={9} className="px-4 py-10 text-center">
                       <div className="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
                         <BookOpen className="h-8 w-8 opacity-60" />
                         <p className="text-sm">{emptyMessage}</p>
@@ -326,6 +339,9 @@ export function MovementsLedgerTable() {
                           label={getMovementStatusLabel(record.status)}
                           tone={getMovementStatusTone(record.status)}
                         />
+                      </td>
+                      <td className="px-4 py-3.5 tabular-nums text-foreground">
+                        {record.installments}
                       </td>
                       <td className="px-4 py-3.5">
                         {record.paymentEvidenceUrl ? (

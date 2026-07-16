@@ -10,7 +10,7 @@ type ExportReportButtonProps = {
 
 export function ExportReportButton({
   onClick,
-  label = "Exportar Reporte (CSV)",
+  label = "Exportar reporte (Excel)",
   className,
   disabled = false,
 }: ExportReportButtonProps) {
