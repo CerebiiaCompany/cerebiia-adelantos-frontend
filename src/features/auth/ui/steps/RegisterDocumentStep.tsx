@@ -323,8 +323,9 @@ export function RegisterDocumentStep({
             role="status"
             className="animate-stagger-up stagger-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground"
           >
-            Documento verificado. No encontramos un pre-registro asociado. Pulsa
-            Continuar para completar tu registro.
+            Documento verificado. No encontramos un pre-registro con ese tipo y
+            número de documento. Usa el mismo tipo de documento con el que
+            estás en nómina, o pulsa Continuar para completar tu registro.
           </div>
         )}
 

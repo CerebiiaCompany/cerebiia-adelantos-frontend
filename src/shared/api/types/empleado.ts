@@ -68,6 +68,7 @@ export type UpdateEmpleadoRequest = CreateEmpleadoRequest;
 
 export interface VerificarPreRegistroRequest {
   documento: string;
+  tipo_documento: string;
 }
 
 export interface VerificarPreRegistroResponse {
@@ -78,6 +79,7 @@ export interface VerificarPreRegistroResponse {
 
 export interface ActivarEmpleadoRequest {
   documento: string;
+  tipo_documento: string;
   password: string;
 }
 
