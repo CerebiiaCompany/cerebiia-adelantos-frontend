@@ -5,7 +5,6 @@ import {
   mapToAdvanceAuditRecords,
   mapToLoanInstallmentRecords,
   mapToMovementRecords,
-  buildPayrollClosureSnapshot,
   resolveEmpresaId,
   type RegisteredCompanyAdvance,
 } from "@/entities/employer-audit";
@@ -108,7 +107,7 @@ export function useEmployerPayrollClosure() {
     queryKey: [...EMPLOYER_AUDIT_QUERY_KEY, "payroll-closure"],
     queryFn: async () => {
       const { advances } = await fetchEmployerAdvances(queryClient);
-      return buildPayrollClosureSnapshot(advances);
+      return advances;
     },
     staleTime: 30_000,
   });
