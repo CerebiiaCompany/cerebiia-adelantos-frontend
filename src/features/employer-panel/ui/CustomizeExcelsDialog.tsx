@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ImagePlus, Palette, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,15 @@ import {
   argbToCssHex,
   buildPaletteFromHeaderColor,
   colorsToPalette,
-  paletteToColors,
   loadExcelBrandingPreferences,
-  saveExcelBrandingPreferences,
+  paletteToColors,
   type ExcelBrandTarget,
   type ExcelBrandingPreferences,
   type ExcelColorPalette,
 } from "@/shared/lib/excelBranding";
 import { EXCEL_DOCUMENT_TITLES } from "@/shared/lib/excelBrandBanner";
+import { useExcelBranding } from "../model/useExcelBranding";
+import { ApiError } from "@/shared/api/errors";
 
 function ExcelPreview({
   palette,
@@ -158,11 +159,27 @@ function ExcelPreview({
 }
 
 export function CustomizeExcelsButton() {
+  const { data, isFetching, saveBranding, isSaving, refetch } = useExcelBranding();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<ExcelBrandingPreferences>(() =>
     loadExcelBrandingPreferences(),
   );
+  const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [baselineLogoFileName, setBaselineLogoFileName] = useState<string | null>(
+    null,
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!data) return;
+    if (!open) {
+      setDraft(data);
+      setBaselineLogoFileName(data.logoFileName);
+      setPendingLogoFile(null);
+      setRemoveLogo(false);
+    }
+  }, [data, open]);
 
   const palette = useMemo(
     () =>
@@ -182,7 +199,12 @@ export function CustomizeExcelsButton() {
 
   const handleOpenChange = (next: boolean) => {
     if (next) {
-      setDraft(loadExcelBrandingPreferences());
+      const current = data ?? loadExcelBrandingPreferences();
+      setDraft(current);
+      setBaselineLogoFileName(current.logoFileName);
+      setPendingLogoFile(null);
+      setRemoveLogo(false);
+      void refetch();
     }
     setOpen(next);
   };
@@ -231,6 +253,8 @@ export function CustomizeExcelsButton() {
         toast.error("No se pudo leer el logo.");
         return;
       }
+      setPendingLogoFile(file);
+      setRemoveLogo(false);
       setDraft((prev) => ({
         ...prev,
         logoDataUrl: result,
@@ -241,14 +265,34 @@ export function CustomizeExcelsButton() {
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    saveExcelBrandingPreferences(draft);
-    toast.success("Estilo de Excels guardado. Se aplicará en las próximas descargas.");
-    setOpen(false);
+  const handleSave = async () => {
+    try {
+      const shouldRemoveLogo =
+        removeLogo ||
+        (!draft.logoDataUrl && Boolean(baselineLogoFileName));
+
+      await saveBranding({
+        prefs: draft,
+        pendingLogoFile: shouldRemoveLogo ? null : pendingLogoFile,
+        removeLogo: shouldRemoveLogo,
+      });
+      toast.success(
+        "Estilo de Excels guardado en la cuenta. Se aplicará en cualquier dispositivo.",
+      );
+      setOpen(false);
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : "No se pudo guardar la personalización. Intenta de nuevo.";
+      toast.error(message);
+    }
   };
 
   const handleReset = () => {
     setDraft({ ...DEFAULT_EXCEL_BRANDING });
+    setPendingLogoFile(null);
+    setRemoveLogo(Boolean(baselineLogoFileName));
     toast.message("Borrador restaurado al estilo Cerebiia. Guarda para aplicar.");
   };
 
@@ -268,8 +312,8 @@ export function CustomizeExcelsButton() {
         <DialogHeader>
           <DialogTitle>Personalizar Excels</DialogTitle>
           <DialogDescription>
-            Solo cambia colores de encabezado y logo. No modifica datos ni la
-            lógica de la plantilla de nómina ni de la liquidación al suspender.
+            Solo cambia colores de encabezado y logo. Se guarda en tu cuenta
+            (no en este dispositivo) para que persista en todos los equipos.
           </DialogDescription>
         </DialogHeader>
 
@@ -434,13 +478,15 @@ export function CustomizeExcelsButton() {
                   variant="ghost"
                   size="sm"
                   className="gap-1.5 text-destructive"
-                  onClick={() =>
+                  onClick={() => {
+                    setPendingLogoFile(null);
+                    setRemoveLogo(true);
                     setDraft((prev) => ({
                       ...prev,
                       logoDataUrl: null,
                       logoFileName: null,
-                    }))
-                  }
+                    }));
+                  }}
                 >
                   <Trash2 className="h-4 w-4" />
                   Quitar
@@ -502,11 +548,16 @@ export function CustomizeExcelsButton() {
             <X className="mr-1.5 h-4 w-4" />
             Cancelar
           </Button>
-          <Button type="button" onClick={handleSave}>
-            Guardar estilo
+          <Button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={isSaving || isFetching}
+          >
+            {isSaving ? "Guardando…" : "Guardar estilo"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+

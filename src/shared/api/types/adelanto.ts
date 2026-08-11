@@ -132,6 +132,8 @@ export interface EmpleadoMeDTO {
   monto_maximo_adelanto: string;
   /** Monto que aún puede solicitar (fuente de verdad del backend). */
   saldo_disponible?: string;
+  /** Aceptó T&C + tratamiento de datos al activar cuenta. */
+  acepto_tratamiento_datos_y_terminos?: boolean;
   empresa_nombre?: string;
   empresa?: EmpleadoEmpresaSummaryDTO;
   tarifa_fija_por_cuota?: string;
@@ -142,4 +144,63 @@ export interface EmpleadoMeDTO {
   numero_cuenta?: string;
   tipo_cuenta?: string;
   fecha_ingreso?: string;
+}
+
+/** Detalle de cuota a descontar — GET /adelantos/empresa/referencia-nomina/ */
+export interface ReferenciaNominaDetalleDTO {
+  inicio_periodo: string;
+  fin_periodo: string;
+  numero_documento: string;
+  nombre: string;
+  apellido: string;
+  solicitud_id: string;
+  cuota_numero: number;
+  total_cuotas: number;
+  fecha_corte: string;
+  monto_a_descontar: string;
+  monto_solicitud: string;
+  tarifa_cuota: string;
+  tarifa_total_solicitud: string;
+  estado_cuota: string;
+}
+
+/** Resumen por empleado del periodo de descuentos. */
+export interface ReferenciaNominaResumenDTO {
+  inicio_periodo: string;
+  fin_periodo: string;
+  numero_documento: string;
+  nombre: string;
+  apellido: string;
+  cantidad_adelantos: number;
+  total_cuotas: number;
+  detalle_cuotas: string;
+  total_costo_servicio: string;
+  total_neto_transferido: string;
+  total_solicitado: string;
+  total_a_descontar_mes: string;
+  total_a_pagar_proveedor: string;
+}
+
+export interface ReferenciaNominaTotalesDTO {
+  cantidad_adelantos: number;
+  total_cuotas: number;
+  total_costo_servicio: string;
+  total_neto_transferido: string;
+  total_solicitado: string;
+  total_a_descontar_mes: string;
+  total_a_pagar_proveedor: string;
+}
+
+/** Respuesta de GET /adelantos/empresa/referencia-nomina/?periodo=YYYY-MM */
+export interface ReferenciaNominaDTO {
+  empresa_id: string;
+  empresa_nombre: string;
+  empresa_nit: string;
+  periodo: string;
+  inicio_periodo: string;
+  fin_periodo: string;
+  detalle: ReferenciaNominaDetalleDTO[];
+  resumen: ReferenciaNominaResumenDTO[];
+  total_a_descontar: string;
+  totales: ReferenciaNominaTotalesDTO;
 }

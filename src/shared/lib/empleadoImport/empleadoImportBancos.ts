@@ -21,4 +21,5 @@ export const EMPLEADO_IMPORT_ACCEPTED_BANKS = [
   "Nequi",
   "Daviplata",
   "Movii",
+  "Nu",
 ] as const;

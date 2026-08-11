@@ -3,11 +3,15 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AppAnimatedBackground } from "@/components/AppAnimatedBackground";
 import { NotificationPopover } from "@/components/header/NotificationPopover";
 import { UserProfilePopover } from "@/components/header/UserProfilePopover";
+import { WhatsAppSupportFab } from "@/components/WhatsAppSupportFab";
 import { EMPLOYER_SIDEBAR_ITEMS } from "@/components/sidebar/employerSidebarNavConfig";
 import { Outlet, useLocation } from "react-router-dom";
+import { useExcelBranding } from "@/features/employer-panel";
 
 export function EmployerLayout() {
   const location = useLocation();
+  // Hidrata personalización de Excels desde BD al entrar al panel empresa.
+  useExcelBranding();
 
   return (
     <SidebarProvider>
@@ -31,6 +35,7 @@ export function EmployerLayout() {
         >
           <Outlet />
         </div>
+        <WhatsAppSupportFab />
       </SidebarInset>
     </SidebarProvider>
   );

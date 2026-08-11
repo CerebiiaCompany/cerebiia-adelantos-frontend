@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth";
 import {
+  EmployerNominaDescuentosPanel,
   EmployerPanelUnavailableNotice,
   useEmpleadosMetricas,
   useEmployerConfig,
@@ -141,17 +142,7 @@ export default function EmployerPanelPage() {
         />
       ) : null}
 
-      <div className="glass-card glow-border rounded-xl p-6">
-        <h2 className="font-display text-lg font-semibold text-foreground">
-          Resumen operativo
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Bienvenido al panel de empresa. Desde aquí puedes auditar adelantos,
-          supervisar cuotas de préstamos, consultar el libro contable y generar
-          los reportes de retención para nómina. El monitoreo usa el historial
-          oficial de solicitudes de plantilla.
-        </p>
-      </div>
+      <EmployerNominaDescuentosPanel />
     </div>
   );
 }

@@ -196,7 +196,10 @@ describe("employer audit mappers", () => {
     );
     expect(ana?.advancesCount).toBe(1);
     expect(ana?.installments).toBe(1);
-    expect(ana?.installmentValue).toBeNull();
+    expect(ana?.installmentValue).toBe(400_000);
+    expect(ana?.installmentProgressLabel).toBe("1 de 1 cuota");
+    expect(ana?.principalTotal).toBe(400_000);
+    expect(ana?.loanInstallmentsTotal).toBe(400_000);
 
     const luis = closure.employeeSummaries.find(
       (item) => item.employeeDocument === "456",
@@ -204,6 +207,13 @@ describe("employer audit mappers", () => {
     expect(luis?.advancesCount).toBe(1);
     expect(luis?.installments).toBe(3);
     expect(luis?.installmentValue).toBe(300_000);
+    expect(luis?.installmentProgressLabel).toBe("1 de 3 cuotas");
+    expect(luis?.principalTotal).toBe(900_000);
+    expect(luis?.loanInstallmentsTotal).toBe(300_000);
+    // 8.000 total / 3 cuotas → comisión informativa del mes
+    expect(luis?.feesTotal).toBe(2_667);
+    // La comisión no entra al consolidado ni al reembolso
+    expect(closure.totalPayrollDeductions).toBe(700_000);
   });
 
   it("reembolsa al proveedor solo la cuota del mes en planes multi-cuota", () => {
@@ -224,6 +234,12 @@ describe("employer audit mappers", () => {
     expect(june.providerReimbursement).toBe(100_000);
     expect(june.totalPayrollDeductions).toBe(100_000);
     expect(june.employeeSummaries[0].advancesCount).toBe(1);
+    expect(june.employeeSummaries[0].installmentProgressLabel).toBe(
+      "1 de 2 cuotas",
+    );
+    expect(june.employeeSummaries[0].principalTotal).toBe(200_000);
+    expect(june.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
+    expect(june.employeeSummaries[0].feesTotal).toBe(4_000);
 
     const july = buildPayrollClosureSnapshot(
       advance,
@@ -232,6 +248,11 @@ describe("employer audit mappers", () => {
     expect(july.providerReimbursement).toBe(100_000);
     expect(july.totalPayrollDeductions).toBe(100_000);
     expect(july.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
+    expect(july.employeeSummaries[0].installmentProgressLabel).toBe(
+      "2 de 2 cuotas",
+    );
+    expect(july.employeeSummaries[0].principalTotal).toBe(200_000);
+    expect(july.employeeSummaries[0].feesTotal).toBe(4_000);
     // No se “realizó” en julio: solo se cobra la cuota 2.
     expect(july.employeeSummaries[0].advancesCount).toBe(0);
 
@@ -253,8 +274,10 @@ describe("employer audit mappers", () => {
     expect(closure.employeeSummaries[0].advancesCount).toBe(1);
     expect(closure.employeeSummaries[0].installments).toBe(1);
     expect(closure.employeeSummaries[0].advancesTotal).toBe(100_000);
-    expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(0);
-    expect(closure.totalPayrollDeductions).toBe(100_000);
+    expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
+    expect(closure.employeeSummaries[0].installmentProgressLabel).toBe(
+      "1 de 1 cuota",
+    );    expect(closure.totalPayrollDeductions).toBe(100_000);
     expect(closure.providerReimbursement).toBe(100_000);
   });
 

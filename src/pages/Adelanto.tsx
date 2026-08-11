@@ -76,8 +76,11 @@ export default function Adelanto() {
     empleadoMe?.nombre?.trim() || profile?.fullName || "Empleado";
   const advanceAvailability = useMemo(() => getAdvanceAvailabilityInfo(), []);
   const isAdvanceWindowOpen = advanceAvailability.canRequestAdvance;
+  const hasAcceptedTerms =
+    empleadoMe?.acepto_tratamiento_datos_y_terminos !== false;
   const canRequest =
     isAdvanceWindowOpen &&
+    hasAcceptedTerms &&
     !solicitudActiva &&
     maxAmount >= ADVANCE_MIN_AMOUNT &&
     amount >= ADVANCE_MIN_AMOUNT &&
@@ -158,6 +161,8 @@ export default function Adelanto() {
       >
         {!isAdvanceWindowOpen ? (
           "No puedes adelantar hoy"
+        ) : !hasAcceptedTerms ? (
+          "Debes aceptar términos y tratamiento de datos"
         ) : solicitudActiva ? (
           "Tienes una solicitud en curso"
         ) : canRequest ? (

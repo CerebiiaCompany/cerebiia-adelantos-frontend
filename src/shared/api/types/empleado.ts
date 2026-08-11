@@ -88,6 +88,8 @@ export interface ActivarEmpleadoRequest {
   documento: string;
   tipo_documento: string;
   password: string;
+  /** Aceptación de tratamiento de datos (obligatorias/sensibles) + T&C. */
+  acepto_tratamiento_datos_y_terminos: boolean;
   nombre?: string;
   celular?: string;
   banco_id?: string;

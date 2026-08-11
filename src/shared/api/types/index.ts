@@ -52,6 +52,9 @@ export type {
   HistorialSolicitudEmpresaDTO,
   HistorialSolicitudesEmpresaParams,
   MiSituacionFinancieraDTO,
+  ReferenciaNominaDTO,
+  ReferenciaNominaDetalleDTO,
+  ReferenciaNominaResumenDTO,
   SolicitudAdelantoDTO,
   SolicitudDetalleDTO,
   TendenciaMensualDTO,
@@ -65,6 +68,9 @@ export type {
   EmpresaEstadoDTO,
   EmpresaListItemDTO,
   EmpresasListParams,
+  ExcelBrandColorsDTO,
+  ExcelBrandingDTO,
+  UpdateExcelBrandingRequest,
 } from "./empresa";
 
 export interface ForgotPasswordRequest {

@@ -40,7 +40,10 @@ export interface ExcelBrandingPreferences {
   applyTo: ExcelBrandTarget;
 }
 
+/** @deprecated Persistencia migrada a BD; se mantiene por compatibilidad de tests/legacy. */
 export const EXCEL_BRANDING_STORAGE_KEY = "adecerebiia.excelBranding.v2";
+/** @deprecated Persistencia migrada a BD; se mantiene por compatibilidad de tests/legacy. */
+export const EXCEL_BRANDING_STORAGE_PREFIX_V3 = "adecerebiia.excelBranding.v3:";
 
 /** Paleta por defecto (AdeCerebiia / plantilla nómina actual). */
 export const DEFAULT_EXCEL_COLOR_PALETTE: ExcelColorPalette = {
@@ -173,11 +176,119 @@ export const DEFAULT_EXCEL_BRANDING: ExcelBrandingPreferences = {
   applyTo: "todos",
 };
 
+/** Caché en memoria hidratada desde la API (persistencia real = BD). */
+const runtimeExcelBrandingByOwner = new Map<string, ExcelBrandingPreferences>();
+
 function isBrowserStorageAvailable(): boolean {
   try {
     return typeof localStorage !== "undefined";
   } catch {
     return false;
+  }
+}
+
+/**
+ * Dueño de la personalización: id del usuario empresa autenticado.
+ * Cada empresa tiene su propia cuenta → branding aislado en caché de sesión.
+ */
+export function resolveExcelBrandingOwnerKey(
+  explicitOwnerKey?: string | null,
+): string | null {
+  const trimmed = explicitOwnerKey?.trim();
+  if (trimmed) return trimmed;
+
+  if (!isBrowserStorageAvailable()) return null;
+
+  try {
+    // Lectura directa de la sesión (evita acoplar a React).
+    const raw = localStorage.getItem("cerebiia_auth");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      actorType?: string;
+      user?: { id?: string; role?: string };
+    };
+    if (parsed.actorType !== "system_user") return null;
+    if (parsed.user?.role !== "empresa") return null;
+    return typeof parsed.user.id === "string" && parsed.user.id.trim()
+      ? parsed.user.id.trim()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/** @deprecated Preferencias viven en BD; solo útil para limpiar restos legacy. */
+export function getExcelBrandingStorageKey(ownerKey: string): string {
+  return `${EXCEL_BRANDING_STORAGE_PREFIX_V3}${ownerKey}`;
+}
+
+function discardLegacyLocalPreferences(ownerKey?: string | null): void {
+  if (!isBrowserStorageAvailable()) return;
+  try {
+    localStorage.removeItem(EXCEL_BRANDING_STORAGE_KEY);
+    localStorage.removeItem("adecerebiia.excelBranding.v1");
+    localStorage.removeItem("adecerebiia.excelBranding.v2.claimedBy");
+    if (ownerKey) {
+      localStorage.removeItem(getExcelBrandingStorageKey(ownerKey));
+    }
+  } catch {
+    // ignore
+  }
+}
+
+export function normalizeExcelBrandingPreferences(
+  raw: Partial<ExcelBrandingPreferences> | null | undefined,
+): ExcelBrandingPreferences {
+  const presetId =
+    typeof raw?.presetId === "string" ? raw.presetId : "cerebiia";
+  const rawApplyTo = raw?.applyTo === "ambos" ? "todos" : raw?.applyTo;
+  const applyTo: ExcelBrandTarget =
+    rawApplyTo === "nomina" ||
+    rawApplyTo === "liquidacion" ||
+    rawApplyTo === "todos"
+      ? rawApplyTo
+      : "todos";
+
+  const colors = normalizeColors(
+    raw?.colors,
+    EXCEL_COLOR_PRESETS.some((p) => p.id === presetId) ? presetId : "cerebiia",
+  );
+
+  return {
+    presetId: EXCEL_COLOR_PRESETS.some((p) => p.id === presetId)
+      ? presetId
+      : "custom",
+    colors,
+    logoDataUrl:
+      typeof raw?.logoDataUrl === "string" ? raw.logoDataUrl : null,
+    logoFileName:
+      typeof raw?.logoFileName === "string" ? raw.logoFileName : null,
+    applyTo,
+  };
+}
+
+/**
+ * Convierte una URL de logo (p. ej. S3) a data URL para ExcelJS / vista previa.
+ */
+export async function fetchLogoAsDataUrl(
+  logoUrl: string | null | undefined,
+): Promise<string | null> {
+  if (!logoUrl || !logoUrl.trim()) return null;
+  if (logoUrl.startsWith("data:image/")) return logoUrl;
+
+  try {
+    const res = await fetch(logoUrl);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
   }
 }
 
@@ -336,61 +447,53 @@ function normalizeColors(
   };
 }
 
-export function loadExcelBrandingPreferences(): ExcelBrandingPreferences {
-  if (!isBrowserStorageAvailable()) return { ...DEFAULT_EXCEL_BRANDING };
-
-  try {
-    const raw =
-      localStorage.getItem(EXCEL_BRANDING_STORAGE_KEY) ??
-      localStorage.getItem("adecerebiia.excelBranding.v1");
-    if (!raw) return { ...DEFAULT_EXCEL_BRANDING };
-    const parsed = JSON.parse(raw) as Partial<ExcelBrandingPreferences> & {
-      presetId?: string;
-    };
-
-    const presetId =
-      typeof parsed.presetId === "string" ? parsed.presetId : "cerebiia";
-    const rawApplyTo =
-      parsed.applyTo === "ambos" ? "todos" : parsed.applyTo;
-    const applyTo: ExcelBrandTarget =
-      rawApplyTo === "nomina" ||
-      rawApplyTo === "liquidacion" ||
-      rawApplyTo === "todos"
-        ? rawApplyTo
-        : "todos";
-
-    const colors = normalizeColors(
-      parsed.colors,
-      EXCEL_COLOR_PRESETS.some((p) => p.id === presetId) ? presetId : "cerebiia",
-    );
-
-    return {
-      presetId: EXCEL_COLOR_PRESETS.some((p) => p.id === presetId)
-        ? presetId
-        : "custom",
-      colors,
-      logoDataUrl:
-        typeof parsed.logoDataUrl === "string" ? parsed.logoDataUrl : null,
-      logoFileName:
-        typeof parsed.logoFileName === "string" ? parsed.logoFileName : null,
-      applyTo,
-    };
-  } catch {
+/**
+ * Lee la personalización activa en esta sesión (caché hidratada desde BD).
+ * Sin hidratar aún → defaults Cerebiia.
+ */
+export function loadExcelBrandingPreferences(
+  ownerKey?: string | null,
+): ExcelBrandingPreferences {
+  const resolvedOwner = resolveExcelBrandingOwnerKey(ownerKey);
+  if (!resolvedOwner) {
     return { ...DEFAULT_EXCEL_BRANDING };
   }
+
+  const cached = runtimeExcelBrandingByOwner.get(resolvedOwner);
+  if (cached) {
+    return { ...cached, colors: { ...cached.colors } };
+  }
+
+  discardLegacyLocalPreferences(resolvedOwner);
+  return { ...DEFAULT_EXCEL_BRANDING };
 }
 
+/**
+ * Actualiza la caché de sesión. La persistencia real es vía API → BD.
+ */
 export function saveExcelBrandingPreferences(
   prefs: ExcelBrandingPreferences,
+  ownerKey?: string | null,
 ): void {
-  if (!isBrowserStorageAvailable()) return;
-  localStorage.setItem(EXCEL_BRANDING_STORAGE_KEY, JSON.stringify(prefs));
+  const resolvedOwner = resolveExcelBrandingOwnerKey(ownerKey);
+  if (!resolvedOwner) return;
+
+  const normalized = normalizeExcelBrandingPreferences(prefs);
+  runtimeExcelBrandingByOwner.set(resolvedOwner, normalized);
+  discardLegacyLocalPreferences(resolvedOwner);
 }
 
-export function clearExcelBrandingPreferences(): void {
-  if (!isBrowserStorageAvailable()) return;
-  localStorage.removeItem(EXCEL_BRANDING_STORAGE_KEY);
-  localStorage.removeItem("adecerebiia.excelBranding.v1");
+export function clearExcelBrandingPreferences(
+  ownerKey?: string | null,
+): void {
+  const resolvedOwner = resolveExcelBrandingOwnerKey(ownerKey);
+  if (resolvedOwner) {
+    runtimeExcelBrandingByOwner.delete(resolvedOwner);
+    discardLegacyLocalPreferences(resolvedOwner);
+  } else {
+    runtimeExcelBrandingByOwner.clear();
+    discardLegacyLocalPreferences(null);
+  }
 }
 
 export type ExcelBrandDocument = "nomina" | "liquidacion" | "reporte";
@@ -455,5 +558,5 @@ export function stripDataUrlPrefix(dataUrl: string): string {
   return comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
 }
 
-/** Límite razonable para localStorage (~400 KB base64). */
+/** Límite de logo alineado con el backend (~400 KB). */
 export const EXCEL_LOGO_MAX_BYTES = 400 * 1024;

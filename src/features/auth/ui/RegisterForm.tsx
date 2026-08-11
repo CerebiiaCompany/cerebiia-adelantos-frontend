@@ -611,6 +611,8 @@ export function RegisterForm({
         documento: documentoOriginal,
         tipo_documento: tipoOriginal,
         password: values.password,
+        acepto_tratamiento_datos_y_terminos:
+          documentData.acceptMandatorySensitiveTreatment === true,
         nombre: nombreCompleto,
         celular: activationConfirm.phone,
         banco_id: activationConfirm.bankId,

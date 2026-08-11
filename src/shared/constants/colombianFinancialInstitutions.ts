@@ -60,7 +60,7 @@ export const COLOMBIAN_FINANCIAL_INSTITUTION_GROUPS: FinancialInstitutionGroup[]
         { value: "RappiPay", label: "RappiPay" },
         { value: "Mercado Pago", label: "Mercado Pago" },
         { value: "Tpaga", label: "Tpaga" },
-        { value: "Nu Colombia", label: "Nu Colombia" },
+        { value: "Nu", label: "Nu" },
         { value: "Powwi", label: "Powwi" },
         { value: "Ualá", label: "Ualá" },
       ],

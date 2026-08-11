@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useLogin } from "../model/useLogin";
 import { rememberedCredentialsStorage } from "../model/rememberedCredentialsStorage";
+import { pendingLoginCredentialsStorage } from "../model/pendingLoginCredentialsStorage";
 import {
   loginSchema,
   type LoginFormValues,
@@ -77,7 +78,10 @@ function getDefaultValues(loginType: LoginType): LoginFormValues {
 function buildFormValuesForLoginType(
   loginType: LoginType,
   savedCredentials: RememberedCredentials | null,
+  options?: { rememberMe?: boolean },
 ): LoginFormValues {
+  const rememberMe = options?.rememberMe ?? true;
+
   if (
     savedCredentials &&
     savedCredentials.loginType === loginType
@@ -87,7 +91,7 @@ function buildFormValuesForLoginType(
         loginType: "empresa",
         email: savedCredentials.identifier,
         password: savedCredentials.password,
-        rememberMe: true,
+        rememberMe,
       };
     }
 
@@ -95,7 +99,7 @@ function buildFormValuesForLoginType(
       loginType: "empleado",
       documento: savedCredentials.identifier,
       password: savedCredentials.password,
-      rememberMe: true,
+      rememberMe,
     };
   }
 
@@ -108,6 +112,8 @@ export function LoginForm() {
   const [loginType, setLoginType] = useState<LoginType>("empleado");
   const [savedCredentials, setSavedCredentials] =
     useState<RememberedCredentials | null>(null);
+  const [pendingCredentials, setPendingCredentials] =
+    useState<RememberedCredentials | null>(null);
   const { mutate: login, isPending, error } = useLogin();
 
   const form = useForm<LoginFormValues>({
@@ -119,7 +125,7 @@ export function LoginForm() {
     let cancelled = false;
 
     async function bootstrapForm() {
-      const [savedCredentials] = await Promise.all([
+      const [saved] = await Promise.all([
         rememberedCredentialsStorage.load(),
         new Promise<void>((resolve) => {
           window.setTimeout(resolve, LOGIN_BOOTSTRAP_MS);
@@ -128,11 +134,21 @@ export function LoginForm() {
 
       if (cancelled) return;
 
-      setSavedCredentials(savedCredentials);
+      // Tras activar cuenta: prefill una vez. No marca "Recordarme" hasta que el usuario lo elija.
+      const pending = pendingLoginCredentialsStorage.consume();
+      const credentialsForForm = pending ?? saved;
+      const rememberMeChecked = Boolean(saved) && !pending;
 
-      const initialLoginType = savedCredentials?.loginType ?? "empleado";
+      setSavedCredentials(saved);
+      setPendingCredentials(pending);
+
+      const initialLoginType = credentialsForForm?.loginType ?? "empleado";
       setLoginType(initialLoginType);
-      form.reset(buildFormValuesForLoginType(initialLoginType, savedCredentials));
+      form.reset(
+        buildFormValuesForLoginType(initialLoginType, credentialsForForm, {
+          rememberMe: rememberMeChecked,
+        }),
+      );
       form.clearErrors();
 
       setIsReady(true);
@@ -150,7 +166,22 @@ export function LoginForm() {
 
     setLoginType(nextType);
     setShowPassword(false);
-    form.reset(buildFormValuesForLoginType(nextType, savedCredentials));
+
+    const pendingMatch =
+      pendingCredentials && pendingCredentials.loginType === nextType
+        ? pendingCredentials
+        : null;
+    const savedMatch =
+      savedCredentials && savedCredentials.loginType === nextType
+        ? savedCredentials
+        : null;
+    const credentialsForForm = pendingMatch ?? savedMatch;
+
+    form.reset(
+      buildFormValuesForLoginType(nextType, credentialsForForm, {
+        rememberMe: Boolean(savedMatch) && !pendingMatch,
+      }),
+    );
     form.clearErrors();
   }
 
