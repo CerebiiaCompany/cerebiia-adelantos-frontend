@@ -21,6 +21,16 @@ import {
   getEmpleadoImportColumnIndexByField,
   type EmpleadoImportField,
 } from "./empleadoImportHeaders";
+import {
+  resolveExcelBrandForDocument,
+  type ExcelColorPalette,
+} from "../excelBranding";
+import {
+  applyModernExcelBrandBanner,
+  getExcelDocumentTitle,
+  stretchExcelImagesToAnchor,
+  EXCEL_LOGO_COLUMN_WIDTH,
+} from "../excelBrandBanner";
 
 export { getEmpleadoImportListSheetName, EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER } from "./empleadoImportCatalogs";
 export type { EmpleadoImportTemplateOptions } from "./empleadoImportCatalogs";
@@ -46,12 +56,8 @@ function buildBlankImportRow(): string[] {
 }
 
 const BRAND_PRIMARY = "FF3B5BDB";
-const BRAND_PRIMARY_DARK = "FF2E4A9E";
-const BRAND_ACCENT = "FF7C3AED";
-const HEADER_BG = "FF1E3A8A";
-const HEADER_FG = "FFFFFFFF";
-const ALT_ROW_BG = "FFF8FAFC";
-const BORDER_COLOR = "FFE2E8F0";
+const FALLBACK_ALT_ROW_BG = "FFF8FAFC";
+const FALLBACK_BORDER = "FFE2E8F0";
 
 const COLUMN_GUIDE: Array<{
   field: EmpleadoImportField;
@@ -163,13 +169,15 @@ function applyTextFormat(
 function applyTextFormatToColumns(
   worksheet: ExcelJS.Worksheet,
   columnIndexes: readonly number[],
-  rowCount: number,
+  firstRow: number,
+  lastRow: number,
 ) {
   columnIndexes.forEach((columnIndex) => {
     const column = worksheet.getColumn(columnIndex + 1);
     column.numFmt = "@";
 
-    for (let rowIndex = 1; rowIndex <= rowCount; rowIndex += 1) {
+    // No tocar la fila del banner (título centrado B1:K1).
+    for (let rowIndex = firstRow; rowIndex <= lastRow; rowIndex += 1) {
       applyTextFormat(worksheet, rowIndex, [columnIndex]);
     }
   });
@@ -180,22 +188,29 @@ const SALARIO_COLUMN_NUM_FMT = "#,##0";
 
 function applySalarioNumberFormat(
   worksheet: ExcelJS.Worksheet,
-  rowCount: number,
+  firstDataRow: number,
+  lastDataRow: number,
 ) {
   const columnIndex = columnIndexForField("salario");
   const column = worksheet.getColumn(columnIndex);
   column.numFmt = SALARIO_COLUMN_NUM_FMT;
-  column.alignment = { horizontal: "right", vertical: "middle" };
+  // No usar column.alignment: Excel lo aplica a toda la columna (incluido el
+  // título fusionado B1:K1) y lo empuja a la derecha.
 
-  for (let rowIndex = 2; rowIndex <= rowCount; rowIndex += 1) {
+  for (let rowIndex = firstDataRow; rowIndex <= lastDataRow; rowIndex += 1) {
     const cell = worksheet.getCell(rowIndex, columnIndex);
     cell.numFmt = SALARIO_COLUMN_NUM_FMT;
     cell.alignment = { horizontal: "right", vertical: "middle" };
   }
 }
 
-function styleHeaderRow(worksheet: ExcelJS.Worksheet, columnCount: number) {
-  const headerRow = worksheet.getRow(1);
+function styleHeaderRow(
+  worksheet: ExcelJS.Worksheet,
+  columnCount: number,
+  palette: ExcelColorPalette,
+  headerRowIndex = 1,
+) {
+  const headerRow = worksheet.getRow(headerRowIndex);
   headerRow.height = 28;
 
   for (let column = 1; column <= columnCount; column += 1) {
@@ -204,12 +219,12 @@ function styleHeaderRow(worksheet: ExcelJS.Worksheet, columnCount: number) {
       name: "Calibri",
       size: 11,
       bold: true,
-      color: { argb: HEADER_FG },
+      color: { argb: palette.headerFg },
     };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: HEADER_BG },
+      fgColor: { argb: palette.headerBg },
     };
     cell.alignment = {
       vertical: "middle",
@@ -217,10 +232,10 @@ function styleHeaderRow(worksheet: ExcelJS.Worksheet, columnCount: number) {
       wrapText: true,
     };
     cell.border = {
-      top: { style: "thin", color: { argb: BRAND_PRIMARY_DARK } },
-      bottom: { style: "medium", color: { argb: BRAND_ACCENT } },
-      left: { style: "thin", color: { argb: BRAND_PRIMARY_DARK } },
-      right: { style: "thin", color: { argb: BRAND_PRIMARY_DARK } },
+      top: { style: "thin", color: { argb: palette.primaryDark } },
+      bottom: { style: "medium", color: { argb: palette.accent } },
+      left: { style: "thin", color: { argb: palette.primaryDark } },
+      right: { style: "thin", color: { argb: palette.primaryDark } },
     };
   }
 }
@@ -230,26 +245,27 @@ function styleDataRow(
   rowIndex: number,
   columnCount: number,
   isAlternate: boolean,
+  palette: ExcelColorPalette,
 ) {
   const row = worksheet.getRow(rowIndex);
   row.height = 22;
 
   for (let column = 1; column <= columnCount; column += 1) {
     const cell = row.getCell(column);
-    cell.font = { name: "Calibri", size: 11, color: { argb: "FF1E293B" } };
+    cell.font = { name: "Calibri", size: 11, color: { argb: palette.text } };
     cell.alignment = { vertical: "middle", horizontal: "left" };
     cell.border = {
-      top: { style: "thin", color: { argb: BORDER_COLOR } },
-      bottom: { style: "thin", color: { argb: BORDER_COLOR } },
-      left: { style: "thin", color: { argb: BORDER_COLOR } },
-      right: { style: "thin", color: { argb: BORDER_COLOR } },
+      top: { style: "thin", color: { argb: palette.border } },
+      bottom: { style: "thin", color: { argb: palette.border } },
+      left: { style: "thin", color: { argb: palette.border } },
+      right: { style: "thin", color: { argb: palette.border } },
     };
 
     if (isAlternate) {
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: ALT_ROW_BG },
+        fgColor: { argb: palette.altRowBg },
       };
     }
   }
@@ -344,10 +360,9 @@ function buildListasWorksheet(
 function applyNominaCatalogValidations(
   worksheet: ExcelJS.Worksheet,
   listRanges: EmpleadoImportListRanges,
+  firstDataRow: number,
   lastDataRow: number,
 ) {
-  const firstDataRow = 2;
-
   applyExcelListValidation(
     worksheet,
     columnIndexForField("banco_id"),
@@ -413,10 +428,12 @@ function applyFechaIngresoPlaceholderStyle(
   }
 }
 
-function buildNominaWorksheet(
+async function buildNominaWorksheet(
   workbook: ExcelJS.Workbook,
   options?: EmpleadoImportTemplateOptions,
 ) {
+  const { palette, logoDataUrl } = resolveExcelBrandForDocument("nomina");
+
   const worksheet = workbook.addWorksheet("Nomina", {
     views: [{ state: "frozen", ySplit: 1 }],
     properties: { defaultRowHeight: 22 },
@@ -430,33 +447,76 @@ function buildNominaWorksheet(
     worksheet.getColumn(index + 1).width = width;
   });
 
-  styleHeaderRow(worksheet, EMPLEADO_IMPORT_TEMPLATE_HEADERS.length);
+  const logoOffset = await applyModernExcelBrandBanner({
+    workbook,
+    worksheet,
+    columnCount: EMPLEADO_IMPORT_TEMPLATE_HEADERS.length,
+    palette,
+    logoDataUrl,
+    title: getExcelDocumentTitle("nomina"),
+  });
 
-  for (let rowIndex = 2; rowIndex <= matrix.length; rowIndex += 1) {
+  // Mantener el ancho fijo de A1 tras el resto de anchos de columna.
+  worksheet.getColumn(1).width = EXCEL_LOGO_COLUMN_WIDTH;
+  const headerRowIndex = 1 + logoOffset;
+  const firstDataRow = 2 + logoOffset;
+  const lastDataRow = matrix.length + logoOffset;
+
+  styleHeaderRow(
+    worksheet,
+    EMPLEADO_IMPORT_TEMPLATE_HEADERS.length,
+    palette,
+    headerRowIndex,
+  );
+
+  for (let rowIndex = firstDataRow; rowIndex <= lastDataRow; rowIndex += 1) {
     styleDataRow(
       worksheet,
       rowIndex,
       EMPLEADO_IMPORT_TEMPLATE_HEADERS.length,
-      rowIndex % 2 === 0,
+      (rowIndex - logoOffset) % 2 === 0,
+      palette,
     );
   }
 
   applyTextFormatToColumns(
     worksheet,
     EMPLEADO_IMPORT_TEXT_COLUMN_INDEXES,
-    matrix.length,
+    headerRowIndex,
+    lastDataRow,
   );
-  applySalarioNumberFormat(worksheet, matrix.length);
+  applySalarioNumberFormat(worksheet, firstDataRow, lastDataRow);
+
+  // Reafirmar centrado del título tras formatos de columna/datos.
+  const titleMaster =
+    worksheet.getCell(1, 2).value != null
+      ? worksheet.getCell(1, 2)
+      : worksheet.getCell(1, 1);
+  titleMaster.alignment = {
+    vertical: "middle",
+    horizontal: "center",
+    wrapText: false,
+  };
 
   const listRanges = writeNominaCatalogListSources(worksheet, options);
 
   worksheet.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 1, column: EMPLEADO_IMPORT_TEMPLATE_HEADERS.length },
+    from: { row: headerRowIndex, column: 1 },
+    to: {
+      row: headerRowIndex,
+      column: EMPLEADO_IMPORT_TEMPLATE_HEADERS.length,
+    },
   };
 
-  applyNominaCatalogValidations(worksheet, listRanges, matrix.length);
-  applyFechaIngresoPlaceholderStyle(worksheet, 2, matrix.length);
+  applyNominaCatalogValidations(
+    worksheet,
+    listRanges,
+    firstDataRow,
+    lastDataRow,
+  );
+  applyFechaIngresoPlaceholderStyle(worksheet, firstDataRow, lastDataRow);
+
+  worksheet.views = [{ state: "frozen", ySplit: headerRowIndex }];
 
   return worksheet;
 }
@@ -465,6 +525,10 @@ function buildInstructionsWorksheet(
   workbook: ExcelJS.Workbook,
   options?: EmpleadoImportTemplateOptions,
 ) {
+  const { palette } = resolveExcelBrandForDocument("nomina");
+  const border = palette.border || FALLBACK_BORDER;
+  const altRow = palette.altRowBg || FALLBACK_ALT_ROW_BG;
+
   const sheet = workbook.addWorksheet("Instrucciones", {
     properties: { defaultRowHeight: 20 },
   });
@@ -476,19 +540,19 @@ function buildInstructionsWorksheet(
     name: "Calibri",
     size: 16,
     bold: true,
-    color: { argb: HEADER_FG },
+    color: { argb: palette.headerFg },
   };
   titleCell.fill = {
     type: "pattern",
     pattern: "solid",
-    fgColor: { argb: HEADER_BG },
+    fgColor: { argb: palette.headerBg },
   };
   titleCell.alignment = { vertical: "middle", horizontal: "left" };
   sheet.getRow(1).height = 36;
 
   sheet.mergeCells("A2:F2");
   sheet.getCell("A2").value =
-    "Complete la hoja «Nomina» desde la fila 2, en el mismo orden que «Nuevo empleado». Use los desplegables y reemplace AAAA-MM-DD en fecha de ingreso.";
+    "Complete la hoja «Nomina» debajo de la fila de encabezados (fila 3 si hay banner), en el mismo orden que «Nuevo empleado». Use los desplegables y reemplace AAAA-MM-DD en fecha de ingreso.";
   sheet.getCell("A2").font = {
     name: "Calibri",
     size: 11,
@@ -516,7 +580,7 @@ function buildInstructionsWorksheet(
   ["Columna", "Obligatorio", "Ejemplo", "Notas"].forEach((label, index) => {
     const cell = guideHeaderRow.getCell(index + 1);
     cell.value = label;
-    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: HEADER_FG } };
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: palette.headerFg } };
     cell.fill = {
       type: "pattern",
       pattern: "solid",
@@ -538,17 +602,17 @@ function buildInstructionsWorksheet(
       cell.font = { name: "Calibri", size: 10, color: { argb: "FF334155" } };
       cell.alignment = { vertical: "top", wrapText: true };
       cell.border = {
-        top: { style: "thin", color: { argb: BORDER_COLOR } },
-        bottom: { style: "thin", color: { argb: BORDER_COLOR } },
-        left: { style: "thin", color: { argb: BORDER_COLOR } },
-        right: { style: "thin", color: { argb: BORDER_COLOR } },
+        top: { style: "thin", color: { argb: border } },
+        bottom: { style: "thin", color: { argb: border } },
+        left: { style: "thin", color: { argb: border } },
+        right: { style: "thin", color: { argb: border } },
       };
 
       if (index % 2 === 1) {
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: ALT_ROW_BG },
+          fgColor: { argb: altRow },
         };
       }
     }
@@ -569,7 +633,7 @@ function buildInstructionsWorksheet(
     name: "Calibri",
     size: 12,
     bold: true,
-    color: { argb: HEADER_FG },
+    color: { argb: palette.headerFg },
   };
   syntaxTitle.fill = {
     type: "pattern",
@@ -606,12 +670,12 @@ function buildInstructionsWorksheet(
     name: "Calibri",
     size: 12,
     bold: true,
-    color: { argb: HEADER_FG },
+    color: { argb: palette.headerFg },
   };
   banksTitle.fill = {
     type: "pattern",
     pattern: "solid",
-    fgColor: { argb: BRAND_PRIMARY_DARK },
+    fgColor: { argb: palette.primaryDark },
   };
   banksTitle.alignment = { vertical: "middle", horizontal: "left" };
   sheet.getRow(banksStartRow).height = 26;
@@ -633,7 +697,7 @@ export async function buildEmpleadoImportTemplateBuffer(
   workbook.modified = new Date();
   workbook.company = "Cerebiia";
 
-  buildNominaWorksheet(workbook, options);
+  await buildNominaWorksheet(workbook, options);
   buildListasWorksheet(workbook, options);
   buildInstructionsWorksheet(workbook, options);
 
@@ -645,8 +709,8 @@ export async function buildEmpleadoImportTemplateBuffer(
     },
   ];
 
-  const buffer = await workbook.xlsx.writeBuffer();
-  return buffer as ArrayBuffer;
+  const raw = await workbook.xlsx.writeBuffer();
+  return stretchExcelImagesToAnchor(raw as ArrayBuffer);
 }
 
 /** @deprecated Usar buildEmpleadoImportTemplateBuffer para descarga con diseño corporativo. */

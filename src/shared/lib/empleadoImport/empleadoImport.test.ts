@@ -63,12 +63,13 @@ describe("empleadoImport", () => {
       defval: "",
     });
 
-    expect(rows[0]?.slice(0, EMPLEADO_IMPORT_TEMPLATE_HEADERS.length)).toEqual([
+    expect(String(rows[0]?.[0] ?? "")).toMatch(/Plantilla de Importación de Nómina/i);
+    expect(rows[1]?.slice(0, EMPLEADO_IMPORT_TEMPLATE_HEADERS.length)).toEqual([
       ...EMPLEADO_IMPORT_TEMPLATE_HEADERS,
     ]);
-    expect(rows.length).toBe(1 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
+    expect(rows.length).toBe(2 + EMPLEADO_IMPORT_BLANK_ROW_COUNT);
     expect(
-      rows[1]
+      rows[2]
         ?.slice(0, EMPLEADO_IMPORT_TEMPLATE_HEADERS.length)
         .every(
           (cell, index) =>
@@ -94,18 +95,18 @@ describe("empleadoImport", () => {
     expect(listas?.getCell(1, 2).value).toBe("cc");
 
     const nomina = workbook.getWorksheet("Nomina");
-    expect(nomina?.dataValidations?.model?.A2?.type).toBe("list");
-    expect(nomina?.dataValidations?.model?.G2?.type).toBe("list");
-    expect(nomina?.dataValidations?.model?.I2?.type).toBe("list");
-    expect(nomina?.dataValidations?.model?.J2?.type).toBe("list");
+    expect(nomina?.dataValidations?.model?.A3?.type).toBe("list");
+    expect(nomina?.dataValidations?.model?.G3?.type).toBe("list");
+    expect(nomina?.dataValidations?.model?.I3?.type).toBe("list");
+    expect(nomina?.dataValidations?.model?.J3?.type).toBe("list");
     // Desplegables apuntan a columnas ocultas de la misma hoja (compat. Excel Online).
-    expect(nomina?.dataValidations?.model?.A2?.formulae?.[0]).toBe("$AO$1:$AO$4");
-    expect(nomina?.dataValidations?.model?.J2?.formulae?.[0]).toBe("$AQ$1:$AQ$2");
-    expect(nomina?.dataValidations?.model?.I2?.formulae?.[0]).toBe("$AN$1:$AN$2");
+    expect(nomina?.dataValidations?.model?.A3?.formulae?.[0]).toBe("$AO$1:$AO$4");
+    expect(nomina?.dataValidations?.model?.J3?.formulae?.[0]).toBe("$AQ$1:$AQ$2");
+    expect(nomina?.dataValidations?.model?.I3?.formulae?.[0]).toBe("$AN$1:$AN$2");
     expect(nomina?.getColumn(40).hidden).toBe(true);
     expect(nomina?.getCell(1, 40).value).toBe("Bancolombia");
     expect(nomina?.getCell(1, 43).value).toBe("ahorros");
-    expect(nomina?.getCell(2, 8).value).toBe(
+    expect(nomina?.getCell(3, 8).value).toBe(
       EMPLEADO_IMPORT_FECHA_INGRESO_PLACEHOLDER,
     );
   });
@@ -244,6 +245,38 @@ ppt,123456789,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_
     expect(uploadMatrix).toHaveLength(2);
   });
 
+  it("reconoce encabezados aunque la plantilla tenga banner de marca en la fila 1", () => {
+    const sourceMatrix = [
+      ["Plantilla de Importación de Nómina", "", "", "", "", "", "", "", "", "", ""],
+      [...EMPLEADO_IMPORT_TEMPLATE_HEADERS],
+      [
+        "cc",
+        "1002345678",
+        "Ana María Restrepo",
+        "ana@empresa.com",
+        "3001234567",
+        "2500000",
+        "fijo",
+        "2024-01-15",
+        "Bancolombia",
+        "ahorros",
+        "12345678901",
+      ],
+    ];
+
+    const uploadMatrix = buildBackendNominaUploadMatrix(sourceMatrix);
+    expect(uploadMatrix[0]).toEqual([...EMPLEADO_IMPORT_BACKEND_HEADERS]);
+    expect(uploadMatrix[1]?.[1]).toBe("1002345678");
+    expect(uploadMatrix[1]?.[3]).toBe("ana@empresa.com");
+    expect(uploadMatrix).toHaveLength(2);
+
+    const { valid, errors } = mapEmpleadoImportMatrix(sourceMatrix);
+    expect(errors).toHaveLength(0);
+    expect(valid).toHaveLength(1);
+    expect(valid[0].rowNumber).toBe(3);
+    expect(valid[0].data.documento).toBe("1002345678");
+  });
+
   it("aplica formato de miles a la columna Salario mensual", async () => {
     const buffer = await buildEmpleadoImportTemplateBuffer();
     const workbook = new ExcelJS.Workbook();
@@ -254,7 +287,8 @@ ppt,123456789,Carlos Mendoza,carlos.mendoza@empresa.com,3154561230,1500000,obra_
       EMPLEADO_IMPORT_TEMPLATE_HEADERS.indexOf("Salario mensual") + 1;
 
     expect(nomina?.getColumn(salarioColIndex).numFmt).toBe("#,##0");
-    expect(nomina?.getCell(2, salarioColIndex).numFmt).toBe("#,##0");
+    // Con banner: encabezados en fila 2, datos desde fila 3.
+    expect(nomina?.getCell(3, salarioColIndex).numFmt).toBe("#,##0");
   });
 
   it("normaliza salario con separadores de miles al preparar upload", () => {

@@ -415,6 +415,8 @@ export async function downloadEmpleadoCarteraReport(
 
   await downloadBrandedExcelMultiSheetReport({
     filename: buildFilename(cartera.empleado.documento, generatedAt),
+    brandDocument: "liquidacion",
+    bannerDocument: "liquidacion",
     sheets: [
       buildCarteraDetalleSheet(cartera),
       buildCarteraResumenAdelantosSheet(cartera),

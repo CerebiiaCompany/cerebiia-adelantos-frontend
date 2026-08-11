@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildBrandedExcelWorkbook,
-  EXCEL_BRAND,
-} from "./excelReport";
+import { buildBrandedExcelWorkbook, EXCEL_BRAND } from "./excelReport";
 
 describe("excelReport", () => {
-  it("genera encabezado con estilo de plantilla de nómina", async () => {
+  it("genera banner moderno + encabezado con estilo corporativo", async () => {
     const workbook = await buildBrandedExcelWorkbook({
       filename: "reporte-test",
       sheetName: "Movimientos",
@@ -21,7 +18,11 @@ describe("excelReport", () => {
     const sheet = workbook.getWorksheet("Movimientos");
     expect(sheet).toBeTruthy();
 
-    const headerCell = sheet!.getCell(1, 1);
+    const bannerTitle =
+      sheet!.getCell(1, 1).value ?? sheet!.getCell(1, 2).value;
+    expect(String(bannerTitle)).toMatch(/Historial de Movimientos/i);
+
+    const headerCell = sheet!.getCell(2, 1);
     expect(headerCell.value).toBe("Empleado");
     expect(headerCell.font?.name).toBe(EXCEL_BRAND.fontName);
     expect(headerCell.font?.bold).toBe(true);
@@ -32,13 +33,13 @@ describe("excelReport", () => {
         : null,
     ).toBe(EXCEL_BRAND.headerBg);
 
-    const amountCell = sheet!.getCell(2, 2);
+    const amountCell = sheet!.getCell(3, 2);
     expect(amountCell.value).toBe(100_000);
     expect(amountCell.numFmt).toBe(EXCEL_BRAND.currencyFmt);
 
-    // header + 2 data + blank + 1 footer
-    expect(sheet!.rowCount).toBe(5);
-    const footerLabel = sheet!.getCell(5, 1);
+    // banner + header + 2 data + blank + 1 footer
+    expect(sheet!.rowCount).toBe(6);
+    const footerLabel = sheet!.getCell(6, 1);
     expect(footerLabel.value).toBe("Total");
     expect(footerLabel.font?.bold).toBe(true);
   });

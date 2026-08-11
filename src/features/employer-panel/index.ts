@@ -17,6 +17,7 @@ export { EmployerPanelUnavailableNotice } from "./ui/EmployerPanelUnavailableNot
 export { EmpleadosTable } from "./ui/EmpleadosTable";
 export { DeactivateEmpleadoButton } from "./ui/DeactivateEmpleadoButton";
 export { ImportEmpleadosButton } from "./ui/ImportEmpleadosButton";
+export { CustomizeExcelsButton } from "./ui/CustomizeExcelsDialog";
 export {
   CreateEmpleadoDialog,
   CreateEmpleadoButton,
