@@ -9,6 +9,11 @@ import {
   resolveEmpleadoImportField,
   type EmpleadoImportField,
 } from "./empleadoImportHeaders";
+import {
+  buildEmpleadoImportFieldIndexMap,
+  hasAllRequiredImportFields,
+  splitEmpleadoImportHeaderAndData,
+} from "./findEmpleadoImportHeaderRow";
 import { parseEmpleadoImportFile } from "./parseEmpleadoImportFile";
 
 const REQUIRED_IMPORT_FIELDS: EmpleadoImportField[] = [
@@ -25,24 +30,12 @@ const REQUIRED_IMPORT_FIELDS: EmpleadoImportField[] = [
   "numero_cuenta",
 ];
 
-function buildFieldIndexMap(headerRow: string[]): Map<EmpleadoImportField, number> {
-  const fieldIndexes = new Map<EmpleadoImportField, number>();
-
-  headerRow.forEach((header, index) => {
-    const field = resolveEmpleadoImportField(header);
-    if (field) {
-      fieldIndexes.set(field, index);
-    }
-  });
-
-  return fieldIndexes;
-}
-
 function validateImportFieldHeaders(
   fieldIndexes: Map<EmpleadoImportField, number>,
 ): void {
-  const missing = REQUIRED_IMPORT_FIELDS.filter((field) => !fieldIndexes.has(field));
+  if (hasAllRequiredImportFields(fieldIndexes)) return;
 
+  const missing = REQUIRED_IMPORT_FIELDS.filter((field) => !fieldIndexes.has(field));
   if (missing.length === 0) return;
 
   throw new Error(
@@ -75,8 +68,8 @@ export function buildBackendNominaUploadMatrix(matrix: string[][]): string[][] {
     throw new Error("El archivo está vacío.");
   }
 
-  const [headerRow, ...dataRows] = matrix;
-  const fieldIndexes = buildFieldIndexMap(headerRow);
+  const { headerRow, dataRows } = splitEmpleadoImportHeaderAndData(matrix);
+  const fieldIndexes = buildEmpleadoImportFieldIndexMap(headerRow);
   validateImportFieldHeaders(fieldIndexes);
 
   const uploadRows: string[][] = [[...EMPLEADO_IMPORT_BACKEND_HEADERS]];

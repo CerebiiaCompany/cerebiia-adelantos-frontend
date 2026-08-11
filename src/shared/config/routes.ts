@@ -13,6 +13,8 @@ export const ROUTES = {
     asistente: "/asistente",
     logros: "/logros",
     notificaciones: "/notificaciones",
+    auditorias: "/auditorias",
+    soportes: "/mi-soporte",
   },
   employer: {
     panel: "/empleador/panel",
@@ -22,6 +24,8 @@ export const ROUTES = {
     seguimientoCuotas: "/empleador/seguimiento-cuotas",
     historialMovimientos: "/empleador/historial-movimientos",
     retencionesCierres: "/empleador/retenciones-cierres",
+    auditorias: "/empleador/auditorias",
+    soportes: "/empleador/soportes",
   },
   admin: {
     panel: "/admin/panel",

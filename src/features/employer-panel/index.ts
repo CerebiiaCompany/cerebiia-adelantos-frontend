@@ -17,6 +17,7 @@ export { EmployerPanelUnavailableNotice } from "./ui/EmployerPanelUnavailableNot
 export { EmpleadosTable } from "./ui/EmpleadosTable";
 export { DeactivateEmpleadoButton } from "./ui/DeactivateEmpleadoButton";
 export { ImportEmpleadosButton } from "./ui/ImportEmpleadosButton";
+export { CustomizeExcelsButton } from "./ui/CustomizeExcelsDialog";
 export {
   CreateEmpleadoDialog,
   CreateEmpleadoButton,
@@ -27,3 +28,6 @@ export { LoanInstallmentsTable } from "./ui/audit/LoanInstallmentsTable";
 export { MovementsLedgerTable } from "./ui/audit/MovementsLedgerTable";
 export { PayrollClosureView } from "./ui/audit/PayrollClosureView";
 export { EmployerSolicitudDetalleDialog } from "./ui/audit/EmployerSolicitudDetalleDialog";
+export { ReportesDatosIncorrectosTable } from "./ui/ReportesDatosIncorrectosTable";
+export { useReportesDatoIncorrectoEmpresa } from "./model/useReportesDatoIncorrectoEmpresa";
+export { useResponderReporteDatoIncorrecto } from "./model/useResponderReporteDatoIncorrecto";

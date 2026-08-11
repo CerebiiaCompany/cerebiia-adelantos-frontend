@@ -27,6 +27,10 @@ import {
   type EmpleadoImportRowError,
   type EmpleadoImportValidRow,
 } from "./importResultMessages";
+import {
+  findEmpleadoImportHeaderRowIndex,
+  splitEmpleadoImportHeaderAndData,
+} from "./findEmpleadoImportHeaderRow";
 
 export type {
   EmpleadoImportRowError,
@@ -191,10 +195,16 @@ function rowHasImportableData(headerRow: string[], row: string[]): boolean {
   });
 }
 
-function matrixToRecords(matrix: string[][]): Record<EmpleadoImportField, string>[] {
-  if (matrix.length < 2) return [];
+function matrixToRecords(matrix: string[][]): {
+  records: Record<EmpleadoImportField, string>[];
+  headerRowIndex: number;
+} {
+  if (matrix.length < 2) {
+    return { records: [], headerRowIndex: 0 };
+  }
 
-  const [headerRow, ...dataRows] = matrix;
+  const { headerRow, dataRows, headerRowIndex } =
+    splitEmpleadoImportHeaderAndData(matrix);
   const fieldIndexes = new Map<EmpleadoImportField, number>();
 
   headerRow.forEach((header, index) => {
@@ -204,7 +214,11 @@ function matrixToRecords(matrix: string[][]): Record<EmpleadoImportField, string
     }
   });
 
-  return dataRows
+  if (fieldIndexes.size === 0) {
+    return { records: [], headerRowIndex };
+  }
+
+  const records = dataRows
     .filter((row) => rowHasImportableData(headerRow, row))
     .map((row) => {
       const record = {} as Record<EmpleadoImportField, string>;
@@ -215,6 +229,8 @@ function matrixToRecords(matrix: string[][]): Record<EmpleadoImportField, string
 
       return record;
     });
+
+  return { records, headerRowIndex };
 }
 
 function normalizeImportDocumento(tipoDocumento: string, documento: string): string {
@@ -265,14 +281,13 @@ function normalizeImportRecord(
 export function mapEmpleadoImportMatrix(
   matrix: string[][],
 ): EmpleadoImportParseResult {
-  const records = matrixToRecords(matrix);
+  const { records, headerRowIndex } = matrixToRecords(matrix);
   const valid: EmpleadoImportValidRow[] = [];
   const errors: EmpleadoImportRowError[] = [];
 
   if (records.length === 0) {
-    const hasRecognizedHeaders = matrix[0]?.some((header) =>
-      Boolean(resolveEmpleadoImportField(header)),
-    );
+    const hasRecognizedHeaders =
+      findEmpleadoImportHeaderRowIndex(matrix) >= 0;
 
     if (hasRecognizedHeaders) {
       return { valid, errors: [] };
@@ -292,7 +307,8 @@ export function mapEmpleadoImportMatrix(
   }
 
   records.forEach((record, index) => {
-    const rowNumber = index + 2;
+    // Fila Excel 1-based: banner opcional + encabezado + índice de dato.
+    const rowNumber = headerRowIndex + index + 2;
     const normalized = normalizeImportRecord(record);
     const parsed = createEmpleadoSchema.safeParse(normalized);
 

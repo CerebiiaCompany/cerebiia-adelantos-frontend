@@ -173,7 +173,9 @@ function normalizeRestoredStep(
   documentNumber: string,
 ): RegisterStepId {
   if (!documentNumber) return "document";
-  if (step === "basic-info" || step === "contact-email") return step;
+  if (step === "basic-info" || step === "contact-email" || step === "confirm-data") {
+    return step;
+  }
   if (!profile && step !== "document") return "document";
 
   if (step === "password" && !laborCertFile) {

@@ -1,9 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
+  ClipboardList,
   History,
   LayoutDashboard,
   LineChart,
+  MessageCircle,
   Sparkles,
   Trophy,
   Wallet,
@@ -92,6 +94,22 @@ export const EMPLOYEE_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
     icon: Bell,
     animation: "bell",
     moduleId: "employee.notificaciones",
+  },
+  {
+    title: "Auditorías",
+    url: ROUTES.employee.auditorias,
+    icon: ClipboardList,
+    animation: "history",
+    tooltip: "Historial de cambios en tus datos personales y bancarios.",
+    moduleId: "employee.auditorias",
+  },
+  {
+    title: "Mi soporte",
+    url: ROUTES.employee.soportes,
+    icon: MessageCircle,
+    animation: "bell",
+    tooltip: "Reportes de datos incorrectos y respuestas de tu empresa.",
+    moduleId: "employee.soportes",
   },
 ];
 

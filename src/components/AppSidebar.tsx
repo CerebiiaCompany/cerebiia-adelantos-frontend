@@ -2,6 +2,7 @@ import { PanelLeftClose } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { useAuthAccess } from "@/features/auth";
+import { useUnreadSoporteCount } from "@/features/soporte";
 import { canAccessModule } from "@/shared/config/moduleAccess";
 import {
   Sidebar,
@@ -55,6 +56,7 @@ function AppSidebarContent({
   const { state, isMobile, setOpenMobile } = useSidebar();
   const layout = useSidebarLayout();
   const { appRole } = useAuthAccess();
+  const unreadSoporteCount = useUnreadSoporteCount();
   const isDrawer = layout === "drawer";
   const collapsed = layout === "panel" && state === "collapsed";
   const location = useLocation();
@@ -128,6 +130,8 @@ function AppSidebarContent({
                   location.pathname === item.url ||
                     (!item.end && location.pathname.startsWith(item.url)),
                 );
+                const badgeCount =
+                  item.moduleId === "employee.soportes" ? unreadSoporteCount : 0;
 
                 return (
                   <SidebarMenuItem
@@ -149,7 +153,11 @@ function AppSidebarContent({
                             collapsed && "sidebar-menu-link--collapsed",
                           )}
                         >
-                          <SidebarNavLink item={item} collapsed={collapsed} />
+                          <SidebarNavLink
+                            item={item}
+                            collapsed={collapsed}
+                            badgeCount={badgeCount}
+                          />
                         </SidebarMenuButton>
                       </AppTooltip>
                     ) : (
@@ -162,7 +170,11 @@ function AppSidebarContent({
                           collapsed && "sidebar-menu-link--collapsed",
                         )}
                       >
-                        <SidebarNavLink item={item} collapsed={collapsed} />
+                        <SidebarNavLink
+                          item={item}
+                          collapsed={collapsed}
+                          badgeCount={badgeCount}
+                        />
                       </SidebarMenuButton>
                     )}
                   </SidebarMenuItem>

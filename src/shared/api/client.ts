@@ -14,6 +14,7 @@ const NO_BEARER_PATHS = [
   "/empleados/login/",
   "/empleados/verificar-pre-registro/",
   "/empleados/activar/",
+  "/empleados/bancos/",
 ] as const;
 
 const NO_REFRESH_ON_401_PATHS = [

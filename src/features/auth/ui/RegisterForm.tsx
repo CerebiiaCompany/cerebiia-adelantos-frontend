@@ -3,7 +3,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/shared/config/routes";
 import { env } from "@/shared/config/env";
-import { mapTipoDocumentoToApi } from "@/shared/api";
+import { mapTipoDocumentoFromApi, mapTipoDocumentoToApi } from "@/shared/api";
+import {
+  joinNombreCompleto,
+  splitNombreCompleto,
+} from "@/shared/api/verificarPreRegistroMappers";
 import type {
   UserProfileData,
 } from "@/shared/api/types";
@@ -12,6 +16,7 @@ import { loadColombianMajorCities } from "@/shared/constants/colombian-cities.lo
 import {
   normalizeEmail,
   sanitizeColombianPhone,
+  type ActivationConfirmFormValues,
   type BasicInfoFormValues,
   type ContactEmailFormValues,
   type ContactPhoneFormValues,
@@ -45,6 +50,7 @@ import { RegisterContactEmailStep } from "./steps/RegisterContactEmailStep";
 import { RegisterContactPhoneStep } from "./steps/RegisterContactPhoneStep";
 import { RegisterIdentityUploadStep } from "./steps/RegisterIdentityUploadStep";
 import { RegisterPasswordStep } from "./steps/RegisterPasswordStep";
+import { RegisterConfirmDataStep } from "./steps/RegisterConfirmDataStep";
 import { RegisterReviewStep } from "./steps/RegisterReviewStep";
 import { RegisterSelfieValidationStep } from "./steps/RegisterSelfieValidationStep";
 import { RegisterLaborCertificationStep } from "./steps/RegisterLaborCertificationStep";
@@ -76,7 +82,11 @@ const EXISTING_USER_STEP_ORDER: RegisterStepId[] = [
   "password",
 ];
 
-const ACTIVATION_STEP_ORDER: RegisterStepId[] = ["document", "password"];
+const ACTIVATION_STEP_ORDER: RegisterStepId[] = [
+  "document",
+  "confirm-data",
+  "password",
+];
 
 function getStepOrderIndex(
   stepId: RegisterStepId,
@@ -129,6 +139,17 @@ const EMPTY_IDENTITY_UPLOAD: IdentityUploadFormValues = {
 const EMPTY_SELFIE_FILE: File | null = null;
 const EMPTY_LABOR_CERT_FILE: File | null = null;
 
+const EMPTY_ACTIVATION_CONFIRM: ActivationConfirmFormValues = {
+  nombres: "",
+  apellidos: "",
+  documentType: "CC",
+  documentNumber: "",
+  phone: "",
+  accountType: "ahorros",
+  bankId: "",
+  accountNumber: "",
+};
+
 const STEP_HEADERS: Record<
   RegisterStepId,
   { title: string; subtitle: string }
@@ -156,6 +177,11 @@ const STEP_HEADERS: Record<
   review: {
     title: "Revisa tus datos",
     subtitle: "Confirma que tu información esté correcta antes de continuar",
+  },
+  "confirm-data": {
+    title: "Confirma tus datos",
+    subtitle:
+      "Revisa la información de tu pre-registro y corrige lo necesario",
   },
   "selfie-validation": {
     title: "Validación facial",
@@ -244,6 +270,9 @@ export function RegisterForm({
   const [laborCertFile, setLaborCertFile] = useState<File | null>(
     EMPTY_LABOR_CERT_FILE,
   );
+  const [activationConfirm, setActivationConfirm] =
+    useState<ActivationConfirmFormValues>(EMPTY_ACTIVATION_CONFIRM);
+  const [activationBankName, setActivationBankName] = useState("");
 
   const { mutate: verifyDocument, isPending: isVerifying } =
     useVerifyDocument();
@@ -302,6 +331,8 @@ export function RegisterForm({
     setIdentityUpload(EMPTY_IDENTITY_UPLOAD);
     setSelfieFile(EMPTY_SELFIE_FILE);
     setLaborCertFile(EMPTY_LABOR_CERT_FILE);
+    setActivationConfirm(EMPTY_ACTIVATION_CONFIRM);
+    setActivationBankName("");
   }, []);
 
   const handleResetRegistration = useCallback(async () => {
@@ -435,7 +466,26 @@ export function RegisterForm({
               setFlowType("activation");
               setVerificationStatus("verified-existing");
               setProfile(null);
-              goToStep("password");
+              const { nombres, apellidos } = splitNombreCompleto(response.nombre);
+              setActivationConfirm({
+                nombres,
+                apellidos,
+                documentType: mapTipoDocumentoFromApi(
+                  response.tipo_documento ||
+                    mapTipoDocumentoToApi(values.documentType),
+                ),
+                documentNumber:
+                  response.documento || values.documentNumber,
+                phone: response.celular || "",
+                accountType:
+                  response.tipo_cuenta === "corriente"
+                    ? "corriente"
+                    : "ahorros",
+                bankId: response.banco_id || "",
+                accountNumber: response.numero_cuenta || "",
+              });
+              setActivationBankName(response.banco_nombre || "");
+              goToStep("confirm-data");
               return;
             }
 
@@ -539,12 +589,39 @@ export function RegisterForm({
     goToStep("password");
   }
 
+  function handleConfirmDataSubmit(values: ActivationConfirmFormValues) {
+    setActivationConfirm(values);
+    goToStep("password");
+  }
+
   function handlePasswordSubmit(values: PasswordFormValues) {
     if (flowType === "activation") {
+      const nombreCompleto = joinNombreCompleto(
+        activationConfirm.nombres,
+        activationConfirm.apellidos,
+      );
+      const documentoOriginal = documentData.documentNumber;
+      const tipoOriginal = mapTipoDocumentoToApi(documentData.documentType);
+      const documentoConfirmado = activationConfirm.documentNumber;
+      const tipoConfirmado = mapTipoDocumentoToApi(
+        activationConfirm.documentType,
+      );
+
       activateEmpleado({
-        documento: documentData.documentNumber,
-        tipo_documento: mapTipoDocumentoToApi(documentData.documentType),
+        documento: documentoOriginal,
+        tipo_documento: tipoOriginal,
         password: values.password,
+        nombre: nombreCompleto,
+        celular: activationConfirm.phone,
+        banco_id: activationConfirm.bankId,
+        tipo_cuenta: activationConfirm.accountType,
+        numero_cuenta: activationConfirm.accountNumber,
+        ...(documentoConfirmado !== documentoOriginal
+          ? { documento_actualizado: documentoConfirmado }
+          : {}),
+        ...(tipoConfirmado !== tipoOriginal
+          ? { tipo_documento_actualizado: tipoConfirmado }
+          : {}),
       });
       return;
     }
@@ -592,8 +669,10 @@ export function RegisterForm({
         return "selfie-validation";
       case "password":
         return flowType === "activation"
-          ? "document"
+          ? "confirm-data"
           : "labor-certification";
+      case "confirm-data":
+        return "document";
       default:
         return null;
     }
@@ -669,7 +748,7 @@ export function RegisterForm({
             onVerify={handleVerify}
             onProceedNewUser={() => {
               if (flowType === "activation") {
-                goToStep("password");
+                goToStep("confirm-data");
                 return;
               }
               handleProceedNewUser();
@@ -718,6 +797,16 @@ export function RegisterForm({
           />
         )}
 
+        {step === "confirm-data" && flowType === "activation" && (
+          <RegisterConfirmDataStep
+            defaultValues={activationConfirm}
+            initialBankName={activationBankName}
+            isSubmitting={false}
+            onBack={() => goToStep("document")}
+            onSubmit={handleConfirmDataSubmit}
+          />
+        )}
+
         {step === "review" && profile && documentData.documentType && (
           <RegisterReviewStep
             documentType={documentData.documentType}
@@ -756,8 +845,7 @@ export function RegisterForm({
             isSubmitting={isRegistering || isActivating}
             onBack={() => {
               if (flowType === "activation") {
-                setVerificationStatus("idle");
-                goToStep("document");
+                goToStep("confirm-data");
                 return;
               }
               goToStep("labor-certification");
