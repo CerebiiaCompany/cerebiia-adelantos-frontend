@@ -10,6 +10,7 @@ export type RegisterStepId =
   | "contact-phone"
   | "identity-upload"
   | "review"
+  | "confirm-data"
   | "selfie-validation"
   | "labor-certification"
   | "password";
@@ -33,6 +34,7 @@ const NEW_USER_STEPS: StepConfig[] = [
 
 const ACTIVATION_STEPS: StepConfig[] = [
   { id: "document", label: "Verificación" },
+  { id: "confirm-data", label: "Confirmación" },
   { id: "password", label: "Activación" },
 ];
 

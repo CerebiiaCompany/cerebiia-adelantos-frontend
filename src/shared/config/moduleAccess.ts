@@ -9,7 +9,9 @@ export type EmployeeModuleId =
   | "employee.control"
   | "employee.asistente"
   | "employee.logros"
-  | "employee.notificaciones";
+  | "employee.notificaciones"
+  | "employee.auditorias"
+  | "employee.soportes";
 
 export type EmployerModuleId =
   | "employer.dashboard"
@@ -17,7 +19,9 @@ export type EmployerModuleId =
   | "employer.monitoreoAdelantos"
   | "employer.seguimientoCuotas"
   | "employer.historialMovimientos"
-  | "employer.retencionesCierres";
+  | "employer.retencionesCierres"
+  | "employer.auditorias"
+  | "employer.soportes";
 
 export type AppModuleId = EmployeeModuleId | EmployerModuleId;
 
@@ -61,6 +65,14 @@ export const APP_MODULES: Record<AppModuleId, ModuleDefinition> = {
     path: ROUTES.employee.notificaciones,
     roles: ["employee"],
   },
+  "employee.auditorias": {
+    path: ROUTES.employee.auditorias,
+    roles: ["employee"],
+  },
+  "employee.soportes": {
+    path: ROUTES.employee.soportes,
+    roles: ["employee"],
+  },
   "employer.dashboard": {
     path: ROUTES.employer.panel,
     roles: ["employer"],
@@ -84,6 +96,14 @@ export const APP_MODULES: Record<AppModuleId, ModuleDefinition> = {
   },
   "employer.retencionesCierres": {
     path: ROUTES.employer.retencionesCierres,
+    roles: ["employer"],
+  },
+  "employer.auditorias": {
+    path: ROUTES.employer.auditorias,
+    roles: ["employer"],
+  },
+  "employer.soportes": {
+    path: ROUTES.employer.soportes,
     roles: ["employer"],
   },
 };

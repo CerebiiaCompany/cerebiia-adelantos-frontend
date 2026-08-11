@@ -22,9 +22,8 @@ export const EXCEL_BRAND = {
 
 export type BrandedExcelCellValue = string | number | null | undefined;
 
-export type BrandedExcelReportOptions = {
-  filename: string;
-  sheetName?: string;
+export type BrandedExcelSheetOptions = {
+  sheetName: string;
   headers: string[];
   rows: BrandedExcelCellValue[][];
   /** Índices 0-based de columnas con formato moneda (#,##0). */
@@ -36,6 +35,14 @@ export type BrandedExcelReportOptions = {
    * Inserta una fila vacía separadora antes de los totales.
    */
   footerRows?: BrandedExcelCellValue[][];
+};
+
+export type BrandedExcelReportOptions = Omit<
+  BrandedExcelSheetOptions,
+  "sheetName"
+> & {
+  filename: string;
+  sheetName?: string;
 };
 
 function estimateColumnWidth(
@@ -151,22 +158,19 @@ function writeStyledRow(
   }
 }
 
-/** Construye un workbook ExcelJS con el look & feel de la plantilla de nómina. */
-export async function buildBrandedExcelWorkbook(
-  options: BrandedExcelReportOptions,
-): Promise<ExcelJS.Workbook> {
+/** Agrega una hoja con el estilo corporativo a un workbook existente. */
+export function appendBrandedSheet(
+  workbook: ExcelJS.Workbook,
+  options: BrandedExcelSheetOptions,
+): ExcelJS.Worksheet {
   const {
-    sheetName = "Reporte",
+    sheetName,
     headers,
     rows,
     currencyColumnIndexes = [],
     columnWidths,
     footerRows = [],
   } = options;
-
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = "AdeCerebiia";
-  workbook.created = new Date();
 
   const worksheet = workbook.addWorksheet(sheetName, {
     views: [{ state: "frozen", ySplit: 1 }],
@@ -206,6 +210,35 @@ export async function buildBrandedExcelWorkbook(
     });
   }
 
+  return worksheet;
+}
+
+/** Construye un workbook ExcelJS con el look & feel de la plantilla de nómina. */
+export async function buildBrandedExcelWorkbook(
+  options: BrandedExcelReportOptions,
+): Promise<ExcelJS.Workbook> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "AdeCerebiia";
+  workbook.created = new Date();
+  appendBrandedSheet(workbook, {
+    sheetName: options.sheetName ?? "Reporte",
+    headers: options.headers,
+    rows: options.rows,
+    currencyColumnIndexes: options.currencyColumnIndexes,
+    columnWidths: options.columnWidths,
+    footerRows: options.footerRows,
+  });
+  return workbook;
+}
+
+/** Workbook con varias hojas (mismo estilo corporativo). */
+export async function buildBrandedExcelMultiSheetWorkbook(
+  sheets: BrandedExcelSheetOptions[],
+): Promise<ExcelJS.Workbook> {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "AdeCerebiia";
+  workbook.created = new Date();
+  sheets.forEach((sheet) => appendBrandedSheet(workbook, sheet));
   return workbook;
 }
 
@@ -216,6 +249,16 @@ export async function downloadBrandedExcelReport(
   options: BrandedExcelReportOptions,
 ): Promise<void> {
   const workbook = await buildBrandedExcelWorkbook(options);
+  const buffer = await workbook.xlsx.writeBuffer();
+  downloadExcelBuffer(options.filename, buffer as ArrayBuffer);
+}
+
+/** Descarga un .xlsx con varias hojas corporativas. */
+export async function downloadBrandedExcelMultiSheetReport(options: {
+  filename: string;
+  sheets: BrandedExcelSheetOptions[];
+}): Promise<void> {
+  const workbook = await buildBrandedExcelMultiSheetWorkbook(options.sheets);
   const buffer = await workbook.xlsx.writeBuffer();
   downloadExcelBuffer(options.filename, buffer as ArrayBuffer);
 }

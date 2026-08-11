@@ -3,7 +3,9 @@ import {
   BookOpen,
   CalendarClock,
   ClipboardCheck,
+  ClipboardList,
   LayoutDashboard,
+  MessageCircle,
   Receipt,
   Users,
 } from "lucide-react";
@@ -30,7 +32,7 @@ export const EMPLOYER_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
     title: "Monitoreo adelantos",
     url: ROUTES.employer.monitoreoAdelantos,
     icon: ClipboardCheck,
-    animation: "control",
+    animation: "history",
     moduleId: "employer.monitoreoAdelantos",
   },
   {
@@ -44,7 +46,7 @@ export const EMPLOYER_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
     title: "Historial movimientos",
     url: ROUTES.employer.historialMovimientos,
     icon: BookOpen,
-    animation: "control",
+    animation: "history",
     moduleId: "employer.historialMovimientos",
   },
   {
@@ -53,5 +55,21 @@ export const EMPLOYER_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
     icon: Receipt,
     animation: "dashboard",
     moduleId: "employer.retencionesCierres",
+  },
+  {
+    title: "Auditorías",
+    url: ROUTES.employer.auditorias,
+    icon: ClipboardList,
+    animation: "history",
+    tooltip: "Control de cambios en datos de empleados.",
+    moduleId: "employer.auditorias",
+  },
+  {
+    title: "Soportes",
+    url: ROUTES.employer.soportes,
+    icon: MessageCircle,
+    animation: "bell",
+    tooltip: "Reportes de datos incorrectos enviados por empleados.",
+    moduleId: "employer.soportes",
   },
 ];

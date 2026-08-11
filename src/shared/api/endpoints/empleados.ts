@@ -16,10 +16,14 @@ import type {
   ActivarEmpleadoRequest,
   ActivarEmpleadoResponse,
   BancoDTO,
+  CarteraPendienteEmpleadoDTO,
   CreateEmpleadoRequest,
   CreateEmpleadoResponse,
   EmpleadoDTO,
+  ListadoAuditoriaCambioDTO,
+  ListadoReporteDatoIncorrectoDTO,
   MetricasEmpresaEmpleadosDTO,
+  ReporteDatoIncorrectoDTO,
   ResultadoCargaNominaDTO,
   UpdateEmpleadoMeRequest,
   UpdateEmpleadoRequest,
@@ -50,6 +54,79 @@ export const empleadosEndpoints = {
   me: () => http.get<EmpleadoMeDTO>("/empleados/me/"),
   updateMe: (data: UpdateEmpleadoMeRequest) =>
     http.patch<EmpleadoDTO>("/empleados/me/", data),
+  listAuditoriaCambiosMe: (params?: { page?: number; page_size?: number }) => {
+    const search = new URLSearchParams();
+    if (params?.page) search.set("page", String(params.page));
+    if (params?.page_size) search.set("page_size", String(params.page_size));
+    const query = search.toString();
+    return http.get<ListadoAuditoriaCambioDTO>(
+      `/empleados/me/auditoria-cambios/${query ? `?${query}` : ""}`,
+    );
+  },
+  listAuditoriaCambiosEmpresa: (params?: {
+    page?: number;
+    page_size?: number;
+    empleado_id?: string;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.page) search.set("page", String(params.page));
+    if (params?.page_size) search.set("page_size", String(params.page_size));
+    if (params?.empleado_id) search.set("empleado_id", params.empleado_id);
+    const query = search.toString();
+    return http.get<ListadoAuditoriaCambioDTO>(
+      `/empleados/auditoria-cambios/${query ? `?${query}` : ""}`,
+    );
+  },
+  createReporteDatoIncorrecto: (payload: {
+    campos_reportados: string[];
+    mensaje: string;
+    evidencias: File[];
+  }) => {
+    const formData = new FormData();
+    formData.append("mensaje", payload.mensaje);
+    formData.append(
+      "campos_reportados",
+      JSON.stringify(payload.campos_reportados),
+    );
+    payload.evidencias.forEach((file) => {
+      formData.append("evidencias", file);
+    });
+    return http.postForm<ReporteDatoIncorrectoDTO>(
+      "/empleados/me/reportes-datos/",
+      formData,
+    );
+  },
+  listReportesDatoIncorrectoMe: (params?: {
+    page?: number;
+    page_size?: number;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.page) search.set("page", String(params.page));
+    if (params?.page_size) search.set("page_size", String(params.page_size));
+    const query = search.toString();
+    return http.get<ListadoReporteDatoIncorrectoDTO>(
+      `/empleados/me/reportes-datos/${query ? `?${query}` : ""}`,
+    );
+  },
+  listReportesDatoIncorrectoEmpresa: (params?: {
+    page?: number;
+    page_size?: number;
+    estado?: string;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.page) search.set("page", String(params.page));
+    if (params?.page_size) search.set("page_size", String(params.page_size));
+    if (params?.estado) search.set("estado", params.estado);
+    const query = search.toString();
+    return http.get<ListadoReporteDatoIncorrectoDTO>(
+      `/empleados/reportes-datos/${query ? `?${query}` : ""}`,
+    );
+  },
+  responderReporteDatoIncorrecto: (reporteId: string, respuesta: string) =>
+    http.post<ReporteDatoIncorrectoDTO>(
+      `/empleados/reportes-datos/${reporteId}/responder/`,
+      { respuesta },
+    ),
   cargarNomina: (archivo: File) => {
     const formData = new FormData();
     formData.append("archivo", archivo);
@@ -64,6 +141,14 @@ export const empleadosEndpoints = {
    */
   suspender: (empleadoId: string) =>
     http.post<EmpleadoDTO>(`/empleados/${empleadoId}/suspender/`),
+  /**
+   * Cartera pendiente (cuotas por descontar) para saneamiento.
+   * GET /empleados/{id}/cartera-pendiente/
+   */
+  carteraPendiente: (empleadoId: string) =>
+    http.get<CarteraPendienteEmpleadoDTO>(
+      `/empleados/${empleadoId}/cartera-pendiente/`,
+    ),
   /**
    * Reactiva un empleado suspendido.
    * POST /empleados/{id}/reactivar/ → `activo` o `pre_registrado`.

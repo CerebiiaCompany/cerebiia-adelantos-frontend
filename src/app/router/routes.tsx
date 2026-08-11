@@ -9,12 +9,16 @@ import Control from "@/pages/Control";
 import Asistente from "@/pages/Asistente";
 import Logros from "@/pages/Logros";
 import Notificaciones from "@/pages/Notificaciones";
+import EmployeeAuditoriasPage from "@/pages/employee/EmployeeAuditoriasPage";
+import EmployeeSoportesPage from "@/pages/employee/EmployeeSoportesPage";
 import EmployerPanelPage from "@/pages/employer/EmployerPanelPage";
 import EmployerMisEmpleadosPage from "@/pages/employer/EmployerMisEmpleadosPage";
 import EmployerMonitoreoAdelantosPage from "@/pages/employer/EmployerMonitoreoAdelantosPage";
 import EmployerSeguimientoCuotasPage from "@/pages/employer/EmployerSeguimientoCuotasPage";
 import EmployerHistorialMovimientosPage from "@/pages/employer/EmployerHistorialMovimientosPage";
 import EmployerRetencionesCierresPage from "@/pages/employer/EmployerRetencionesCierresPage";
+import EmployerAuditoriasPage from "@/pages/employer/EmployerAuditoriasPage";
+import EmployerSoportesPage from "@/pages/employer/EmployerSoportesPage";
 import EmployerForcePasswordChangePage from "@/pages/employer/EmployerForcePasswordChangePage";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
@@ -112,6 +116,22 @@ export function AppRouter() {
                   </ModuleGuard>
                 }
               />
+              <Route
+                path={ROUTES.employee.auditorias}
+                element={
+                  <ModuleGuard moduleId="employee.auditorias">
+                    <EmployeeAuditoriasPage />
+                  </ModuleGuard>
+                }
+              />
+              <Route
+                path={ROUTES.employee.soportes}
+                element={
+                  <ModuleGuard moduleId="employee.soportes">
+                    <EmployeeSoportesPage />
+                  </ModuleGuard>
+                }
+              />
             </Route>
           </Route>
 
@@ -168,6 +188,22 @@ export function AppRouter() {
                   element={
                     <ModuleGuard moduleId="employer.retencionesCierres">
                       <EmployerRetencionesCierresPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="auditorias"
+                  element={
+                    <ModuleGuard moduleId="employer.auditorias">
+                      <EmployerAuditoriasPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="soportes"
+                  element={
+                    <ModuleGuard moduleId="employer.soportes">
+                      <EmployerSoportesPage />
                     </ModuleGuard>
                   }
                 />

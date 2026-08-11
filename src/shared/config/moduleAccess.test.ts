@@ -9,7 +9,7 @@ import { ROUTES } from "./routes";
 describe("moduleAccess", () => {
   it("allows employees to access all employee modules", () => {
     const modules = getModulesForRole("employee");
-    expect(modules).toHaveLength(8);
+    expect(modules).toHaveLength(10);
 
     for (const moduleId of modules) {
       expect(canAccessModule("employee", moduleId)).toBe(true);
@@ -32,6 +32,8 @@ describe("moduleAccess", () => {
     expect(canAccessModule("employer", "employer.retencionesCierres")).toBe(
       true,
     );
+    expect(canAccessModule("employer", "employer.auditorias")).toBe(true);
+    expect(canAccessModule("employer", "employer.soportes")).toBe(true);
     expect(canAccessModule("employer", "employee.adelanto")).toBe(false);
     expect(getModulesForRole("employer")).toEqual([
       "employer.dashboard",
@@ -40,6 +42,8 @@ describe("moduleAccess", () => {
       "employer.seguimientoCuotas",
       "employer.historialMovimientos",
       "employer.retencionesCierres",
+      "employer.auditorias",
+      "employer.soportes",
     ]);
   });
 

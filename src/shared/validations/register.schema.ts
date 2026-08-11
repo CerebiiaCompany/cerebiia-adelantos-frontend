@@ -407,3 +407,54 @@ export function validateLaborCertFile(
 
   return null;
 }
+
+export const activationConfirmSchema = z
+  .object({
+    nombres: z
+      .string()
+      .min(1, "Ingresa tus nombres")
+      .max(120, "Máximo 120 caracteres")
+      .transform((value) => value.trim()),
+    apellidos: z
+      .string()
+      .min(1, "Ingresa tus apellidos")
+      .max(120, "Máximo 120 caracteres")
+      .transform((value) => value.trim()),
+    documentType: z.enum(documentTypes, {
+      required_error: "Selecciona el tipo de documento",
+      invalid_type_error: "Selecciona el tipo de documento",
+    }),
+    documentNumber: z
+      .string()
+      .min(1, "Ingresa el número de documento")
+      .transform((value) => value.trim()),
+    phone: z
+      .string()
+      .min(1, "Ingresa el número de teléfono")
+      .transform((value) => sanitizeColombianPhone(value))
+      .refine(
+        (value) => isValidColombianPhone(value),
+        "Ingresa un celular colombiano válido (10 dígitos, inicia en 3)",
+      ),
+    accountType: z.enum(["ahorros", "corriente"], {
+      required_error: "Selecciona el tipo de cuenta",
+      invalid_type_error: "Selecciona el tipo de cuenta",
+    }),
+    bankId: z.string().min(1, "Selecciona el banco"),
+    accountNumber: z
+      .string()
+      .min(1, "Ingresa el número de cuenta")
+      .max(50, "Máximo 50 caracteres")
+      .transform((value) => value.trim()),
+  })
+  .superRefine((data, ctx) => {
+    if (!isValidDocumentNumber(data.documentType, data.documentNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ingresa un número de documento válido",
+        path: ["documentNumber"],
+      });
+    }
+  });
+
+export type ActivationConfirmFormValues = z.infer<typeof activationConfirmSchema>;
