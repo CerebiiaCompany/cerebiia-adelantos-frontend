@@ -273,6 +273,40 @@ const REGISTER_BRAND_PANEL_BY_STEP: Record<
       { title: "Corrige lo necesario y continúa", icon: Pencil },
     ),
   },
+  "confirm-data": {
+    title: (
+      <>
+        Confirma y
+        <br />
+        corrige tus datos.
+      </>
+    ),
+    description: (
+      <>
+        Revisa nombres, documento, teléfono y cuenta bancaria. Usa el lápiz
+        para editar cualquier dato incorrecto.
+      </>
+    ),
+    steps: [
+      {
+        title: "Revisa tu información",
+        description: "Datos personales y bancarios del pre-registro.",
+        icon: ClipboardCheck,
+      },
+      {
+        title: "Edita con el lápiz",
+        description: "Corrige solo lo que necesites y continúa.",
+        icon: Pencil,
+      },
+    ],
+    mobileTitle: "Confirma tus datos",
+    mobileSummary:
+      "Revisa y corrige tu información antes de crear la contraseña.",
+    compactSteps: compactSteps(
+      { title: "Revisa nombres, documento y teléfono", icon: ClipboardCheck },
+      { title: "Edita con el lápiz y continúa", icon: Pencil },
+    ),
+  },
   "selfie-validation": {
     title: (
       <>

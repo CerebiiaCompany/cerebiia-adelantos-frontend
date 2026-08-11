@@ -75,12 +75,26 @@ export interface VerificarPreRegistroResponse {
   existe: boolean;
   nombre: string;
   ya_activo: boolean;
+  documento: string;
+  tipo_documento: string;
+  celular: string;
+  banco_id: string;
+  banco_nombre: string;
+  tipo_cuenta: string;
+  numero_cuenta: string;
 }
 
 export interface ActivarEmpleadoRequest {
   documento: string;
   tipo_documento: string;
   password: string;
+  nombre?: string;
+  celular?: string;
+  banco_id?: string;
+  tipo_cuenta?: string;
+  numero_cuenta?: string;
+  documento_actualizado?: string;
+  tipo_documento_actualizado?: string;
 }
 
 export type ActivarEmpleadoResponse = {
@@ -108,10 +122,126 @@ export interface ResultadoCargaNominaDTO {
   }>;
 }
 
+export type AuditoriaCambioActorTipo = "empleado" | "empresa" | "sistema";
+
+export type AuditoriaCambioAccion =
+  | "confirmacion_activacion"
+  | "actualizacion_propia"
+  | "actualizacion_empresa";
+
+export interface AuditoriaCambioCampoDTO {
+  campo: string;
+  etiqueta: string;
+  valor_anterior: string;
+  valor_nuevo: string;
+}
+
+export interface AuditoriaCambioEmpleadoDTO {
+  id: string;
+  empleado_id: string;
+  empresa_id: string;
+  empleado_nombre: string;
+  empleado_documento: string;
+  actor_tipo: AuditoriaCambioActorTipo | string;
+  actor_nombre: string;
+  accion: AuditoriaCambioAccion | string;
+  cambios: AuditoriaCambioCampoDTO[];
+  created_at: string;
+}
+
+export interface ListadoAuditoriaCambioDTO {
+  count: number;
+  page: number;
+  page_size: number;
+  results: AuditoriaCambioEmpleadoDTO[];
+}
+
+export type CampoReporteDatoIncorrecto =
+  | "documento"
+  | "nombre"
+  | "banco"
+  | "tipo_cuenta"
+  | "numero_cuenta";
+
+export type EstadoReporteDatoIncorrecto =
+  | "pendiente"
+  | "en_revision"
+  | "respondido"
+  | "resuelto";
+
+export interface EvidenciaAdjuntoDTO {
+  nombre: string;
+  path: string;
+  url: string;
+}
+
+export interface ReporteDatoIncorrectoDTO {
+  id: string;
+  empleado_id: string;
+  empresa_id: string;
+  empleado_nombre: string;
+  empleado_documento: string;
+  campos_reportados: CampoReporteDatoIncorrecto[] | string[];
+  mensaje: string;
+  evidencias: EvidenciaAdjuntoDTO[];
+  estado: EstadoReporteDatoIncorrecto | string;
+  respuesta_empresa?: string;
+  respondido_por_nombre?: string;
+  empresa_nombre?: string;
+  respondido_en?: string | null;
+  created_at: string;
+}
+
+export interface ListadoReporteDatoIncorrectoDTO {
+  count: number;
+  page: number;
+  page_size: number;
+  results: ReporteDatoIncorrectoDTO[];
+}
+
 /** KPIs de nómina de la empresa autenticada (`GET /empleados/metricas/`). */
 export interface MetricasEmpresaEmpleadosDTO {
   total: number;
   activos: number;
   pre_registrados: number;
   inactivos: number;
+}
+
+/** Resumen del empleado en cartera pendiente. */
+export interface CarteraEmpleadoResumenDTO {
+  id: string;
+  nombre: string;
+  documento: string;
+  salario: string;
+  estado: EmpleadoEstado | string;
+}
+
+/** Cuota pendiente de un adelanto ya desembolsado. */
+export interface CarteraCuotaPendienteDTO {
+  cuota_id: string;
+  solicitud_id: string;
+  cuota_numero: number;
+  cuota_monto: string;
+  tarifa_cuota: string;
+  fecha_corte: string;
+  monto_solicitud: string;
+  monto_neto: string;
+  tarifa_total: string;
+  numero_cuotas_total: number;
+  pagado_en: string | null;
+}
+
+export interface CarteraTotalesDTO {
+  cantidad_cuotas: number;
+  total_capital: string;
+  total_tarifas: string;
+  total_a_descontar: string;
+}
+
+/** `GET /empleados/{id}/cartera-pendiente/` */
+export interface CarteraPendienteEmpleadoDTO {
+  empleado: CarteraEmpleadoResumenDTO;
+  generado_en: string;
+  cuotas_pendientes: CarteraCuotaPendienteDTO[];
+  totales: CarteraTotalesDTO;
 }

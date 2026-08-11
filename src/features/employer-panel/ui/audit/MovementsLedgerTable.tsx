@@ -109,6 +109,8 @@ export function MovementsLedgerTable() {
       await downloadBrandedExcelReport({
         filename: "historial-movimientos-cerebiia",
         sheetName: "Movimientos",
+        brandDocument: "reporte",
+        bannerDocument: "movimientos",
         headers: [
           "Código de transferencia",
           "Fecha y hora",

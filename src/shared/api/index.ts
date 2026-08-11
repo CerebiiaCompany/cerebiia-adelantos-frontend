@@ -25,6 +25,11 @@ export {
   mapTipoDocumentoToApi,
 } from "./empleadoMappers";
 export {
+  joinNombreCompleto,
+  normalizeVerificarPreRegistroResponse,
+  splitNombreCompleto,
+} from "./verificarPreRegistroMappers";
+export {
   formatMontoForApi,
   mapSolicitudToHistoryRecord,
 } from "./adelantoMappers";

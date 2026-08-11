@@ -122,6 +122,8 @@ export function PayrollClosureView() {
       await downloadBrandedExcelReport({
         filename: `retenciones-nomina-${snapshot.monthKey}`,
         sheetName: "Retenciones",
+        brandDocument: "reporte",
+        bannerDocument: "retenciones",
         headers: [
           "Empleado",
           "Documento",

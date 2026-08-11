@@ -5,6 +5,7 @@ import { useAuth } from "@/features/auth";
 import {
   CreateEmpleadoButton,
   CreateEmpleadoDialog,
+  CustomizeExcelsButton,
   EmpleadosTable,
   ImportEmpleadosButton,
 } from "@/features/employer-panel";
@@ -26,6 +27,7 @@ export default function EmployerMisEmpleadosPage() {
         description={`Listado de empleados vinculados a ${companyName}`}
         actions={
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <CustomizeExcelsButton />
             <ImportEmpleadosButton />
             <CreateEmpleadoButton onClick={() => setCreateDialogOpen(true)} />
           </div>

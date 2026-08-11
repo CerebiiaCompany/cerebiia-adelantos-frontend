@@ -3,13 +3,19 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { SidebarNavIcon } from "./SidebarNavIcon";
 import type { SidebarNavItemConfig } from "./sidebarNavConfig";
+import { SoporteAlertDot } from "@/features/soporte";
 
 interface SidebarNavLinkProps {
   item: SidebarNavItemConfig;
   collapsed?: boolean;
+  badgeCount?: number;
 }
 
-export function SidebarNavLink({ item, collapsed = false }: SidebarNavLinkProps) {
+export function SidebarNavLink({
+  item,
+  collapsed = false,
+  badgeCount = 0,
+}: SidebarNavLinkProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const isActive = Boolean(
     useMatch({ path: item.url, end: item.end ?? item.url === "/" }),
@@ -32,14 +38,27 @@ export function SidebarNavLink({ item, collapsed = false }: SidebarNavLinkProps)
         isActive && "app-sidebar-nav-link--active",
       )}
     >
-      <SidebarNavIcon
-        icon={item.icon}
-        animation={item.animation}
-        isActive={isActive}
-      />
+      <span className="relative inline-flex shrink-0">
+        <SidebarNavIcon
+          icon={item.icon}
+          animation={item.animation}
+          isActive={isActive}
+        />
+        {collapsed && badgeCount > 0 ? (
+          <SoporteAlertDot
+            count={badgeCount}
+            className="absolute -right-1 -top-0.5"
+          />
+        ) : null}
+      </span>
 
       {!collapsed && (
-        <span className="truncate text-sm tracking-tight">{item.title}</span>
+        <>
+          <span className="min-w-0 flex-1 truncate text-sm tracking-tight">
+            {item.title}
+          </span>
+          {badgeCount > 0 ? <SoporteAlertDot count={badgeCount} /> : null}
+        </>
       )}
     </NavLink>
   );
