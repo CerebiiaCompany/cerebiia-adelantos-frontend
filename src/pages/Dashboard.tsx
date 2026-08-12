@@ -187,6 +187,7 @@ export default function Dashboard() {
         <StatCard
           label="Próximo pago"
           value={nextPaymentLabel}
+          valueClassName="text-2xl font-semibold tracking-tight"
           sub={
             <>
               en{" "}
@@ -406,6 +407,7 @@ function StatCard({
   iconAriaLabel,
   iconMotion,
   iconMotionAlways,
+  valueClassName,
 }: {
   label: string;
   value: ReactNode;
@@ -417,6 +419,7 @@ function StatCard({
   iconAriaLabel?: string;
   iconMotion?: "zap" | "trend-up" | "withdraw" | "calendar";
   iconMotionAlways?: boolean;
+  valueClassName?: string;
 }) {
   const motionStyles: Record<
     NonNullable<typeof iconMotion>,
@@ -487,9 +490,12 @@ function StatCard({
         )}
       </div>
       <div
-        className={`font-display text-3xl font-bold ${
-          accent ? "text-gradient" : "text-foreground"
-        } ${trend === "up" ? "text-primary" : ""}`}
+        className={cn(
+          "font-display text-3xl font-bold",
+          accent ? "text-gradient" : "text-foreground",
+          trend === "up" && "text-primary",
+          valueClassName,
+        )}
       >
         {value}
       </div>

@@ -9,6 +9,8 @@ export type NotificationKind =
   | "payroll_due_3d"
   | "next_payment_net_updated"
   | "cupo_80"
+  | "cupo_low"
+  | "cupo_exhausted"
   | "achievement_unlocked"
   | "data_change_audit"
   | "support_replied"

@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, beforeEach, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { buildDemoEmpleadoSession } from "@/shared/api/authMappers";
@@ -32,18 +32,28 @@ vi.mock("@/shared/api/endpoints", () => ({
   },
 }));
 
+vi.mock("./useNotificationWebSocket", () => ({
+  useNotificationWebSocket: () => ({ isConnected: false }),
+}));
+
+vi.mock("./useNotificationSound", () => ({
+  useNotificationSound: () => undefined,
+}));
+
 function renderNotificationsHook() {
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
 
-  return renderHook(() => useNotifications(), {
+  const hook = renderHook(() => useNotifications(), {
     wrapper: ({ children }) => (
       <QueryClientProvider client={queryClient}>
         <NotificationsProvider>{children}</NotificationsProvider>
       </QueryClientProvider>
     ),
   });
+
+  return { ...hook, queryClient };
 }
 
 describe("NotificationsProvider (API)", () => {
@@ -91,5 +101,46 @@ describe("NotificationsProvider (API)", () => {
     });
     expect(result.current.notifications[0].title).toBe("Adelanto pagado");
     expect(result.current.unreadCount).toBe(1);
+  });
+
+  it("marca como leída de forma optimista y llama a la API", async () => {
+    const session = buildDemoEmpleadoSession();
+    useAuthMock.mockReturnValue({ session, isLoading: false });
+    const unreadPayload = {
+      unread_count: 1,
+      items: [
+        {
+          id: "n1",
+          recipient_tipo: "empleado",
+          recipient_id: session.empleado.id,
+          kind: "advance_paid",
+          title: "Adelanto pagado",
+          description: "Tu adelanto fue transferido.",
+          href: "/mis-adelantos",
+          dedupe_key: "advance-paid:1",
+          leida: false,
+          created_at: "2026-01-10T12:00:00.000Z",
+        },
+      ],
+    };
+
+    listMeMock.mockResolvedValue(unreadPayload);
+    marcarLeidasMock.mockReturnValue(new Promise(() => {}));
+
+    const { result } = renderNotificationsHook();
+
+    await waitFor(() => {
+      expect(result.current.notifications).toHaveLength(1);
+    });
+
+    act(() => {
+      result.current.markAsRead("n1");
+    });
+
+    await waitFor(() => {
+      expect(result.current.notifications[0].read).toBe(true);
+      expect(result.current.unreadCount).toBe(0);
+      expect(marcarLeidasMock).toHaveBeenCalledWith({ ids: ["n1"] });
+    });
   });
 });

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { NotificationItem } from "@/components/header/NotificationItem";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { useNotifications } from "@/features/notifications";
+import { useNotifications, NotificationSoundPreview } from "@/features/notifications";
 import { ROUTES } from "@/shared/config/routes";
 import { Bell } from "lucide-react";
 
@@ -39,6 +39,7 @@ export default function EmployerNotificacionesPage() {
           </button>
         }
       />
+      <NotificationSoundPreview />
       <div className="space-y-2">
         {notifications.length === 0 ? (
           <div className="glass-card glow-border rounded-xl px-4 py-10 text-center">

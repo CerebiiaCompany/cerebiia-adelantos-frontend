@@ -1,4 +1,8 @@
 export type { NotificationKind, StoredNotification } from "./model/types";
+export {
+  SUPPORT_NOTIFICATION_KINDS,
+  isSupportNotificationKind,
+} from "./model/supportNotificationKinds";
 export type {
   DeriveSolicitudInput,
   DeriveAuditInput,
