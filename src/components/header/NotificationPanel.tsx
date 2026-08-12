@@ -2,12 +2,12 @@ import { Bell } from "lucide-react";
 import { NotificationItem } from "@/components/header/NotificationItem";
 import { Button } from "@/components/ui/button";
 import { AnimatedNumber } from "@/components/ui/animated-number";
-import type { DemoNotification } from "@/shared/config/demoNotifications";
+import type { AppNotification } from "@/features/notifications";
 
 interface NotificationPanelProps {
-  unreadNotifications: DemoNotification[];
+  unreadNotifications: AppNotification[];
   unreadCount: number;
-  onNotificationClick: (id: string) => void;
+  onNotificationClick: (notification: AppNotification) => void;
   onMarkAllAsRead: () => void;
   onViewAll: () => void;
 }
@@ -67,7 +67,7 @@ export function NotificationPanel({
                 key={notification.id}
                 notification={notification}
                 compact
-                onClick={() => onNotificationClick(notification.id)}
+                onClick={() => onNotificationClick(notification)}
               />
             ))}
           </div>

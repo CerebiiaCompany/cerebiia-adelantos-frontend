@@ -76,7 +76,9 @@ export function SolicitudCuotasPlan({
                   <td className="px-4 py-3 tabular-nums text-muted-foreground">
                     {Number.isNaN(tarifa)
                       ? cuota.tarifa_cuota
-                      : formatCOP(tarifa)}
+                      : tarifa === 0
+                        ? "Gratis"
+                        : formatCOP(tarifa)}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {formatDate(fechaCorte)}

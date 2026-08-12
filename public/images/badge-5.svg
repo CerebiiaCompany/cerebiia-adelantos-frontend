@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="m5Bg" x1="10" y1="6" x2="70" y2="74" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6EE7B7"/>
+      <stop offset="0.5" stop-color="#34D399"/>
+      <stop offset="1" stop-color="#059669"/>
+    </linearGradient>
+    <filter id="m5Soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#059669" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="40" cy="40" r="34" fill="url(#m5Bg)" filter="url(#m5Soft)"/>
+  <ellipse cx="30" cy="28" rx="12" ry="7" fill="#FFFFFF" fill-opacity="0.28"/>
+  <text x="40" y="48" text-anchor="middle" font-family="system-ui,Segoe UI,sans-serif" font-size="28" font-weight="800" fill="#FFFFFF">5</text>
+</svg>

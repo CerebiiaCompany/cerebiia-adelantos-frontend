@@ -16,6 +16,11 @@ export interface RegisteredCompanyAdvance {
   advancedAmount: number;
   installments: number;
   feeAmount: number;
+  /**
+   * Tarifa fija por cuota al momento de la solicitud (snapshot).
+   * Sirve para detectar promo de primera cuota gratis en retenciones.
+   */
+  feePerCuotaSnapshot?: number;
   netDisbursedAmount: number;
   status: CompanyAdvanceStatus;
   requestedAt: string;

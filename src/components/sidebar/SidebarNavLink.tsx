@@ -1,20 +1,22 @@
 import { NavLink, useMatch } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { NavAlertDot } from "@/components/sidebar/NavAlertDot";
 import { SidebarNavIcon } from "./SidebarNavIcon";
 import type { SidebarNavItemConfig } from "./sidebarNavConfig";
-import { SoporteAlertDot } from "@/features/soporte";
 
 interface SidebarNavLinkProps {
   item: SidebarNavItemConfig;
   collapsed?: boolean;
   badgeCount?: number;
+  badgeLabel?: string;
 }
 
 export function SidebarNavLink({
   item,
   collapsed = false,
   badgeCount = 0,
+  badgeLabel,
 }: SidebarNavLinkProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const isActive = Boolean(
@@ -45,8 +47,9 @@ export function SidebarNavLink({
           isActive={isActive}
         />
         {collapsed && badgeCount > 0 ? (
-          <SoporteAlertDot
+          <NavAlertDot
             count={badgeCount}
+            label={badgeLabel}
             className="absolute -right-1 -top-0.5"
           />
         ) : null}
@@ -57,7 +60,9 @@ export function SidebarNavLink({
           <span className="min-w-0 flex-1 truncate text-sm tracking-tight">
             {item.title}
           </span>
-          {badgeCount > 0 ? <SoporteAlertDot count={badgeCount} /> : null}
+          {badgeCount > 0 ? (
+            <NavAlertDot count={badgeCount} label={badgeLabel} />
+          ) : null}
         </>
       )}
     </NavLink>

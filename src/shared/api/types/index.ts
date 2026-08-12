@@ -52,6 +52,9 @@ export type {
   HistorialSolicitudEmpresaDTO,
   HistorialSolicitudesEmpresaParams,
   MiSituacionFinancieraDTO,
+  ReferenciaNominaDTO,
+  ReferenciaNominaDetalleDTO,
+  ReferenciaNominaResumenDTO,
   SolicitudAdelantoDTO,
   SolicitudDetalleDTO,
   TendenciaMensualDTO,
@@ -62,9 +65,27 @@ export type { PaginatedResponse } from "./pagination";
 export type { AdelantoConfiguracionDTO } from "./configuracion";
 
 export type {
+  NotificacionDTO,
+  ListadoNotificacionesDTO,
+  MarcarLeidasRequest,
+  MarcarLeidasResponse,
+} from "./notificacion";
+
+export type {
+  LogroAdminDTO,
+  CrearLogroRequest,
+  ActualizarLogroRequest,
+  LogroEmpleadoItemDTO,
+  LogrosEmpleadoSnapshotDTO,
+} from "./logro";
+
+export type {
   EmpresaEstadoDTO,
   EmpresaListItemDTO,
   EmpresasListParams,
+  ExcelBrandColorsDTO,
+  ExcelBrandingDTO,
+  UpdateExcelBrandingRequest,
 } from "./empresa";
 
 export interface ForgotPasswordRequest {

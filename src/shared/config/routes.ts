@@ -26,6 +26,7 @@ export const ROUTES = {
     retencionesCierres: "/empleador/retenciones-cierres",
     auditorias: "/empleador/auditorias",
     soportes: "/empleador/soportes",
+    notificaciones: "/empleador/notificaciones",
   },
   admin: {
     panel: "/admin/panel",

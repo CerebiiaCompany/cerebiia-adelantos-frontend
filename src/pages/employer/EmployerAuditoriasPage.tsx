@@ -25,6 +25,7 @@ export default function EmployerAuditoriasPage() {
         isError={query.isError}
         onRetry={() => query.refetch()}
         showEmployeeColumn
+        trackUnread
         emptyMessage="Todavía no hay cambios de datos registrados para tu empresa."
         page={page}
         pageSize={PAGE_SIZE}

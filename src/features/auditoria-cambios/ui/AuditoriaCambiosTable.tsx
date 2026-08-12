@@ -1,9 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NavAlertDot } from "@/components/sidebar/NavAlertDot";
 import type { AuditoriaCambioEmpleadoDTO } from "@/shared/api/types/empleado";
+import {
+  AUDITORIA_SEEN_CHANGED_EVENT,
+  getSeenAuditoriaCambioIds,
+  isAuditoriaCambioAlertable,
+  isAuditoriaCambioUnread,
+  markAuditoriaCambioSeen,
+} from "@/shared/lib/auditoriaSeenStorage";
 import { cn } from "@/lib/utils";
 
 const ACCION_LABELS: Record<string, string> = {
@@ -53,6 +61,8 @@ export interface AuditoriaCambiosTableProps {
   onRetry?: () => void;
   /** Mostrar columna de empleado (vista empresa). */
   showEmployeeColumn?: boolean;
+  /** Marcar/avisar cambios no revisados (vista empresa). */
+  trackUnread?: boolean;
   emptyMessage?: string;
   page: number;
   pageSize: number;
@@ -66,6 +76,7 @@ export function AuditoriaCambiosTable({
   isError,
   onRetry,
   showEmployeeColumn = false,
+  trackUnread = false,
   emptyMessage = "Aún no hay cambios registrados.",
   page,
   pageSize,
@@ -74,6 +85,18 @@ export function AuditoriaCambiosTable({
 }: AuditoriaCambiosTableProps) {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [seenIds, setSeenIds] = useState(() => getSeenAuditoriaCambioIds());
+
+  useEffect(() => {
+    if (!trackUnread) return;
+    const sync = () => setSeenIds(getSeenAuditoriaCambioIds());
+    window.addEventListener(AUDITORIA_SEEN_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(AUDITORIA_SEEN_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [trackUnread]);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -98,6 +121,21 @@ export function AuditoriaCambiosTable({
   }, [records, search]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  const handleToggle = (row: AuditoriaCambioEmpleadoDTO, isExpanded: boolean) => {
+    if (isExpanded) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(row.id);
+    if (
+      trackUnread &&
+      isAuditoriaCambioAlertable(row) &&
+      isAuditoriaCambioUnread(row.id, true, seenIds)
+    ) {
+      setSeenIds(markAuditoriaCambioSeen(row.id));
+    }
+  };
 
   if (isLoading) return <TableSkeleton />;
 
@@ -159,15 +197,21 @@ export function AuditoriaCambiosTable({
               <tbody>
                 {filtered.map((row) => {
                   const isExpanded = expandedId === row.id;
+                  const unread =
+                    trackUnread &&
+                    isAuditoriaCambioUnread(
+                      row.id,
+                      isAuditoriaCambioAlertable(row),
+                      seenIds,
+                    );
                   return (
                     <FragmentRow
                       key={row.id}
                       row={row}
                       isExpanded={isExpanded}
+                      unread={unread}
                       showEmployeeColumn={showEmployeeColumn}
-                      onToggle={() =>
-                        setExpandedId(isExpanded ? null : row.id)
-                      }
+                      onToggle={() => handleToggle(row, isExpanded)}
                     />
                   );
                 })}
@@ -211,11 +255,13 @@ export function AuditoriaCambiosTable({
 function FragmentRow({
   row,
   isExpanded,
+  unread,
   showEmployeeColumn,
   onToggle,
 }: {
   row: AuditoriaCambioEmpleadoDTO;
   isExpanded: boolean;
+  unread: boolean;
   showEmployeeColumn: boolean;
   onToggle: () => void;
 }) {
@@ -227,6 +273,7 @@ function FragmentRow({
         className={cn(
           "border-b border-border/40 transition-colors hover:bg-muted/30",
           isExpanded && "bg-muted/20",
+          unread && "bg-primary/[0.04]",
         )}
       >
         <td className="px-3 py-3">
@@ -244,7 +291,15 @@ function FragmentRow({
           </button>
         </td>
         <td className="whitespace-nowrap px-3 py-3 text-foreground">
-          {formatDateTime(row.created_at)}
+          <span className="inline-flex items-center gap-2">
+            {formatDateTime(row.created_at)}
+            {unread ? (
+              <NavAlertDot
+                count={1}
+                label="Cambio de datos sin revisar"
+              />
+            ) : null}
+          </span>
         </td>
         {showEmployeeColumn ? (
           <td className="px-3 py-3">

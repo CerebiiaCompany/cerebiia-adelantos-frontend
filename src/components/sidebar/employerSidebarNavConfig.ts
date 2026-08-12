@@ -1,5 +1,6 @@
 import type { SidebarNavItemConfig } from "./sidebarNavConfig";
 import {
+  Bell,
   BookOpen,
   CalendarClock,
   ClipboardCheck,
@@ -11,7 +12,11 @@ import {
 } from "lucide-react";
 import { ROUTES } from "@/shared/config/routes";
 
-/** Módulos visibles para rol empresa: auditoría, control y transparencia */
+/**
+ * Navegación empresa — misma estructura visual que el panel empleado
+ * (sección Principal, tipografía, iconos outlined, cierre con Notificaciones /
+ * Auditorías / Mi soporte).
+ */
 export const EMPLOYER_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
   {
     title: "Dashboard",
@@ -39,7 +44,7 @@ export const EMPLOYER_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
     title: "Seguimiento cuotas",
     url: ROUTES.employer.seguimientoCuotas,
     icon: CalendarClock,
-    animation: "wallet",
+    animation: "chart",
     moduleId: "employer.seguimientoCuotas",
   },
   {
@@ -57,6 +62,13 @@ export const EMPLOYER_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
     moduleId: "employer.retencionesCierres",
   },
   {
+    title: "Notificaciones",
+    url: ROUTES.employer.notificaciones,
+    icon: Bell,
+    animation: "bell",
+    moduleId: "employer.notificaciones",
+  },
+  {
     title: "Auditorías",
     url: ROUTES.employer.auditorias,
     icon: ClipboardList,
@@ -65,7 +77,7 @@ export const EMPLOYER_SIDEBAR_ITEMS: SidebarNavItemConfig[] = [
     moduleId: "employer.auditorias",
   },
   {
-    title: "Soportes",
+    title: "Mi soporte",
     url: ROUTES.employer.soportes,
     icon: MessageCircle,
     animation: "bell",

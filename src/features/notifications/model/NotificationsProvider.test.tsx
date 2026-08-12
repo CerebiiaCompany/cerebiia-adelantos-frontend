@@ -1,6 +1,6 @@
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, beforeEach, vi } from "vitest";
-import { appendAdvanceRequestedNotification } from "@/entities/notification";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { buildDemoEmpleadoSession } from "@/shared/api/authMappers";
 import {
   NotificationsProvider,
@@ -8,90 +8,88 @@ import {
 } from "./NotificationsProvider";
 
 const useAuthMock = vi.fn();
+const listMeMock = vi.fn();
+const marcarLeidasMock = vi.fn();
+const marcarTodasMock = vi.fn();
 
 vi.mock("@/features/auth/model/AuthProvider", () => ({
   useAuth: () => useAuthMock(),
 }));
 
+vi.mock("@/shared/config/env", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/config/env")>();
+  return {
+    ...actual,
+    env: { ...actual.env, apiUrl: "http://localhost:8000/api/v1" },
+  };
+});
+
+vi.mock("@/shared/api/endpoints", () => ({
+  notificacionesEndpoints: {
+    listMe: (...args: unknown[]) => listMeMock(...args),
+    marcarLeidas: (...args: unknown[]) => marcarLeidasMock(...args),
+    marcarTodasLeidas: (...args: unknown[]) => marcarTodasMock(...args),
+  },
+}));
+
 function renderNotificationsHook() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
   return renderHook(() => useNotifications(), {
     wrapper: ({ children }) => (
-      <NotificationsProvider>{children}</NotificationsProvider>
+      <QueryClientProvider client={queryClient}>
+        <NotificationsProvider>{children}</NotificationsProvider>
+      </QueryClientProvider>
     ),
   });
 }
 
-describe("NotificationsProvider", () => {
+describe("NotificationsProvider (API)", () => {
   beforeEach(() => {
-    vi.stubGlobal("localStorage", {
-      store: {} as Record<string, string>,
-      getItem(key: string) {
-        return this.store[key] ?? null;
-      },
-      setItem(key: string, value: string) {
-        this.store[key] = value;
-      },
-      removeItem(key: string) {
-        delete this.store[key];
-      },
-      clear() {
-        this.store = {};
-      },
-    });
-
     useAuthMock.mockReturnValue({
       session: null,
       isLoading: false,
     });
+    listMeMock.mockReset();
+    marcarLeidasMock.mockReset();
+    marcarTodasMock.mockReset();
   });
 
-  it("inicia sin notificaciones para cuentas nuevas", () => {
+  it("sin sesión no consulta y lista vacía", async () => {
     const { result } = renderNotificationsHook();
-
     expect(result.current.notifications).toEqual([]);
-    expect(result.current.unreadCount).toBe(0);
-    expect(result.current.unreadNotifications).toEqual([]);
+    expect(listMeMock).not.toHaveBeenCalled();
   });
 
-  it("carga notificaciones del empleado logueado", () => {
+  it("carga notificaciones del empleado desde la API", async () => {
     const session = buildDemoEmpleadoSession();
     useAuthMock.mockReturnValue({ session, isLoading: false });
-
-    appendAdvanceRequestedNotification(session.empleado.id, 400000);
+    listMeMock.mockResolvedValue({
+      unread_count: 1,
+      items: [
+        {
+          id: "n1",
+          recipient_tipo: "empleado",
+          recipient_id: session.empleado.id,
+          kind: "advance_paid",
+          title: "Adelanto pagado",
+          description: "Tu adelanto fue transferido.",
+          href: "/mis-adelantos",
+          dedupe_key: "advance-paid:1",
+          leida: false,
+          created_at: "2026-01-10T12:00:00.000Z",
+        },
+      ],
+    });
 
     const { result } = renderNotificationsHook();
 
-    expect(result.current.notifications).toHaveLength(1);
-    expect(result.current.notifications[0].title).toBe("Adelanto solicitado");
-    expect(result.current.notifications[0].description).toContain("$400.000");
+    await waitFor(() => {
+      expect(result.current.notifications).toHaveLength(1);
+    });
+    expect(result.current.notifications[0].title).toBe("Adelanto pagado");
     expect(result.current.unreadCount).toBe(1);
-  });
-
-  it("markAllAsRead marca todas las notificaciones como leídas", () => {
-    const session = buildDemoEmpleadoSession();
-    useAuthMock.mockReturnValue({ session, isLoading: false });
-    appendAdvanceRequestedNotification(session.empleado.id, 200000);
-
-    const { result } = renderNotificationsHook();
-
-    act(() => {
-      result.current.markAllAsRead();
-    });
-
-    expect(result.current.unreadCount).toBe(0);
-    expect(result.current.notifications[0].read).toBe(true);
-  });
-
-  it("persiste ids leídos aunque aún no haya notificaciones", () => {
-    const { result } = renderNotificationsHook();
-
-    act(() => {
-      result.current.markAsRead("future-notification");
-    });
-
-    expect(result.current.unreadCount).toBe(0);
-    expect(localStorage.getItem("cerebiia:read-notification-ids")).toContain(
-      "future-notification",
-    );
   });
 });

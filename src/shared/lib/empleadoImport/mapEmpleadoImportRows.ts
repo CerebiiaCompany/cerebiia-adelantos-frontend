@@ -137,6 +137,9 @@ function mapBank(value: string): string {
     bogota: "Banco de Bogotá",
     bancodeoccidente: "Banco de Occidente",
     occidente: "Banco de Occidente",
+    nu: "Nu",
+    nucolombia: "Nu",
+    nubank: "Nu",
   };
 
   if (aliases[normalized]) return aliases[normalized];

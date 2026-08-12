@@ -5,6 +5,8 @@ import type {
   EmpresaEstadoDTO,
   EmpresaListItemDTO,
   EmpresasListParams,
+  ExcelBrandingDTO,
+  UpdateExcelBrandingRequest,
 } from "../types/empresa";
 
 function buildEmpresasListarPath(params?: EmpresasListParams): string {
@@ -24,4 +26,20 @@ export const empresasEndpoints = {
   /** Reactiva empresa: POST /empresas/{id}/reactivar/ → activa=true */
   reactivar: (empresaId: string) =>
     http.post<EmpresaEstadoDTO>(`/empresas/${empresaId}/reactivar/`),
+
+  /** Personalización de Excels de la empresa autenticada (BD). */
+  getExcelBranding: () =>
+    http.get<ExcelBrandingDTO>("/empresas/me/excel-branding/"),
+  updateExcelBranding: (body: UpdateExcelBrandingRequest) =>
+    http.put<ExcelBrandingDTO>("/empresas/me/excel-branding/", body),
+  uploadExcelLogo: (file: File) => {
+    const formData = new FormData();
+    formData.append("logo", file);
+    return http.postForm<ExcelBrandingDTO>(
+      "/empresas/me/excel-branding/logo/",
+      formData,
+    );
+  },
+  deleteExcelLogo: () =>
+    http.del<ExcelBrandingDTO>("/empresas/me/excel-branding/logo/"),
 };

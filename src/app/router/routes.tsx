@@ -19,6 +19,7 @@ import EmployerHistorialMovimientosPage from "@/pages/employer/EmployerHistorial
 import EmployerRetencionesCierresPage from "@/pages/employer/EmployerRetencionesCierresPage";
 import EmployerAuditoriasPage from "@/pages/employer/EmployerAuditoriasPage";
 import EmployerSoportesPage from "@/pages/employer/EmployerSoportesPage";
+import EmployerNotificacionesPage from "@/pages/employer/EmployerNotificacionesPage";
 import EmployerForcePasswordChangePage from "@/pages/employer/EmployerForcePasswordChangePage";
 import NotFound from "@/pages/NotFound";
 import LoginPage from "@/pages/public/LoginPage";
@@ -204,6 +205,14 @@ export function AppRouter() {
                   element={
                     <ModuleGuard moduleId="employer.soportes">
                       <EmployerSoportesPage />
+                    </ModuleGuard>
+                  }
+                />
+                <Route
+                  path="notificaciones"
+                  element={
+                    <ModuleGuard moduleId="employer.notificaciones">
+                      <EmployerNotificacionesPage />
                     </ModuleGuard>
                   }
                 />
