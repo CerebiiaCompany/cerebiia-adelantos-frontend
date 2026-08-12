@@ -30,6 +30,8 @@ type AdvanceSimulatorCardProps = {
   fee: number;
   total: number;
   installmentValue: number;
+  /** Promo empleado nuevo: primera cuota sin comisión. */
+  primeraCuotaGratis?: boolean;
   disabled?: boolean;
   /** Fecha base para el plan de cortes (por defecto hoy). */
   requestedAt?: Date;
@@ -47,6 +49,7 @@ export function AdvanceSimulatorCard({
   fee,
   total,
   installmentValue,
+  primeraCuotaGratis = false,
   disabled = false,
   requestedAt = new Date(),
 }: AdvanceSimulatorCardProps) {
@@ -58,6 +61,10 @@ export function AdvanceSimulatorCard({
   const cutoffDates = hasAmount
     ? buildInstallmentCutoffDates(requestedAt, installments)
     : [];
+  const feeLabel = formatAdvanceTransactionFeeLabel(tarifaFijaPorCuota, {
+    primeraCuotaGratis,
+    numeroCuotas: installments,
+  });
 
   return (
     <AdvanceTimelineShell
@@ -155,9 +162,10 @@ export function AdvanceSimulatorCard({
 
             <SummaryRow label="Monto solicitado" value={amount} />
             <SummaryRow
-              label={formatAdvanceTransactionFeeLabel(tarifaFijaPorCuota)}
+              label={feeLabel}
               value={fee}
               negative
+              gratis={primeraCuotaGratis && fee === 0}
             />
             <SummaryRow label="Cuotas" value={installments} isCount />
 
@@ -222,16 +230,20 @@ function SummaryRow({
   value,
   negative = false,
   isCount = false,
+  gratis = false,
 }: {
   label: string;
   value: number;
   negative?: boolean;
   isCount?: boolean;
+  gratis?: boolean;
 }) {
   return (
     <div className="flex justify-between text-sm">
       <span className="text-muted-foreground">{label}</span>
-      {isCount ? (
+      {gratis ? (
+        <span className="font-medium text-emerald-600">Gratis</span>
+      ) : isCount ? (
         <AnimatedNumber
           value={value}
           className="font-medium text-foreground"

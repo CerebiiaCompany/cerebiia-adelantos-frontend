@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="awBg" x1="10" y1="6" x2="70" y2="74" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C4B5FD"/>
+      <stop offset="0.4" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="awMetal" x1="28" y1="18" x2="52" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EDE9FE"/>
+    </linearGradient>
+    <filter id="awSoft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#7C3AED" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="40" cy="40" r="34" fill="url(#awBg)" filter="url(#awSoft)"/>
+  <ellipse cx="30" cy="28" rx="11" ry="6.5" fill="#FFFFFF" fill-opacity="0.3"/>
+  <circle cx="40" cy="30" r="12" fill="url(#awMetal)" filter="url(#awSoft)"/>
+  <circle cx="40" cy="30" r="6" fill="#A78BFA" fill-opacity="0.4"/>
+  <path d="M32 40 27 54l7.5-4.5L40 58l5.5-8.5L53 54l-5-14z" fill="url(#awMetal)"/>
+  <ellipse cx="36" cy="26" rx="3.5" ry="2" fill="#FFFFFF" fill-opacity="0.5"/>
+</svg>

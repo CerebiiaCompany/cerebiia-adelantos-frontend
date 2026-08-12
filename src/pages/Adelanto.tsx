@@ -45,7 +45,8 @@ export default function Adelanto() {
   const dashboard = useEmployeeDashboard();
   const profile = useProfileView();
   const { data: empleadoMe } = useEmpleadoMe();
-  const { data: adelantoConfig, solicitudActiva } = useAdelantoConfig();
+  const { data: adelantoConfig, solicitudActiva, primeraCuotaGratisDisponible } =
+    useAdelantoConfig();
   const { mutate: createSolicitud, isPending: isSubmitting } =
     useCreateSolicitudAdelanto();
 
@@ -53,10 +54,12 @@ export default function Adelanto() {
     adelantoConfig?.tarifaFijaPorCuota ?? DEFAULT_TARIFA_FIJA_POR_CUOTA;
   const maxInstallments = adelantoConfig?.numeroMaximoCuotas ?? 3;
   const maxAmount = dashboard?.availableAdvance ?? 0;
+  const feeOptions = { primeraCuotaGratis: primeraCuotaGratisDisponible };
   const fee = calculateAdvanceTotalFee(
     tarifaFijaPorCuota,
     installments,
     amount,
+    feeOptions,
   );
   const total = amount - fee;
 
@@ -65,7 +68,7 @@ export default function Adelanto() {
       setInstallments(maxInstallments);
     }
   }, [installments, maxInstallments]);
-  const installmentValue = Math.round(total / installments);
+  const installmentValue = Math.round(amount / installments);
   const bankName = resolveEmpleadoBankName(empleadoMe, profile);
   const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
   const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
@@ -139,6 +142,7 @@ export default function Adelanto() {
         fee={fee}
         total={total}
         installmentValue={installmentValue}
+        primeraCuotaGratis={primeraCuotaGratisDisponible}
         disabled={!isAdvanceWindowOpen}
       />
 

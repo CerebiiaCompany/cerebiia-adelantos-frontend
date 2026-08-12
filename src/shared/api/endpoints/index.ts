@@ -4,3 +4,5 @@ export { adelantosEndpoints, advancesEndpoints } from "./adelantos";
 export { configuracionEndpoints } from "./configuracion";
 export { companiesEndpoints } from "./companies";
 export { empresasEndpoints } from "./empresas";
+export { notificacionesEndpoints } from "./notificaciones";
+export { logrosEndpoints } from "./logros";

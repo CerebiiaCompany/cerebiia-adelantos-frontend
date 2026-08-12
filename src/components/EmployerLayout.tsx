@@ -18,7 +18,7 @@ export function EmployerLayout() {
       <AppSidebar
         brandSubtitle="Panel empresa"
         navItems={EMPLOYER_SIDEBAR_ITEMS}
-        sectionLabel="Gestión"
+        sectionLabel="Principal"
       />
       <SidebarInset className="relative min-w-0 overflow-hidden bg-background">
         <AppAnimatedBackground />

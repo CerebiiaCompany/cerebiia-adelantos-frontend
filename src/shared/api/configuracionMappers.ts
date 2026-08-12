@@ -6,6 +6,7 @@ export interface ParsedAdelantoConfiguracion {
   numeroMaximoCuotas: number;
   plazoMaximoDias: number;
   tarifaFijaPorCuota: number;
+  montoMinimoAdelanto: number | null;
   updatedAt: string;
 }
 
@@ -19,6 +20,8 @@ export function mapAdelantoConfiguracion(
 ): ParsedAdelantoConfiguracion {
   const tarifa = Number.parseFloat(dto.tarifa_fija_por_cuota);
   const porcentaje = Number.parseFloat(dto.porcentaje_maximo_adelanto);
+  const minimoRaw = dto.monto_minimo_adelanto?.trim();
+  const minimo = minimoRaw ? Number.parseFloat(minimoRaw) : Number.NaN;
 
   return {
     porcentajeMaximoAdelanto: Number.isNaN(porcentaje)
@@ -35,6 +38,7 @@ export function mapAdelantoConfiguracion(
     tarifaFijaPorCuota: Number.isNaN(tarifa)
       ? DEFAULT_TARIFA_FIJA_POR_CUOTA
       : Math.round(tarifa),
+    montoMinimoAdelanto: Number.isNaN(minimo) ? null : Math.round(minimo),
     updatedAt: dto.updated_at,
   };
 }
@@ -67,6 +71,7 @@ export function resolveAdelantoConfigFromEmpleadoMe(
         ? nomina.plazo_maximo_dias
         : DEFAULT_PLAZO_MAXIMO_DIAS,
     tarifaFijaPorCuota: Math.round(tarifa),
+    montoMinimoAdelanto: null,
     updatedAt: "",
   };
 }

@@ -2,36 +2,34 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/model/AuthProvider";
-import {
-  loadEmployeeNotifications,
-  subscribeEmployeeNotifications,
-} from "@/entities/notification";
-import { isEmpleadoSession } from "@/shared/api";
-import type { DemoNotification } from "@/shared/config/demoNotifications";
-import { mapStoredNotificationsToDemo } from "./mapStoredNotifications";
-import {
-  getInitialReadNotificationIds,
-  saveReadNotificationIds,
-} from "./notificationsStorage";
+import { resolveAppRole } from "@/shared/api";
+import { notificacionesEndpoints } from "@/shared/api/endpoints";
+import { env } from "@/shared/config/env";
+import { ROUTES } from "@/shared/config/routes";
+import type { AppNotification } from "./types";
+import { mapNotificacionDtosToApp } from "./mapStoredNotifications";
+
+export const NOTIFICACIONES_ME_QUERY_KEY = ["notificaciones", "me"] as const;
 
 function getUnreadNotifications(
-  notifications: DemoNotification[],
-): DemoNotification[] {
+  notifications: AppNotification[],
+): AppNotification[] {
   return notifications.filter((notification) => !notification.read);
 }
 
 interface NotificationsContextValue {
-  notifications: DemoNotification[];
-  unreadNotifications: DemoNotification[];
+  notifications: AppNotification[];
+  unreadNotifications: AppNotification[];
   unreadCount: number;
+  isLoading: boolean;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  notificationsListPath: string | null;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(
@@ -40,68 +38,88 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
-  const employeeId =
-    session && isEmpleadoSession(session) ? session.empleado.id : null;
+  const appRole = session ? resolveAppRole(session) : null;
+  const queryClient = useQueryClient();
+  const enabled =
+    Boolean(env.apiUrl) && (appRole === "employee" || appRole === "employer");
 
-  const [readIds, setReadIds] = useState<Set<string>>(() =>
-    getInitialReadNotificationIds(),
+  const listQuery = useQuery({
+    queryKey: NOTIFICACIONES_ME_QUERY_KEY,
+    queryFn: () => notificacionesEndpoints.listMe(),
+    enabled,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+  });
+
+  const notifications = useMemo(
+    () => mapNotificacionDtosToApp(listQuery.data?.items ?? []),
+    [listQuery.data?.items],
   );
-  const [version, setVersion] = useState(0);
-
-  useEffect(
-    () => subscribeEmployeeNotifications(() => setVersion((v) => v + 1)),
-    [],
-  );
-
-  const notifications = useMemo(() => {
-    if (!employeeId) return [];
-
-    const stored = loadEmployeeNotifications(employeeId);
-    return mapStoredNotificationsToDemo(stored, readIds);
-  }, [employeeId, readIds, version]);
 
   const unreadNotifications = useMemo(
     () => getUnreadNotifications(notifications),
     [notifications],
   );
 
-  const markAsRead = useCallback((id: string) => {
-    setReadIds((current) => {
-      if (current.has(id)) {
-        return current;
-      }
+  const unreadCount =
+    listQuery.data?.unread_count ?? unreadNotifications.length;
 
-      const next = new Set(current);
-      next.add(id);
-      saveReadNotificationIds(next);
-      return next;
-    });
-  }, []);
+  const invalidate = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
+  }, [queryClient]);
+
+  const markReadMutation = useMutation({
+    mutationFn: (ids: string[]) =>
+      notificacionesEndpoints.marcarLeidas({ ids }),
+    onSuccess: invalidate,
+  });
+
+  const markAllMutation = useMutation({
+    mutationFn: () => notificacionesEndpoints.marcarTodasLeidas(),
+    onSuccess: invalidate,
+  });
+
+  const markAsRead = useCallback(
+    (id: string) => {
+      const target = notifications.find((item) => item.id === id);
+      if (!target || target.read) return;
+      markReadMutation.mutate([id]);
+    },
+    [notifications, markReadMutation],
+  );
 
   const markAllAsRead = useCallback(() => {
-    setReadIds((current) => {
-      const allIds = notifications.map((notification) => notification.id);
-      const hasUnread = allIds.some((id) => !current.has(id));
+    if (unreadCount === 0) return;
+    markAllMutation.mutate();
+  }, [unreadCount, markAllMutation]);
 
-      if (!hasUnread) {
-        return current;
-      }
-
-      const next = new Set([...current, ...allIds]);
-      saveReadNotificationIds(next);
-      return next;
-    });
-  }, [notifications]);
+  const notificationsListPath =
+    appRole === "employee"
+      ? ROUTES.employee.notificaciones
+      : appRole === "employer"
+        ? ROUTES.employer.notificaciones
+        : null;
 
   const value = useMemo(
     () => ({
       notifications,
       unreadNotifications,
-      unreadCount: unreadNotifications.length,
+      unreadCount,
+      isLoading: listQuery.isLoading,
       markAsRead,
       markAllAsRead,
+      notificationsListPath,
     }),
-    [notifications, unreadNotifications, markAsRead, markAllAsRead],
+    [
+      notifications,
+      unreadNotifications,
+      unreadCount,
+      listQuery.isLoading,
+      markAsRead,
+      markAllAsRead,
+      notificationsListPath,
+    ],
   );
 
   return (
@@ -115,7 +133,9 @@ export function useNotifications() {
   const context = useContext(NotificationsContext);
 
   if (!context) {
-    throw new Error("useNotifications debe usarse dentro de NotificationsProvider");
+    throw new Error(
+      "useNotifications debe usarse dentro de NotificationsProvider",
+    );
   }
 
   return context;

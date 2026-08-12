@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="Regalo premium abierto">
+  <defs>
+    <!-- Cream cardboard -->
+    <linearGradient id="creamFront" x1="130" y1="210" x2="280" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8F0"/>
+      <stop offset="0.4" stop-color="#F2E4D0"/>
+      <stop offset="1" stop-color="#DFCBB0"/>
+    </linearGradient>
+    <linearGradient id="creamSide" x1="270" y1="210" x2="390" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8D6BE"/>
+      <stop offset="1" stop-color="#C9B08C"/>
+    </linearGradient>
+    <linearGradient id="creamTopRim" x1="150" y1="190" x2="360" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF9F2"/>
+      <stop offset="1" stop-color="#E5D2B8"/>
+    </linearGradient>
+    <linearGradient id="creamLid" x1="120" y1="70" x2="360" y2="200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFCFA"/>
+      <stop offset="0.5" stop-color="#F0E0CC"/>
+      <stop offset="1" stop-color="#DCC6A8"/>
+    </linearGradient>
+
+    <!-- Teal satin / grosgrain ribbon -->
+    <linearGradient id="tealRibbon" x1="180" y1="180" x2="340" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5EEAD4"/>
+      <stop offset="0.35" stop-color="#14B8A6"/>
+      <stop offset="0.7" stop-color="#0D9488"/>
+      <stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="tealVelvet" x1="190" y1="200" x2="330" y2="270" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#134E4A"/>
+      <stop offset="0.45" stop-color="#0F766E"/>
+      <stop offset="1" stop-color="#115E59"/>
+    </linearGradient>
+
+    <!-- Polished precious gold -->
+    <linearGradient id="goldMetal" x1="160" y1="40" x2="360" y2="180" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF6D0"/>
+      <stop offset="0.2" stop-color="#F8E08A"/>
+      <stop offset="0.45" stop-color="#E8B923"/>
+      <stop offset="0.7" stop-color="#C9920A"/>
+      <stop offset="1" stop-color="#8A6508"/>
+    </linearGradient>
+    <linearGradient id="goldEdge" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFF1B0"/>
+      <stop offset="0.4" stop-color="#E0A812"/>
+      <stop offset="1" stop-color="#7A5806"/>
+    </linearGradient>
+    <radialGradient id="coinFace" cx="256" cy="228" r="28" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF4C2"/>
+      <stop offset="0.45" stop-color="#F0C84A"/>
+      <stop offset="1" stop-color="#B8860B"/>
+    </radialGradient>
+    <radialGradient id="coinGlow" cx="256" cy="228" r="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDE68A" stop-opacity="0.85"/>
+      <stop offset="0.55" stop-color="#FBBF24" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Resplandor mágico del interior -->
+    <radialGradient id="innerBloom" cx="256" cy="220" r="90" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF7D0" stop-opacity="0.95"/>
+      <stop offset="0.25" stop-color="#FDE68A" stop-opacity="0.7"/>
+      <stop offset="0.55" stop-color="#FBBF24" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="innerCore" cx="256" cy="224" r="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="0.35" stop-color="#FEF3C7" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="boxShadow" x="-25%" y="-10%" width="150%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#334155" flood-opacity="0.24"/>
+    </filter>
+    <filter id="lidShadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="-6" dy="10" stdDeviation="9" flood-color="#334155" flood-opacity="0.22"/>
+    </filter>
+    <filter id="glowSoft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="glowBloom" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Soft floor shadow only (sin card de fondo) -->
+  <ellipse cx="256" cy="448" rx="120" ry="14" fill="#64748B" fill-opacity="0.16"/>
+
+  <!-- ========== BOX BODY (solid square, no fins) ========== -->
+  <g filter="url(#boxShadow)">
+    <!-- Front -->
+    <path d="M148 228 L256 276 L256 416 L148 368 Z" fill="url(#creamFront)"/>
+    <!-- Right side -->
+    <path d="M256 276 L364 228 L364 368 L256 416 Z" fill="url(#creamSide)"/>
+    <!-- Top rim / thickness -->
+    <path d="M148 228 L256 180 L364 228 L256 276 Z" fill="url(#creamTopRim)"/>
+
+    <!-- Shallow teal velvet insert -->
+    <path d="M168 232 L256 192 L344 232 L256 268 Z" fill="url(#tealVelvet)"/>
+    <path d="M180 230 L256 202 L332 230 L256 256 Z" fill="#0F766E"/>
+    <path d="M190 228 L256 208 L322 228 L256 246 Z" fill="#115E59" fill-opacity="0.55"/>
+
+    <!-- Resplandor interior (contenido mágico) -->
+    <ellipse cx="256" cy="218" rx="88" ry="54" fill="url(#innerBloom)" filter="url(#glowBloom)"/>
+    <ellipse cx="256" cy="222" rx="42" ry="28" fill="url(#innerCore)" filter="url(#glowSoft)"/>
+    <!-- Rayos suaves saliendo de la apertura -->
+    <g opacity="0.55" filter="url(#glowSoft)">
+      <path d="M256 224 L236 120 L248 120 Z" fill="#FEF3C7"/>
+      <path d="M256 224 L268 108 L280 112 Z" fill="#FDE68A"/>
+      <path d="M256 224 L300 140 L308 150 Z" fill="#FEF3C7"/>
+      <path d="M256 224 L204 148 L198 158 Z" fill="#FDE68A"/>
+      <path d="M256 224 L256 96 L266 100 Z" fill="#FFFBEB"/>
+    </g>
+    <!-- Premium gold coin resting on velvet -->
+    <ellipse cx="256" cy="232" rx="46" ry="16" fill="url(#coinGlow)" filter="url(#glowSoft)"/>
+    <ellipse cx="256" cy="230" rx="30" ry="11" fill="#8A6508" opacity="0.35"/>
+    <ellipse cx="256" cy="226" rx="28" ry="26" fill="url(#coinFace)"/>
+    <ellipse cx="256" cy="224" rx="22" ry="20" fill="none" stroke="#FFF6D0" stroke-width="2" stroke-opacity="0.55"/>
+    <ellipse cx="256" cy="224" rx="16" ry="14" fill="none" stroke="#B8860B" stroke-width="1.5"/>
+    <!-- Emblem: estrella coronada -->
+    <path d="M256 212 L260 220 L269 221 L262 227 L264 236 L256 231 L248 236 L250 227 L243 221 L252 220 Z" fill="#8A6508"/>
+    <path d="M256 214 L259 220 L266 221 L261 225 L262 232 L256 228 L250 232 L251 225 L246 221 L253 220 Z" fill="#FFF6D0"/>
+    <path d="M248 210 L256 206 L264 210 L260 214 L252 214 Z" fill="#FFF6D0"/>
+    <path d="M250 208 L256 205 L262 208 L259 211 L253 211 Z" fill="#E8B923"/>
+
+    <!-- Cross ribbon — vertical (woven teal + gold edges) -->
+    <path d="M238 256 L274 256 L278 400 L234 400 Z" fill="url(#tealRibbon)"/>
+    <!-- Grosgrain hint lines -->
+    <path d="M246 260 L246 396" stroke="#99F6E4" stroke-width="1" stroke-opacity="0.25"/>
+    <path d="M256 260 L256 396" stroke="#99F6E4" stroke-width="1" stroke-opacity="0.18"/>
+    <path d="M266 260 L266 396" stroke="#99F6E4" stroke-width="1" stroke-opacity="0.25"/>
+    <path d="M236 256 L240 256 L236 400 L232 400 Z" fill="url(#goldEdge)"/>
+    <path d="M272 256 L276 256 L280 400 L276 400 Z" fill="url(#goldEdge)"/>
+
+    <!-- Cross ribbon — horizontal -->
+    <path d="M160 318 L352 318 L352 352 L160 352 Z" fill="url(#tealRibbon)"/>
+    <path d="M168 326 L344 326" stroke="#99F6E4" stroke-width="1" stroke-opacity="0.22"/>
+    <path d="M168 334 L344 334" stroke="#99F6E4" stroke-width="1" stroke-opacity="0.16"/>
+    <path d="M168 342 L344 342" stroke="#99F6E4" stroke-width="1" stroke-opacity="0.22"/>
+    <path d="M160 316 L352 316 L352 322 L160 322 Z" fill="url(#goldEdge)"/>
+    <path d="M160 348 L352 348 L352 354 L160 354 Z" fill="url(#goldEdge)"/>
+
+    <!-- Soft edge highlight on cream -->
+    <path d="M156 240 L248 280" stroke="#FFFFFF" stroke-width="2.5" stroke-opacity="0.28" stroke-linecap="round"/>
+  </g>
+
+  <!-- Dense gold stardust around opening -->
+  <g opacity="0.95">
+    <circle cx="200" cy="168" r="1.8" fill="#F8E08A"/>
+    <circle cx="220" cy="148" r="1.2" fill="#FFF6D0"/>
+    <circle cx="248" cy="132" r="1.6" fill="#E8B923"/>
+    <circle cx="276" cy="140" r="1.1" fill="#FFF6D0"/>
+    <circle cx="302" cy="158" r="1.7" fill="#F0C84A"/>
+    <circle cx="318" cy="178" r="1.3" fill="#FFF6D0"/>
+    <circle cx="186" cy="190" r="1.4" fill="#E8B923"/>
+    <circle cx="330" cy="200" r="1.5" fill="#F8E08A"/>
+    <circle cx="236" cy="160" r="1" fill="#FFF6D0"/>
+    <circle cx="290" cy="166" r="1.2" fill="#C9920A"/>
+    <path d="M212 156 L213.5 160 L218 161 L214 164 L215.5 168 L212 166 L208.5 168 L210 164 L206 161 L210.5 160 Z" fill="#F0C84A"/>
+    <path d="M296 148 L297.2 151 L300.5 152 L297.8 154 L299 157 L296 155.5 L293 157 L294.2 154 L291.5 152 L294.8 151 Z" fill="#FFF6D0"/>
+    <path d="M264 120 L265.5 124 L269.5 125 L266 128 L267.5 132 L264 129.5 L260.5 132 L262 128 L258.5 125 L262.5 124 Z" fill="#E8B923"/>
+    <rect x="228" y="172" width="10" height="5" rx="1" fill="#E8B923" transform="rotate(-24 233 174)"/>
+    <rect x="288" y="164" width="9" height="4.5" rx="1" fill="#14B8A6" transform="rotate(18 292 166)"/>
+    <rect x="250" y="150" width="8" height="4" rx="1" fill="#F8E08A" transform="rotate(-8 254 152)"/>
+  </g>
+
+  <!-- ========== LID (just lifted, tilted left) ========== -->
+  <g filter="url(#lidShadow)" transform="translate(-10,-4) rotate(-16 230 150)">
+    <!-- Lid plate -->
+    <path d="M130 148 L258 96 L372 142 L340 198 L210 238 L118 186 Z" fill="url(#creamLid)"/>
+    <path d="M258 96 L372 142 L340 198 L210 238 Z" fill="#CDBBA0" fill-opacity="0.5"/>
+    <!-- Underside hint -->
+    <path d="M140 160 L250 120 L350 158 L330 180 L210 214 L130 176 Z" fill="#E8D6BE" fill-opacity="0.35"/>
+
+    <!-- Lid teal sash + gold edges -->
+    <path d="M152 158 L340 142 L346 172 L158 188 Z" fill="url(#tealRibbon)"/>
+    <path d="M160 164 L332 150" stroke="#99F6E4" stroke-width="1.2" stroke-opacity="0.28"/>
+    <path d="M160 172 L332 158" stroke="#99F6E4" stroke-width="1" stroke-opacity="0.18"/>
+    <path d="M152 156 L340 140 L341 148 L153 164 Z" fill="url(#goldEdge)"/>
+    <path d="M158 182 L346 166 L347 174 L159 190 Z" fill="url(#goldEdge)"/>
+
+    <!-- Large polished gold bow loops -->
+    <ellipse cx="188" cy="126" rx="52" ry="30" fill="url(#goldMetal)" transform="rotate(-34 188 126)"/>
+    <ellipse cx="300" cy="120" rx="52" ry="30" fill="url(#goldMetal)" transform="rotate(30 300 120)"/>
+    <ellipse cx="188" cy="126" rx="26" ry="13" fill="#FFF6D0" fill-opacity="0.4" transform="rotate(-34 188 126)"/>
+    <ellipse cx="300" cy="120" rx="26" ry="13" fill="#FFF6D0" fill-opacity="0.35" transform="rotate(30 300 120)"/>
+    <!-- Secondary loops -->
+    <ellipse cx="214" cy="108" rx="24" ry="13" fill="url(#goldMetal)" transform="rotate(-20 214 108)"/>
+    <ellipse cx="274" cy="104" rx="24" ry="13" fill="url(#goldMetal)" transform="rotate(18 274 104)"/>
+
+    <!-- Central gold coin on lid bow -->
+    <circle cx="250" cy="136" r="28" fill="url(#goldMetal)"/>
+    <circle cx="250" cy="134" r="20" fill="none" stroke="#FFF6D0" stroke-width="2.5" stroke-opacity="0.55"/>
+    <circle cx="250" cy="134" r="14" fill="none" stroke="#8A6508" stroke-width="1.5"/>
+    <path d="M250 122 L253 129 L261 130 L255 135 L257 143 L250 139 L243 143 L245 135 L239 130 L247 129 Z" fill="#FFF6D0"/>
+    <circle cx="244" cy="128" r="4" fill="#FFF6D0" fill-opacity="0.55"/>
+
+    <!-- Bow tails -->
+    <path d="M232 154 Q250 196 214 220" stroke="#8A6508" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <path d="M268 154 Q250 196 286 220" stroke="#7A5806" stroke-width="11" stroke-linecap="round" fill="none"/>
+    <path d="M236 152 Q250 186 222 208" stroke="#F8E08A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Extra stardust near lid -->
+  <g>
+    <circle cx="168" cy="120" r="1.4" fill="#FFF6D0"/>
+    <circle cx="348" cy="130" r="1.6" fill="#F0C84A"/>
+    <circle cx="190" cy="98" r="1.1" fill="#E8B923"/>
+    <circle cx="320" cy="108" r="1.3" fill="#FFF6D0"/>
+    <circle cx="256" cy="88" r="1.5" fill="#F8E08A"/>
+  </g>
+</svg>

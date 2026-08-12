@@ -412,7 +412,9 @@ export function PayrollClosureView() {
                       {formatCOP(summary.principalTotal)}
                     </td>
                     <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
-                      {formatCOP(summary.feesTotal)}
+                      {summary.feesTotal === 0
+                        ? "Gratis"
+                        : formatCOP(summary.feesTotal)}
                     </td>
                     <td className="px-4 py-3.5 text-foreground">
                       {summary.installmentProgressLabel ?? "—"}

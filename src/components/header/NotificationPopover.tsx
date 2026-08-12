@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Bell } from "lucide-react";
@@ -12,18 +11,28 @@ import {
   HEADER_POPOVER_COLLISION_PADDING,
   headerPopoverContentClass,
 } from "@/components/header/headerPopoverStyles";
-import { useNotifications } from "@/features/notifications";
-import { ROUTES } from "@/shared/config/routes";
+import {
+  useNotifications,
+  type AppNotification,
+} from "@/features/notifications";
+import { useState } from "react";
 
 export function NotificationPopover() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const { unreadNotifications, unreadCount, markAsRead, markAllAsRead } =
-    useNotifications();
+  const {
+    unreadNotifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    notificationsListPath,
+  } = useNotifications();
 
   const handleViewAll = () => {
     setOpen(false);
-    navigate(ROUTES.employee.notificaciones);
+    if (notificationsListPath) {
+      navigate(notificationsListPath);
+    }
   };
 
   const handleMarkAllAsRead = () => {
@@ -35,10 +44,12 @@ export function NotificationPopover() {
     toast.success("Todas las notificaciones fueron marcadas como leídas");
   };
 
-  const handleNotificationClick = (id: string) => {
-    markAsRead(id);
+  const handleNotificationClick = (notification: AppNotification) => {
+    markAsRead(notification.id);
     setOpen(false);
-    navigate(ROUTES.employee.notificaciones);
+    navigate(
+      notification.href || notificationsListPath || "/",
+    );
   };
 
   return (

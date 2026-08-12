@@ -16,6 +16,8 @@ export {
 export { useDeactivateEmpleado, useReactivarEmpleado } from "./model/useDeactivateEmpleado";
 export { useImportEmpleados } from "./model/useImportEmpleados";
 export { EmployerPanelUnavailableNotice } from "./ui/EmployerPanelUnavailableNotice";
+export { EmployerAdvanceAdoptionCard } from "./ui/EmployerAdvanceAdoptionCard";
+export { EmployerMetricStatCard } from "./ui/EmployerMetricStatCard";
 export { EmployerNominaDescuentosPanel } from "./ui/EmployerNominaDescuentosPanel";
 export { EmpleadosTable } from "./ui/EmpleadosTable";
 export { DeactivateEmpleadoButton } from "./ui/DeactivateEmpleadoButton";

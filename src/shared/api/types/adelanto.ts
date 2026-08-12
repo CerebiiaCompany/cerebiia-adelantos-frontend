@@ -41,6 +41,8 @@ export interface HistorialSolicitudEmpresaDTO {
   monto: string;
   monto_neto: string;
   tarifa_total: string;
+  /** Snapshot de tarifa fija por cuota al crear la solicitud. */
+  tarifa_fija_por_cuota_snapshot?: string;
   numero_cuotas_snapshot: number;
   estado: EstadoSolicitud;
   created_at: string;
@@ -103,6 +105,8 @@ export interface MiSituacionFinancieraDTO {
   cuotas_maximas: number;
   tarifa_por_cuota: string;
   plazo_maximo_dias: number;
+  /** True si el próximo adelanto aplica promo de primera cuota gratis. */
+  primera_cuota_gratis_disponible?: boolean;
   resumen: MiSituacionFinancieraResumenDTO;
   tendencia_mensual: TendenciaMensualDTO[];
 }

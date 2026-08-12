@@ -3,6 +3,7 @@ import {
   appendAdvanceRequestedNotification,
   loadEmployeeNotifications,
   subscribeEmployeeNotifications,
+  upsertEmployeeNotifications,
 } from "./storage";
 import { buildAdvanceRequestedNotification } from "./types";
 
@@ -34,6 +35,13 @@ describe("employeeNotificationsStorage", () => {
     expect(notification.id).toMatch(/^advance-\d+$/);
   });
 
+  it("buildAdvanceRequestedNotification usa id estable con solicitudId", () => {
+    const notification = buildAdvanceRequestedNotification(100000, undefined, {
+      solicitudId: "sol-1",
+    });
+    expect(notification.id).toBe("advance-requested:sol-1");
+  });
+
   it("appendAdvanceRequestedNotification persiste y carga notificaciones", () => {
     appendAdvanceRequestedNotification("emp-1", 300000);
 
@@ -52,5 +60,28 @@ describe("employeeNotificationsStorage", () => {
 
     expect(listener).toHaveBeenCalledTimes(1);
     unsubscribe();
+  });
+
+  it("upsertEmployeeNotifications solo agrega ids nuevos", () => {
+    const first = buildAdvanceRequestedNotification(100000, undefined, {
+      solicitudId: "a",
+    });
+    upsertEmployeeNotifications("emp-1", [first]);
+    const second = {
+      ...first,
+      title: "Cambiado",
+    };
+    const result = upsertEmployeeNotifications("emp-1", [
+      second,
+      buildAdvanceRequestedNotification(200000, undefined, {
+        solicitudId: "b",
+      }),
+    ]);
+
+    expect(result.addedCount).toBe(1);
+    expect(result.notifications).toHaveLength(2);
+    expect(result.notifications.find((n) => n.id === first.id)?.title).toBe(
+      "Adelanto solicitado",
+    );
   });
 });

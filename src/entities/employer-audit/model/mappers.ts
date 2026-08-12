@@ -14,10 +14,13 @@ import {
   type RegisteredCompanyAdvance,
 } from "./registryStorage";
 import {
+  calculateFeeForInstallmentIndex,
+  DEFAULT_TARIFA_FIJA_POR_CUOTA,
+} from "@/shared/config/advanceFees";
+import {
   calculateAdvanceFee,
   isRecoverableCompanyAdvance,
 } from "./calculations";
-import { DEFAULT_TARIFA_FIJA_POR_CUOTA } from "@/shared/config/advanceFees";
 import type {
   HistorialSolicitudEmpresaDTO,
   SolicitudAdelantoDTO,
@@ -65,6 +68,7 @@ function buildRegisteredAdvanceFromAmounts(input: {
   monto: string;
   montoNeto?: string | null;
   tarifaTotal?: string | null;
+  tarifaFijaPorCuotaSnapshot?: string | null;
   installments: number;
   estado: EstadoSolicitud;
   requestedAt: string;
@@ -76,13 +80,24 @@ function buildRegisteredAdvanceFromAmounts(input: {
   const parsedTarifaTotal = input.tarifaTotal
     ? Number.parseFloat(input.tarifaTotal)
     : Number.NaN;
+  const parsedTarifaFija = input.tarifaFijaPorCuotaSnapshot
+    ? Number.parseFloat(input.tarifaFijaPorCuotaSnapshot)
+    : Number.NaN;
   const parsedNet = input.montoNeto
     ? Number.parseFloat(input.montoNeto)
     : Number.NaN;
+  const feePerCuotaSnapshot =
+    !Number.isNaN(parsedTarifaFija) && parsedTarifaFija > 0
+      ? Math.round(parsedTarifaFija)
+      : undefined;
   const feeAmount =
     !Number.isNaN(parsedTarifaTotal) && parsedTarifaTotal >= 0
       ? Math.round(parsedTarifaTotal)
-      : calculateAdvanceFee(safeAmount, DEFAULT_TARIFA_FIJA_POR_CUOTA, input.installments);
+      : calculateAdvanceFee(
+          safeAmount,
+          feePerCuotaSnapshot ?? DEFAULT_TARIFA_FIJA_POR_CUOTA,
+          input.installments,
+        );
   const netDisbursedAmount =
     !Number.isNaN(parsedNet) && parsedNet >= 0
       ? Math.round(parsedNet)
@@ -98,6 +113,7 @@ function buildRegisteredAdvanceFromAmounts(input: {
     advancedAmount: safeAmount,
     installments: input.installments,
     feeAmount,
+    feePerCuotaSnapshot,
     netDisbursedAmount,
     status: mapEstadoToCompanyAdvanceStatus(input.estado),
     requestedAt: input.requestedAt,
@@ -132,6 +148,7 @@ export function mapHistorialEmpresaToRegisteredCompanyAdvances(
       monto: item.monto,
       montoNeto: item.monto_neto,
       tarifaTotal: item.tarifa_total,
+      tarifaFijaPorCuotaSnapshot: item.tarifa_fija_por_cuota_snapshot,
       installments: item.numero_cuotas_snapshot,
       estado: item.estado,
       requestedAt: item.created_at,
@@ -163,6 +180,7 @@ export function mapSolicitudesToRegisteredCompanyAdvances(
       monto: solicitud.monto,
       montoNeto: solicitud.monto_a_recibir ?? solicitud.monto_neto,
       tarifaTotal: solicitud.tarifa_total,
+      tarifaFijaPorCuotaSnapshot: solicitud.tarifa_fija_por_cuota_snapshot,
       installments: solicitud.numero_cuotas_snapshot,
       estado: solicitud.estado,
       requestedAt: solicitud.created_at,
@@ -284,12 +302,22 @@ function getAdvanceInstallmentMonthOffset(
   return offset;
 }
 
-function feePerInstallmentAmount(advance: RegisteredCompanyAdvance): number {
-  const planMonths = Math.max(1, advance.installments);
-  return Math.round(advance.feeAmount / planMonths);
+function feePerInstallmentAmount(
+  advance: RegisteredCompanyAdvance,
+  installmentOffset: number,
+): number {
+  return calculateFeeForInstallmentIndex(
+    advance.feeAmount,
+    advance.installments,
+    installmentOffset,
+    advance.feePerCuotaSnapshot ?? DEFAULT_TARIFA_FIJA_POR_CUOTA,
+  );
 }
 
-function computeMonthlyDeduction(advance: RegisteredCompanyAdvance): {
+function computeMonthlyDeduction(
+  advance: RegisteredCompanyAdvance,
+  installmentOffset: number,
+): {
   advancesTotal: number;
   /** Comisión de la cuota del mes (informativa; no entra en totales). */
   feesTotal: number;
@@ -297,7 +325,7 @@ function computeMonthlyDeduction(advance: RegisteredCompanyAdvance): {
   grandTotal: number;
   installmentValue: number | null;
 } {
-  const feeThisMonth = feePerInstallmentAmount(advance);
+  const feeThisMonth = feePerInstallmentAmount(advance, installmentOffset);
 
   if (advance.installments === 1) {
     return {
@@ -415,7 +443,7 @@ export function buildPayrollClosureSnapshot(
     const offset = getAdvanceInstallmentMonthOffset(advance, monthKey);
     if (offset === null) return;
 
-    const deduction = computeMonthlyDeduction(advance);
+    const deduction = computeMonthlyDeduction(advance, offset);
     const isRequestMonth = offset === 0;
     const planTotal = Math.max(1, advance.installments);
     const current = summaryMap.get(advance.employeeId) ?? {

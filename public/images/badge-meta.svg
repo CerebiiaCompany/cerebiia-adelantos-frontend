@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="metaBg" x1="10" y1="6" x2="70" y2="74" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7DD3FC"/>
+      <stop offset="0.45" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <filter id="metaSoft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#2563EB" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <circle cx="40" cy="40" r="34" fill="url(#metaBg)" filter="url(#metaSoft)"/>
+  <ellipse cx="30" cy="28" rx="11" ry="6.5" fill="#FFFFFF" fill-opacity="0.3"/>
+  <circle cx="40" cy="40" r="16" fill="none" stroke="#FFFFFF" stroke-width="3.5"/>
+  <circle cx="40" cy="40" r="9.5" fill="none" stroke="#DBEAFE" stroke-width="3"/>
+  <circle cx="40" cy="40" r="4" fill="#FFFFFF"/>
+</svg>

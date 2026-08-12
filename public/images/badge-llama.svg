@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="llaBg" x1="10" y1="6" x2="70" y2="74" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A5B4FC"/>
+      <stop offset="0.4" stop-color="#818CF8"/>
+      <stop offset="1" stop-color="#C084FC"/>
+    </linearGradient>
+    <linearGradient id="llaFlame" x1="34" y1="18" x2="48" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.5" stop-color="#EDE9FE"/>
+      <stop offset="1" stop-color="#DDD6FE"/>
+    </linearGradient>
+    <filter id="llaSoft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#7C3AED" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="40" cy="40" r="34" fill="url(#llaBg)" filter="url(#llaSoft)"/>
+  <ellipse cx="30" cy="28" rx="11" ry="6.5" fill="#FFFFFF" fill-opacity="0.3"/>
+  <path d="M40 16c5 10 12 12.5 12 24 0 8.5-5.4 14.5-12 14.5S28 48.5 28 40c0-7 5-12 7.5-16.5 1.2 4.5 3.5 6.5 4.5 6.5 1.2-4.5 0-10 0-14z" fill="url(#llaFlame)" filter="url(#llaSoft)"/>
+  <path d="M40 32c2.5 3.5 5 4.5 5 9 0 3.5-2.2 6-5 6s-5-2.5-5-6c0-3 2.2-4.8 3.8-7 0.4 2.2 1 2.8 1.2 2.8 0.3-1.8 0-3.5 0-4.8z" fill="#8B5CF6" fill-opacity="0.45"/>
+</svg>
