@@ -11,7 +11,7 @@ export const notificacionesEndpoints = {
     if (params?.unread_only) search.set("unread_only", "true");
     const query = search.toString();
     return http.get<ListadoNotificacionesDTO>(
-      `/notificaciones/me/${query ? `?${query}` : ""}`,
+      query ? `/notificaciones/me/?${query}` : "/notificaciones/me/",
     );
   },
   marcarLeidas: (body: MarcarLeidasRequest) =>

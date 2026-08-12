@@ -23,9 +23,8 @@ const KIND_CANONICAL_HREF: Record<string, string> = {
   payroll_due_3d: ROUTES.employee.control,
   next_payment_net_updated: ROUTES.employee.control,
   cupo_80: ROUTES.employee.control,
-  config_fee_updated: ROUTES.employee.adelanto,
-  config_advance_percent_updated: ROUTES.employee.adelanto,
-  config_min_amount_updated: ROUTES.employee.adelanto,
+  cupo_low: ROUTES.employee.control,
+  cupo_exhausted: ROUTES.employee.control,
   // Empresa
   employee_activated: ROUTES.employer.misEmpleados,
   employee_suspended: ROUTES.employer.misEmpleados,
@@ -62,6 +61,17 @@ export function normalizeNotificationHref(
 
   if (kind === "data_change_audit") {
     return resolveAuditHref(pathOnly || raw);
+  }
+
+  if (
+    kind === "config_fee_updated" ||
+    kind === "config_advance_percent_updated" ||
+    kind === "config_min_amount_updated"
+  ) {
+    if (pathOnly.startsWith("/empleador")) {
+      return ROUTES.employer.panel;
+    }
+    return ROUTES.employee.adelanto;
   }
 
   if (kind && KIND_CANONICAL_HREF[kind]) {

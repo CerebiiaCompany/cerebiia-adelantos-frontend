@@ -10,6 +10,8 @@ const KIND_ICON_COLORS: Record<string, string> = {
   payroll_due_3d: "text-primary",
   next_payment_net_updated: "text-primary",
   cupo_80: "text-warning",
+  cupo_low: "text-warning",
+  cupo_exhausted: "text-destructive",
   achievement_unlocked: "text-primary",
   data_change_audit: "text-[hsl(260_70%_50%)]",
   support_replied: "text-primary",

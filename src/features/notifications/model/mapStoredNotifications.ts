@@ -30,6 +30,8 @@ const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
   payroll_due_3d: Calendar,
   next_payment_net_updated: Wallet,
   cupo_80: AlertTriangle,
+  cupo_low: AlertTriangle,
+  cupo_exhausted: AlertTriangle,
   achievement_unlocked: Trophy,
   data_change_audit: UserCog,
   support_replied: MessageSquare,
