@@ -4,10 +4,12 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { FirstFreeAdvanceBanner } from "@/features/dashboard/ui/FirstFreeAdvanceBanner";
 import { PayrollCalendarDialog } from "@/features/dashboard/ui/PayrollCalendarDialog";
 import { PayrollCalendarFab } from "@/features/dashboard/ui/PayrollCalendarFab";
 import { RequestShortcutsBar } from "@/features/dashboard/ui/RequestShortcutsBar";
 import { useEmployeeDashboard } from "@/features/dashboard";
+import { useAdelantoConfig } from "@/features/advance/model/useAdelantoConfig";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import {
   getDaysUntilPayment,
@@ -48,6 +50,7 @@ const ACTIVITY_COUNT_DELAY_OFFSET_MS = 100;
 export default function Dashboard() {
   const navigate = useNavigate();
   const dashboard = useEmployeeDashboard();
+  const { primeraCuotaGratisDisponible } = useAdelantoConfig();
   const greeting = useTimeBasedGreeting(dashboard?.displayName ?? "Empleado");
   const [payrollCalendarOpen, setPayrollCalendarOpen] = useState(false);
 
@@ -100,18 +103,20 @@ export default function Dashboard() {
         onOpenChange={setPayrollCalendarOpen}
       />
 
+      {primeraCuotaGratisDisponible ? <FirstFreeAdvanceBanner /> : null}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Disponible para adelanto"
           value={
             isNominaLoading ? (
-              <span className="font-display text-2xl font-bold text-muted-foreground">
+              <span className="font-display text-3xl font-bold text-muted-foreground">
                 —
               </span>
             ) : (
               <AnimatedCurrency
                 value={availableAdvance}
-                className="font-display text-2xl font-bold text-gradient"
+                className="font-display text-3xl font-bold text-gradient"
               />
             )
           }
@@ -144,7 +149,7 @@ export default function Dashboard() {
           value={
             <AnimatedCurrency
               value={accumulatedIncome}
-              className="font-display text-2xl font-bold text-foreground"
+              className="font-display text-3xl font-bold text-foreground"
             />
           }
           sub={
@@ -171,7 +176,7 @@ export default function Dashboard() {
           value={
             <AnimatedCurrency
               value={totalAdvancedThisMonth}
-              className="font-display text-2xl font-bold text-foreground"
+              className="font-display text-3xl font-bold text-foreground"
             />
           }
           sub="este mes"
@@ -465,7 +470,7 @@ function StatCard({
       )}
     >
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {label}
         </span>
         {onIconClick ? (
@@ -482,7 +487,7 @@ function StatCard({
         )}
       </div>
       <div
-        className={`font-display text-2xl font-bold ${
+        className={`font-display text-3xl font-bold ${
           accent ? "text-gradient" : "text-foreground"
         } ${trend === "up" ? "text-primary" : ""}`}
       >

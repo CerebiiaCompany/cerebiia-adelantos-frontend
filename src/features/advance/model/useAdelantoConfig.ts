@@ -25,6 +25,7 @@ function mapSituacionToConfig(
     plazoMaximoDias:
       situacion.plazo_maximo_dias > 0 ? situacion.plazo_maximo_dias : 90,
     tarifaFijaPorCuota: Number.isNaN(tarifa) ? 8_000 : Math.round(tarifa),
+    montoMinimoAdelanto: null,
     updatedAt: "",
   };
 }
@@ -78,5 +79,7 @@ export function useAdelantoConfig() {
     solicitudActiva: situacionQuery.data?.resumen.solicitud_activa ?? false,
     saldoDisponible: situacionQuery.data?.saldo_disponible,
     montoMaximoSolicitable: situacionQuery.data?.monto_maximo_solicitable,
+    primeraCuotaGratisDisponible:
+      situacionQuery.data?.primera_cuota_gratis_disponible === true,
   };
 }

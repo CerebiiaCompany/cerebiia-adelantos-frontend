@@ -63,8 +63,19 @@ export interface EmployerPayrollDeductionSummary {
    * (null si es 1 cuota, planes mixtos o montos distintos).
    */
   installmentValue: number | null;
+  /**
+   * Etiqueta de progreso de cuota(s) del mes, p.ej. "1 de 2" o "1 de 2 · 2 de 3".
+   */
+  installmentProgressLabel: string | null;
+  /** Monto total adelantado (principal) de los adelantos que impactan el mes. */
+  principalTotal: number;
   advancesTotal: number;
+  /**
+   * Comisión correspondiente a la(s) cuota(s) del mes.
+   * Solo informativa: no se suma al total a descontar ni al reembolso.
+   */
   feesTotal: number;
+  /** Valor a descontar por cuota(s) en el mes (principal del periodo). */
   loanInstallmentsTotal: number;
   grandTotal: number;
 }

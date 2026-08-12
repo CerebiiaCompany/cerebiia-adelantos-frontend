@@ -78,7 +78,8 @@ export function AdvanceReceipt({
   const receiptRef = useRef<HTMLDivElement>(null);
   const profile = useProfileView();
   const { data: empleadoMe } = useEmpleadoMe();
-  const { data: adelantoConfig } = useAdelantoConfig();
+  const { data: adelantoConfig, primeraCuotaGratisDisponible } =
+    useAdelantoConfig();
   const bankName = resolveEmpleadoBankName(empleadoMe, profile);
   const accountTypeLabel = resolveEmpleadoAccountTypeLabel(empleadoMe, profile);
   const accountNumber = resolveEmpleadoAccountNumber(empleadoMe, profile);
@@ -136,8 +137,18 @@ export function AdvanceReceipt({
         amount,
         installments,
         resolvedTarifaFijaPorCuota,
+        {
+          primeraCuotaGratis:
+            transactionFeeAmount == null && primeraCuotaGratisDisponible,
+        },
       ),
-    [transactionFeeAmount, amount, installments, resolvedTarifaFijaPorCuota],
+    [
+      transactionFeeAmount,
+      amount,
+      installments,
+      resolvedTarifaFijaPorCuota,
+      primeraCuotaGratisDisponible,
+    ],
   );
   const netAmount = useMemo(
     () => amount - transactionFee,
@@ -153,8 +164,17 @@ export function AdvanceReceipt({
   );
   const statusConfig = ADVANCE_RECEIPT_STATUS_CONFIG[status];
   const concept = `Adelanto de nómina correspondiente al periodo ${periodLabel}`;
+  const isFirstCuotaGratisReceipt =
+    transactionFee === 0 ||
+    (primeraCuotaGratisDisponible &&
+      transactionFee <
+        resolvedTarifaFijaPorCuota * Math.max(1, installments));
   const transactionFeeConcept = formatAdvanceTransactionFeeLabel(
     resolvedTarifaFijaPorCuota,
+    {
+      primeraCuotaGratis: isFirstCuotaGratisReceipt,
+      numeroCuotas: installments,
+    },
   );
   const disbursementLabel =
     status === "en_curso"
@@ -272,12 +292,18 @@ export function AdvanceReceipt({
                     {transactionFeeConcept}
                   </td>
                   <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-[hsl(260_70%_50%)]">
-                    −
-                    <AnimatedCurrency
-                      value={transactionFee}
-                      className="inline"
-                      duration={600}
-                    />
+                    {transactionFee === 0 ? (
+                      <span className="text-emerald-600">Gratis</span>
+                    ) : (
+                      <>
+                        −
+                        <AnimatedCurrency
+                          value={transactionFee}
+                          className="inline"
+                          duration={600}
+                        />
+                      </>
+                    )}
                   </td>
                 </tr>
                 <tr className="bg-primary/[0.04]">

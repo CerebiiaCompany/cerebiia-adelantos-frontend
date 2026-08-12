@@ -1765,6 +1765,38 @@
   to { opacity: 1; }
 }
 
+@keyframes welcome-confetti {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-5px);
+    opacity: 0.85;
+  }
+}
+
+@keyframes welcome-gift-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes welcome-lid-open {
+  0%,
+  100% {
+    transform: rotate(-2deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-5deg) translateY(-3px);
+  }
+}
+
 @keyframes scale-in {
   from {
     opacity: 0;

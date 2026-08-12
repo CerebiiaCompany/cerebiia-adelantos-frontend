@@ -136,11 +136,15 @@ export function AdvanceConfirmDialog({
 
             <p className="text-center text-xs text-muted-foreground">
               Comisión{" "}
-              <AnimatedCurrency
-                value={fee}
-                className="inline font-medium text-foreground"
-                duration={COUNT_DURATION}
-              />
+              {fee === 0 ? (
+                <span className="font-medium text-emerald-600">Gratis</span>
+              ) : (
+                <AnimatedCurrency
+                  value={fee}
+                  className="inline font-medium text-foreground"
+                  duration={COUNT_DURATION}
+                />
+              )}
             </p>
 
             <dl className="rounded-xl border border-border/60 px-4 py-3 text-sm">

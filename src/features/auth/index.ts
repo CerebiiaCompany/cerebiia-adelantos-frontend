@@ -13,6 +13,7 @@ export {
   syncRememberedCredentialsAfterPasswordReset,
 } from "./model/useChangePassword";
 export { rememberedCredentialsStorage } from "./model/rememberedCredentialsStorage";
+export { pendingLoginCredentialsStorage } from "./model/pendingLoginCredentialsStorage";
 export { ForgotPasswordForm } from "./ui/ForgotPasswordForm";
 export { ForcePasswordChangeForm } from "./ui/ForcePasswordChangeForm";
 export { useForgotPassword } from "./model/useForgotPassword";

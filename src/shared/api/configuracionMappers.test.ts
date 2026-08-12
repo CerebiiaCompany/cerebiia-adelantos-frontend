@@ -18,6 +18,7 @@ describe("mapAdelantoConfiguracion", () => {
     expect(parsed.numeroMaximoCuotas).toBe(3);
     expect(parsed.plazoMaximoDias).toBe(90);
     expect(parsed.tarifaFijaPorCuota).toBe(10_000);
+    expect(parsed.montoMinimoAdelanto).toBeNull();
     expect(parsed.updatedAt).toContain("2026-06-26");
   });
 });

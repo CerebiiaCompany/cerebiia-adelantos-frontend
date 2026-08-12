@@ -1,49 +1,52 @@
-import { Trophy, Star, Shield, Flame, Target, Award } from "lucide-react";
+import { Trophy } from "lucide-react";
 import {
   AnimatedNumber,
   AnimatedProgressBar,
 } from "@/components/ui/animated-number";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { useEmployeeAchievements } from "@/features/achievements";
+import type { AchievementIconKey } from "@/entities/achievement";
+import { cn } from "@/lib/utils";
 
-const achievements = [
-  {
-    icon: Shield,
-    title: "Control total",
-    desc: "No te sobreendeudaste 3 meses seguidos",
-    points: 500,
-  },
-  {
-    icon: Flame,
-    title: "Racha de 5",
-    desc: "5 meses consecutivos bajo el 50% del límite",
-    points: 300,
-  },
-  {
-    icon: Star,
-    title: "Primera vez",
-    desc: "Completaste tu primer adelanto",
-    points: 100,
-  },
-  {
-    icon: Target,
-    title: "Meta ahorro",
-    desc: "Ahorraste el equivalente a 1 semana de ingresos",
-    points: 400,
-  },
-  {
-    icon: Award,
-    title: "Usuario premium",
-    desc: "Mantén puntaje 90+ por 6 meses",
-    points: 1000,
-  },
-];
-
-const TOTAL_POINTS = 0;
-const MAX_POINTS = 500;
-const POINTS_TO_NEXT_LEVEL = MAX_POINTS;
-const LEVEL = 1;
+const ACHIEVEMENT_BADGE_SRC: Record<AchievementIconKey, string> = {
+  star: "/images/badge-copa.svg",
+  milestone5: "/images/badge-5.svg",
+  milestone15: "/images/badge-15.svg",
+  milestone30: "/images/badge-30.svg",
+  shield: "/images/badge-escudo.svg",
+  flame: "/images/badge-llama.svg",
+  target: "/images/badge-meta.svg",
+  award: "/images/badge-award.svg",
+};
 
 export default function Logros() {
+  const { hash } = useLocation();
+  const { data } = useEmployeeAchievements();
+
+  useEffect(() => {
+    if (!hash) return;
+    const id = hash.replace(/^#/, "");
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.scrollIntoView({ behavior: "smooth", block: "center" });
+    node.classList.add("ring-2", "ring-primary/40");
+    const timer = window.setTimeout(() => {
+      node.classList.remove("ring-2", "ring-primary/40");
+    }, 1800);
+    return () => window.clearTimeout(timer);
+  }, [hash, data.items]);
+
+  const {
+    items,
+    totalPoints,
+    level,
+    levelLabel,
+    pointsToNextLevel,
+    maxPointsForLevel,
+  } = data;
+
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
       <PageHeader
@@ -53,23 +56,26 @@ export default function Logros() {
       />
 
       <div className="glass-card glow-border p-6 text-center">
-        <div className="level-badge mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-primary">
-          <Trophy className="level-badge-icon h-8 w-8 text-primary-foreground" />
-        </div>
+        <img
+          src="/images/badge-copa.svg"
+          alt=""
+          className="mx-auto mb-3 h-[4.5rem] w-[4.5rem] object-contain drop-shadow-[0_8px_18px_rgba(79,70,229,0.28)]"
+          draggable={false}
+        />
         <p className="text-sm text-muted-foreground">Nivel actual</p>
         <AnimatedNumber
-          value={LEVEL}
+          value={level}
           className="font-display text-4xl font-bold text-gradient"
         />
-        <p className="mt-1 text-sm text-muted-foreground">Nuevo usuario</p>
+        <p className="mt-1 text-sm text-muted-foreground">{levelLabel}</p>
         <div className="mt-4">
           <div className="mb-1 flex justify-between text-xs text-muted-foreground">
             <span>
-              <AnimatedNumber value={TOTAL_POINTS} className="inline" /> pts
+              <AnimatedNumber value={totalPoints} className="inline" /> pts
             </span>
             <span>
               <AnimatedNumber
-                value={MAX_POINTS}
+                value={maxPointsForLevel}
                 className="inline"
                 duration={800}
               />{" "}
@@ -77,48 +83,85 @@ export default function Logros() {
             </span>
           </div>
           <AnimatedProgressBar
-            value={TOTAL_POINTS}
-            max={MAX_POINTS}
+            value={totalPoints % maxPointsForLevel}
+            max={maxPointsForLevel}
             className="h-2"
           />
           <p className="mt-1 text-xs text-muted-foreground">
             <AnimatedNumber
-              value={POINTS_TO_NEXT_LEVEL}
+              value={pointsToNextLevel}
               className="inline font-medium text-foreground"
               duration={850}
             />{" "}
-            pts para nivel 2
+            pts para nivel {level + 1}
           </p>
         </div>
       </div>
 
       <div className="space-y-3">
-        {achievements.map((a, i) => (
-          <div
-            key={a.title}
-            className="glass-card flex items-center gap-4 p-4 opacity-50"
-          >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground ring-4 ring-border/40">
-              <a.icon className="h-6 w-6" strokeWidth={2.25} />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">{a.title}</p>
-              <p className="text-xs text-muted-foreground">{a.desc}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-bold text-muted-foreground">
-                +
-                <AnimatedNumber
-                  value={a.points}
-                  className="inline"
-                  duration={650}
-                  delay={i * 70 + 60}
+        {items.map((achievement, i) => {
+          const badgeSrc = ACHIEVEMENT_BADGE_SRC[achievement.icon];
+          const unlocked = achievement.unlocked;
+
+          return (
+            <div
+              key={achievement.id}
+              id={`logro-${achievement.id}`}
+              className={cn(
+                "glass-card flex items-center gap-4 p-4 transition-opacity",
+                unlocked ? "opacity-100 ring-1 ring-primary/15" : "opacity-50",
+              )}
+            >
+              <div
+                className={cn(
+                  "flex h-12 w-12 shrink-0 items-center justify-center",
+                  unlocked
+                    ? "drop-shadow-[0_6px_14px_rgba(79,70,229,0.3)]"
+                    : "opacity-70 grayscale-[0.25]",
+                )}
+              >
+                <img
+                  src={badgeSrc}
+                  alt=""
+                  className="h-12 w-12 object-contain"
+                  draggable={false}
                 />
-              </p>
-              <p className="text-xs text-muted-foreground">Bloqueado</p>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {achievement.title}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {achievement.description}
+                </p>
+              </div>
+              <div className="text-right">
+                <p
+                  className={cn(
+                    "text-sm font-bold",
+                    unlocked ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  +
+                  <AnimatedNumber
+                    value={achievement.points}
+                    className="inline"
+                    duration={650}
+                    delay={i * 70 + 60}
+                  />
+                </p>
+                <p
+                  className={cn(
+                    "text-xs font-medium",
+                    unlocked ? "text-emerald-600" : "text-muted-foreground",
+                  )}
+                >
+                  {unlocked ? "Desbloqueado" : "Bloqueado"}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

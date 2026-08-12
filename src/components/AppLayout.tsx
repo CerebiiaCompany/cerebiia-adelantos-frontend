@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AppAnimatedBackground } from "@/components/AppAnimatedBackground";
 import { NotificationPopover } from "@/components/header/NotificationPopover";
 import { UserProfilePopover } from "@/components/header/UserProfilePopover";
+import { WhatsAppSupportFab } from "@/components/WhatsAppSupportFab";
 import { Outlet, useLocation } from "react-router-dom";
 
 export function AppLayout() {
@@ -26,6 +27,7 @@ export function AppLayout() {
         >
           <Outlet />
         </div>
+        <WhatsAppSupportFab />
       </SidebarInset>
     </SidebarProvider>
   );

@@ -2,104 +2,107 @@ import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
   DEFAULT_EXCEL_BRANDING,
   DEFAULT_EXCEL_COLOR_PALETTE,
-  EXCEL_BRANDING_STORAGE_KEY,
-  argbToCssHex,
-  buildPaletteFromHeaderColor,
   clearExcelBrandingPreferences,
-  cssHexToArgb,
   loadExcelBrandingPreferences,
   resolveExcelBrandForDocument,
   saveExcelBrandingPreferences,
 } from "./excelBranding";
 
+const OWNER_A = "empresa-user-a";
+const OWNER_B = "empresa-user-b";
+
 describe("excelBranding", () => {
   beforeEach(() => {
-    clearExcelBrandingPreferences();
+    clearExcelBrandingPreferences(OWNER_A);
+    clearExcelBrandingPreferences(OWNER_B);
+    localStorage.clear();
   });
 
   afterEach(() => {
-    clearExcelBrandingPreferences();
+    clearExcelBrandingPreferences(OWNER_A);
+    clearExcelBrandingPreferences(OWNER_B);
+    localStorage.clear();
   });
 
-  it("carga defaults si no hay preferencias", () => {
-    expect(loadExcelBrandingPreferences()).toEqual(DEFAULT_EXCEL_BRANDING);
+  it("carga defaults si no hay preferencias de la empresa", () => {
+    expect(loadExcelBrandingPreferences(OWNER_A)).toEqual(DEFAULT_EXCEL_BRANDING);
   });
 
-  it("persiste y aplica solo al documento elegido", () => {
-    saveExcelBrandingPreferences({
-      presetId: "forest",
-      colors: {
-        primaryDark: "FF166534",
-        accent: "FF22C55E",
-        headerBg: "FF15803D",
-        headerFg: "FFFFFFFF",
-        altRowBg: "FFF0FDF4",
-        border: "FFBBF7D0",
-        footerBg: "FFDCFCE7",
-        text: "FF14532D",
-      },
-      logoDataUrl: "data:image/png;base64,abc",
-      logoFileName: "logo.png",
-      applyTo: "nomina",
-    });
-
-    const nomina = resolveExcelBrandForDocument("nomina");
-    expect(nomina.palette.headerBg).toBe("FF15803D");
-    expect(nomina.logoDataUrl).toBe("data:image/png;base64,abc");
-    expect(nomina.customized).toBe(true);
-
-    const liquidacion = resolveExcelBrandForDocument("liquidacion");
-    expect(liquidacion.palette.id).toBe(DEFAULT_EXCEL_COLOR_PALETTE.id);
-    expect(liquidacion.logoDataUrl).toBeNull();
-    expect(liquidacion.customized).toBe(false);
-
-    const reporte = resolveExcelBrandForDocument("reporte");
-    expect(reporte.customized).toBe(false);
-  });
-
-  it("con applyTo todos aplica a todos los Excels exportables", () => {
-    saveExcelBrandingPreferences({
-      ...DEFAULT_EXCEL_BRANDING,
-      applyTo: "todos",
-      logoDataUrl: "data:image/png;base64,xyz",
-    });
-
-    expect(resolveExcelBrandForDocument("nomina").customized).toBe(true);
-    expect(resolveExcelBrandForDocument("liquidacion").customized).toBe(true);
-    expect(resolveExcelBrandForDocument("reporte").customized).toBe(true);
-    expect(resolveExcelBrandForDocument("reporte").logoDataUrl).toBe(
-      "data:image/png;base64,xyz",
-    );
-  });
-
-  it("migra applyTo ambos legacy a todos", () => {
+  it("no usa localStorage como fuente de verdad", () => {
     localStorage.setItem(
-      EXCEL_BRANDING_STORAGE_KEY,
+      "adecerebiia.excelBranding.v2",
       JSON.stringify({
         ...DEFAULT_EXCEL_BRANDING,
-        applyTo: "ambos",
+        logoDataUrl: "data:image/jpeg;base64,happy",
+        logoFileName: "happy.jpg",
+        applyTo: "todos",
       }),
     );
-    expect(loadExcelBrandingPreferences().applyTo).toBe("todos");
+
+    const prefs = loadExcelBrandingPreferences(OWNER_B);
+    expect(prefs.logoDataUrl).toBeNull();
+    expect(prefs.logoFileName).toBeNull();
   });
 
-  it("convierte ARGB a CSS hex y viceversa", () => {
-    expect(argbToCssHex("FF1E3A8A")).toBe("#1E3A8A");
-    expect(cssHexToArgb("#1E3A8A")).toBe("FF1E3A8A");
+  it("aisla preferencias entre empresas distintas en caché de sesión", () => {
+    saveExcelBrandingPreferences(
+      {
+        ...DEFAULT_EXCEL_BRANDING,
+        logoDataUrl: "data:image/png;base64,abc",
+        logoFileName: "logo-a.png",
+        applyTo: "todos",
+      },
+      OWNER_A,
+    );
+
+    expect(loadExcelBrandingPreferences(OWNER_A).logoFileName).toBe("logo-a.png");
+    expect(loadExcelBrandingPreferences(OWNER_B)).toEqual(DEFAULT_EXCEL_BRANDING);
   });
 
-  it("genera paleta completa desde un color libre", () => {
-    const palette = buildPaletteFromHeaderColor("#BE123C", "#E11D48");
-    expect(palette.id).toBe("custom");
-    expect(palette.headerBg).toBe("FFBE123C");
-    expect(palette.accent).toBe("FFE11D48");
-    expect(palette.headerFg).toBe("FFFFFFFF");
+  it("aplica solo al documento elegido", () => {
+    saveExcelBrandingPreferences(
+      {
+        presetId: "forest",
+        colors: {
+          primaryDark: "FF166534",
+          accent: "FF22C55E",
+          headerBg: "FF15803D",
+          headerFg: "FFFFFFFF",
+          altRowBg: "FFF0FDF4",
+          border: "FFBBF7D0",
+          footerBg: "FFDCFCE7",
+          text: "FF14532D",
+        },
+        logoDataUrl: "data:image/png;base64,abc",
+        logoFileName: "logo.png",
+        applyTo: "nomina",
+      },
+      OWNER_A,
+    );
+
+    const prefs = loadExcelBrandingPreferences(OWNER_A);
+    const nomina = resolveExcelBrandForDocument("nomina", prefs);
+    const liquidacion = resolveExcelBrandForDocument("liquidacion", prefs);
+
+    expect(nomina.customized).toBe(true);
+    expect(nomina.palette.headerBg).toBe("FF15803D");
+    expect(nomina.logoDataUrl).toBe("data:image/png;base64,abc");
+    expect(liquidacion.customized).toBe(false);
+    expect(liquidacion.palette).toEqual(DEFAULT_EXCEL_COLOR_PALETTE);
+    expect(liquidacion.logoDataUrl).toBeNull();
   });
 
-  it("ignora JSON inválido en storage", () => {
-    localStorage.setItem(EXCEL_BRANDING_STORAGE_KEY, "{not-json");
-    expect(loadExcelBrandingPreferences().presetId).toBe(
-      DEFAULT_EXCEL_BRANDING.presetId,
+  it("con applyTo=todos aplica a reportes", () => {
+    const prefs = {
+      ...DEFAULT_EXCEL_BRANDING,
+      logoDataUrl: "data:image/png;base64,xyz",
+      logoFileName: "logo.png",
+      applyTo: "todos" as const,
+    };
+    saveExcelBrandingPreferences(prefs, OWNER_A);
+    const loaded = loadExcelBrandingPreferences(OWNER_A);
+    expect(resolveExcelBrandForDocument("reporte", loaded).logoDataUrl).toBe(
+      "data:image/png;base64,xyz",
     );
   });
 });

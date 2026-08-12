@@ -68,7 +68,7 @@ export function saveEmployeeNotifications(
 
   window.localStorage.setItem(
     getStorageKey(employeeId),
-    JSON.stringify(notifications.slice(0, 50)),
+    JSON.stringify(notifications.slice(0, 80)),
   );
   notifyListeners();
 }
@@ -78,7 +78,7 @@ export function appendEmployeeNotification(
   notification: StoredNotification,
 ): StoredNotification[] {
   const current = loadEmployeeNotifications(employeeId);
-  const next = [notification, ...current].slice(0, 50);
+  const next = [notification, ...current].slice(0, 80);
   saveEmployeeNotifications(employeeId, next);
   return next;
 }
@@ -91,4 +91,38 @@ export function appendAdvanceRequestedNotification(
     employeeId,
     buildAdvanceRequestedNotification(amount),
   );
+}
+
+/**
+ * Inserta solo notificaciones con id nuevo. Conserva las existentes,
+ * ordena por createdAt desc y limita a 80.
+ */
+export function upsertEmployeeNotifications(
+  employeeId: string,
+  candidates: StoredNotification[],
+): { notifications: StoredNotification[]; addedCount: number } {
+  if (!employeeId || candidates.length === 0) {
+    return {
+      notifications: loadEmployeeNotifications(employeeId),
+      addedCount: 0,
+    };
+  }
+
+  const current = loadEmployeeNotifications(employeeId);
+  const existingIds = new Set(current.map((item) => item.id));
+  const toAdd = candidates.filter((item) => !existingIds.has(item.id));
+
+  if (toAdd.length === 0) {
+    return { notifications: current, addedCount: 0 };
+  }
+
+  const next = [...toAdd, ...current]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+    .slice(0, 80);
+
+  saveEmployeeNotifications(employeeId, next);
+  return { notifications: next, addedCount: toAdd.length };
 }

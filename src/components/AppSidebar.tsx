@@ -2,6 +2,7 @@ import { PanelLeftClose } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useMemo } from "react";
 import { useAuthAccess } from "@/features/auth";
+import { useUnreadAuditoriaCambiosCount } from "@/features/auditoria-cambios";
 import { useUnreadSoporteCount } from "@/features/soporte";
 import { canAccessModule } from "@/shared/config/moduleAccess";
 import {
@@ -57,6 +58,9 @@ function AppSidebarContent({
   const layout = useSidebarLayout();
   const { appRole } = useAuthAccess();
   const unreadSoporteCount = useUnreadSoporteCount();
+  const unreadAuditoriaCount = useUnreadAuditoriaCambiosCount(
+    appRole === "employer",
+  );
   const isDrawer = layout === "drawer";
   const collapsed = layout === "panel" && state === "collapsed";
   const location = useLocation();
@@ -131,7 +135,21 @@ function AppSidebarContent({
                     (!item.end && location.pathname.startsWith(item.url)),
                 );
                 const badgeCount =
-                  item.moduleId === "employee.soportes" ? unreadSoporteCount : 0;
+                  item.moduleId === "employee.soportes"
+                    ? unreadSoporteCount
+                    : item.moduleId === "employer.auditorias"
+                      ? unreadAuditoriaCount
+                      : 0;
+                const badgeLabel =
+                  item.moduleId === "employee.soportes"
+                    ? unreadSoporteCount > 1
+                      ? `${unreadSoporteCount} respuestas nuevas de soporte`
+                      : "Nueva respuesta de soporte"
+                    : item.moduleId === "employer.auditorias"
+                      ? unreadAuditoriaCount > 1
+                        ? `${unreadAuditoriaCount} cambios de datos sin revisar`
+                        : "Hay cambios de datos sin revisar"
+                      : undefined;
 
                 return (
                   <SidebarMenuItem
@@ -157,6 +175,7 @@ function AppSidebarContent({
                             item={item}
                             collapsed={collapsed}
                             badgeCount={badgeCount}
+                            badgeLabel={badgeLabel}
                           />
                         </SidebarMenuButton>
                       </AppTooltip>
@@ -174,6 +193,7 @@ function AppSidebarContent({
                           item={item}
                           collapsed={collapsed}
                           badgeCount={badgeCount}
+                          badgeLabel={badgeLabel}
                         />
                       </SidebarMenuButton>
                     )}

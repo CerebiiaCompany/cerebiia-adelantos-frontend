@@ -23,6 +23,7 @@ export default function Control() {
     usedAmount,
     limitAmount,
     nextPaymentNet,
+    payrollDeductionThisMonth,
     limitDelta,
     monthlyAdvanceData,
   } = control;
@@ -80,7 +81,21 @@ export default function Control() {
               className="font-display text-2xl font-bold text-foreground"
             />
             <p className="text-sm text-muted-foreground">Próximo pago neto</p>
-            <p className="text-xs text-muted-foreground">Descontando adelantos</p>
+            <p className="text-xs text-muted-foreground">
+              {payrollDeductionThisMonth > 0 ? (
+                <>
+                  Descontando{" "}
+                  <AnimatedCurrency
+                    value={payrollDeductionThisMonth}
+                    className="inline"
+                    duration={800}
+                  />{" "}
+                  en adelantos
+                </>
+              ) : (
+                "Sin descuentos de adelantos este mes"
+              )}
+            </p>
           </div>
         </div>
       </div>

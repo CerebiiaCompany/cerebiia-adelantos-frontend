@@ -1,17 +1,18 @@
-import { Building2, Percent, UserPlus, Users } from "lucide-react";
+import { Building2, ClipboardList, Percent, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth";
 import {
+  EmployerAdvanceAdoptionCard,
+  EmployerMetricStatCard,
+  EmployerNominaDescuentosPanel,
   EmployerPanelUnavailableNotice,
   useEmpleadosMetricas,
   useEmployerConfig,
 } from "@/features/employer-panel";
 import { isSystemUserSession } from "@/shared/api";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
-import { AnimatedNumber } from "@/components/ui/animated-number";
 import { formatCOP } from "@/shared/lib";
-import { cn } from "@/lib/utils";
 
 export default function EmployerPanelPage() {
   const { session } = useAuth();
@@ -26,24 +27,12 @@ export default function EmployerPanelPage() {
     isError: isConfigError,
   } = useEmployerConfig();
 
-  const stats = [
-    {
-      label: "Empleados activos",
-      value: metricas?.activos ?? 0,
-      icon: Users,
-      accent: "text-primary",
-      isLoading: isLoadingMetricas,
-      hasError: isMetricasError,
-    },
-    {
-      label: "Usuarios pendientes por activarse",
-      value: metricas?.pre_registrados ?? 0,
-      icon: UserPlus,
-      accent: "text-primary",
-      isLoading: isLoadingMetricas,
-      hasError: isMetricasError,
-    },
-  ] as const;
+  const total = metricas?.total ?? 0;
+  const activos = metricas?.activos ?? 0;
+  const preRegistrados = metricas?.pre_registrados ?? 0;
+  const inactivos = metricas?.inactivos ?? 0;
+  const activosPct =
+    total > 0 ? Math.round((activos / total) * 100) : 0;
 
   const displayName =
     session && isSystemUserSession(session)
@@ -58,34 +47,58 @@ export default function EmployerPanelPage() {
         title={greeting.title}
         description="Gestiona adelantos, empleados y solicitudes de tu empresa"
       />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="glass-card glow-border rounded-xl p-5"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </p>
-              <stat.icon className={cn("h-4 w-4", stat.accent)} strokeWidth={2.25} />
-            </div>
-            {stat.isLoading ? (
-              <Skeleton className="h-9 w-16 rounded-lg" />
-            ) : stat.hasError ? (
-              <p className="font-display text-3xl font-bold text-muted-foreground">
-                —
-              </p>
-            ) : (
-              <AnimatedNumber
-                value={stat.value}
-                className="font-display text-3xl font-bold text-foreground"
-              />
-            )}
-          </div>
-        ))}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
+        <EmployerMetricStatCard
+          label="Empleados en nómina"
+          value={total}
+          icon={ClipboardList}
+          isLoading={isLoadingMetricas}
+          hasError={isMetricasError}
+          hint="Planta completa registrada"
+          segments={[
+            { value: activos, tone: "primary" },
+            { value: preRegistrados, tone: "warning" },
+            { value: inactivos, tone: "muted" },
+          ]}
+          chips={[
+            { label: "activos", value: activos, tone: "primary" },
+            { label: "pendientes", value: preRegistrados, tone: "warning" },
+            { label: "inactivos", value: inactivos, tone: "muted" },
+          ]}
+        />
 
-        <div className="glass-card glow-border rounded-xl p-5">
+        <EmployerMetricStatCard
+          label="Empleados activos"
+          value={activos}
+          icon={Users}
+          isLoading={isLoadingMetricas}
+          hasError={isMetricasError}
+          hint={
+            total > 0
+              ? `${activosPct}% de la nómina ya puede operar`
+              : "Sin empleados en nómina"
+          }
+          segments={[
+            { value: activos, tone: "primary" },
+            { value: Math.max(0, total - activos), tone: "muted" },
+          ]}
+          chips={[
+            {
+              label: "por activar",
+              value: preRegistrados,
+              tone: "warning",
+            },
+            { label: "inactivos", value: inactivos, tone: "muted" },
+          ]}
+        />
+
+        <EmployerAdvanceAdoptionCard
+          totalNomina={total}
+          isLoadingMetricas={isLoadingMetricas}
+          hasMetricasError={isMetricasError}
+        />
+
+        <div className="glass-card glow-border flex h-full flex-col rounded-xl p-5">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-medium text-muted-foreground">
               Reglas de adelanto
@@ -102,7 +115,7 @@ export default function EmployerPanelPage() {
               Configuración global no disponible temporalmente.
             </p>
           ) : (
-            <ul className="space-y-1.5 text-sm text-foreground">
+            <ul className="mt-auto space-y-1.5 text-sm text-foreground">
               <li>
                 Tope:{" "}
                 <span className="font-semibold">
@@ -141,17 +154,7 @@ export default function EmployerPanelPage() {
         />
       ) : null}
 
-      <div className="glass-card glow-border rounded-xl p-6">
-        <h2 className="font-display text-lg font-semibold text-foreground">
-          Resumen operativo
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Bienvenido al panel de empresa. Desde aquí puedes auditar adelantos,
-          supervisar cuotas de préstamos, consultar el libro contable y generar
-          los reportes de retención para nómina. El monitoreo usa el historial
-          oficial de solicitudes de plantilla.
-        </p>
-      </div>
+      <EmployerNominaDescuentosPanel />
     </div>
   );
 }

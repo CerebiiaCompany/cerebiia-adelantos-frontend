@@ -5,7 +5,6 @@ import {
   serializeAdvanceHistoryRecord,
   type EmployeeDashboardMetrics,
 } from "@/entities/employee-dashboard";
-import { appendAdvanceRequestedNotification } from "@/entities/notification";
 import { buildAdvanceHistoryRecord } from "@/shared/config/advanceHistory";
 
 const STORAGE_PREFIX = "cerebiia:employee-dashboard:";
@@ -120,6 +119,5 @@ export function recordEmployeeAdvance(
   };
 
   saveEmployeeDashboardMetrics(employeeId, nextMetrics);
-  appendAdvanceRequestedNotification(employeeId, amount);
   return nextMetrics;
 }

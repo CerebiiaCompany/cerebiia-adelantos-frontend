@@ -36,8 +36,9 @@ const sampleAdvances: RegisteredCompanyAdvance[] = [
     baseSalary: 3_000_000,
     advancedAmount: 900_000,
     installments: 3,
-    feeAmount: 8_000,
-    netDisbursedAmount: 892_000,
+    feeAmount: 16_000,
+    feePerCuotaSnapshot: 8_000,
+    netDisbursedAmount: 884_000,
     status: "procesado",
     requestedAt: "2026-06-19T11:00:00-05:00",
     transferId: "TRF-2",
@@ -171,7 +172,7 @@ describe("employer audit mappers", () => {
   it("genera movimientos desde adelantos reales", () => {
     const movements = mapToMovementRecords(sampleAdvances);
     expect(movements).toHaveLength(2);
-    expect(movements[0].netDisbursedAmount).toBe(892_000);
+    expect(movements[0].netDisbursedAmount).toBe(884_000);
     expect(movements[0].installments).toBe(3);
     expect(movements[0].status).toBeDefined();
     expect(movements[0].paymentEvidenceUrl).toBe(
@@ -196,7 +197,10 @@ describe("employer audit mappers", () => {
     );
     expect(ana?.advancesCount).toBe(1);
     expect(ana?.installments).toBe(1);
-    expect(ana?.installmentValue).toBeNull();
+    expect(ana?.installmentValue).toBe(400_000);
+    expect(ana?.installmentProgressLabel).toBe("1 de 1 cuota");
+    expect(ana?.principalTotal).toBe(400_000);
+    expect(ana?.loanInstallmentsTotal).toBe(400_000);
 
     const luis = closure.employeeSummaries.find(
       (item) => item.employeeDocument === "456",
@@ -204,6 +208,13 @@ describe("employer audit mappers", () => {
     expect(luis?.advancesCount).toBe(1);
     expect(luis?.installments).toBe(3);
     expect(luis?.installmentValue).toBe(300_000);
+    expect(luis?.installmentProgressLabel).toBe("1 de 3 cuotas");
+    expect(luis?.principalTotal).toBe(900_000);
+    expect(luis?.loanInstallmentsTotal).toBe(300_000);
+    // Promo (fee 16k = 8k×2): 1ª cuota gratis → comisión informativa 0 en mes de solicitud
+    expect(luis?.feesTotal).toBe(0);
+    // La comisión no entra al consolidado ni al reembolso
+    expect(closure.totalPayrollDeductions).toBe(700_000);
   });
 
   it("reembolsa al proveedor solo la cuota del mes en planes multi-cuota", () => {
@@ -213,6 +224,8 @@ describe("employer audit mappers", () => {
         id: "adv-2cuotas",
         advancedAmount: 200_000,
         installments: 2,
+        feeAmount: 8_000,
+        feePerCuotaSnapshot: 8_000,
         requestedAt: "2026-06-10T10:00:00-05:00",
       },
     ];
@@ -224,6 +237,12 @@ describe("employer audit mappers", () => {
     expect(june.providerReimbursement).toBe(100_000);
     expect(june.totalPayrollDeductions).toBe(100_000);
     expect(june.employeeSummaries[0].advancesCount).toBe(1);
+    expect(june.employeeSummaries[0].installmentProgressLabel).toBe(
+      "1 de 2 cuotas",
+    );
+    expect(june.employeeSummaries[0].principalTotal).toBe(200_000);
+    expect(june.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
+    expect(june.employeeSummaries[0].feesTotal).toBe(0);
 
     const july = buildPayrollClosureSnapshot(
       advance,
@@ -232,6 +251,11 @@ describe("employer audit mappers", () => {
     expect(july.providerReimbursement).toBe(100_000);
     expect(july.totalPayrollDeductions).toBe(100_000);
     expect(july.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
+    expect(july.employeeSummaries[0].installmentProgressLabel).toBe(
+      "2 de 2 cuotas",
+    );
+    expect(july.employeeSummaries[0].principalTotal).toBe(200_000);
+    expect(july.employeeSummaries[0].feesTotal).toBe(8_000);
     // No se “realizó” en julio: solo se cobra la cuota 2.
     expect(july.employeeSummaries[0].advancesCount).toBe(0);
 
@@ -253,8 +277,10 @@ describe("employer audit mappers", () => {
     expect(closure.employeeSummaries[0].advancesCount).toBe(1);
     expect(closure.employeeSummaries[0].installments).toBe(1);
     expect(closure.employeeSummaries[0].advancesTotal).toBe(100_000);
-    expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(0);
-    expect(closure.totalPayrollDeductions).toBe(100_000);
+    expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
+    expect(closure.employeeSummaries[0].installmentProgressLabel).toBe(
+      "1 de 1 cuota",
+    );    expect(closure.totalPayrollDeductions).toBe(100_000);
     expect(closure.providerReimbursement).toBe(100_000);
   });
 

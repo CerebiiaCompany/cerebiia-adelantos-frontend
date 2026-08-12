@@ -20,7 +20,7 @@ export function SidebarNavIcon({
         isActive ? "h-5 w-5" : "h-[19px] w-[19px]",
         isActive
           ? cn("text-primary", `sidebar-icon-motion-${animation}`)
-          : "text-muted-foreground/90 group-hover:text-primary",
+          : "text-primary/75 group-hover:text-primary",
       )}
       strokeWidth={isActive ? 2.35 : 2}
       aria-hidden="true"

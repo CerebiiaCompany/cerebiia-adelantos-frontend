@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="escBg" x1="10" y1="6" x2="70" y2="74" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67E8F9"/>
+      <stop offset="0.4" stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#6366F1"/>
+    </linearGradient>
+    <linearGradient id="escFace" x1="26" y1="18" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E0F2FE"/>
+    </linearGradient>
+    <filter id="escSoft" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3.5" flood-color="#0284C7" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <circle cx="40" cy="40" r="34" fill="url(#escBg)" filter="url(#escSoft)"/>
+  <ellipse cx="30" cy="28" rx="11" ry="6.5" fill="#FFFFFF" fill-opacity="0.3"/>
+  <path d="M40 18c8 2.5 15 2.5 17.5 2.5 0 15-2.5 26-17.5 36C24.5 46.5 22 35.5 22 20.5 24.5 20.5 32 20.5 40 18z" fill="url(#escFace)" filter="url(#escSoft)"/>
+  <path d="M40 24c6 1.8 11.5 1.8 13 1.8 0 11.5-1.8 20-13 27.5C28.8 45.8 27 37.3 27 25.8 28.5 25.8 34 25.8 40 24z" fill="#7DD3FC" fill-opacity="0.35"/>
+  <path d="M40 28v18" stroke="#2563EB" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M34 35h12" stroke="#2563EB" stroke-width="2.6" stroke-linecap="round"/>
+</svg>

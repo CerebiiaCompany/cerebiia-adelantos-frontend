@@ -1,21 +1,36 @@
-import type { DemoNotification } from "@/shared/config/demoNotifications";
+import type { AppNotification } from "@/features/notifications";
 import { cn } from "@/lib/utils";
 
-const NOTIFICATION_ICON_COLORS: Record<string, string> = {
-  "advance-processed": "text-primary",
-  "next-payroll": "text-primary",
-  "limit-updated": "text-[hsl(260_70%_50%)]",
-  "achievement-unlocked": "text-primary",
-  "budget-reminder": "text-primary",
+const KIND_ICON_COLORS: Record<string, string> = {
+  advance_requested: "text-primary",
+  advance_approved: "text-emerald-600",
+  advance_paid: "text-primary",
+  advance_rejected: "text-destructive",
+  payment_evidence: "text-primary",
+  payroll_due_3d: "text-primary",
+  next_payment_net_updated: "text-primary",
+  cupo_80: "text-warning",
+  achievement_unlocked: "text-primary",
+  data_change_audit: "text-[hsl(260_70%_50%)]",
+  support_replied: "text-primary",
+  config_fee_updated: "text-primary",
+  config_advance_percent_updated: "text-primary",
+  config_min_amount_updated: "text-primary",
+  employee_activated: "text-emerald-600",
+  employee_suspended: "text-destructive",
+  employer_advance_requested: "text-primary",
+  employer_advance_approved: "text-emerald-600",
+  employer_advance_rejected: "text-destructive",
+  employer_support_message: "text-primary",
+  provider_week_debt: "text-warning",
 };
 
-function getNotificationIconColor(id: string): string {
-  if (id.startsWith("advance-")) return "text-primary";
-  return NOTIFICATION_ICON_COLORS[id] ?? "text-primary";
+function getNotificationIconColor(kind: string): string {
+  return KIND_ICON_COLORS[kind] ?? "text-primary";
 }
 
 interface NotificationItemProps {
-  notification: DemoNotification;
+  notification: AppNotification;
   compact?: boolean;
   onClick?: () => void;
 }
@@ -33,7 +48,7 @@ export function NotificationItem({
       <span
         className={cn(
           "inline-flex shrink-0 items-center justify-center",
-          getNotificationIconColor(notification.id),
+          getNotificationIconColor(notification.kind),
           "mt-0.5",
         )}
       >
@@ -81,16 +96,13 @@ export function NotificationItem({
     compact ? "px-4 py-3 hover:bg-secondary/40" : "glass-card p-4",
     !compact && !notification.read && "glow-border",
     compact && !notification.read && "bg-primary/[0.04]",
-    isInteractive && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+    isInteractive &&
+      "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
   );
 
   if (isInteractive) {
     return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={className}
-      >
+      <button type="button" onClick={onClick} className={className}>
         {content}
       </button>
     );

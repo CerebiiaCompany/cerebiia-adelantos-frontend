@@ -8,6 +8,7 @@ import type {
   HistorialSolicitudEmpresaDTO,
   HistorialSolicitudesEmpresaParams,
   MiSituacionFinancieraDTO,
+  ReferenciaNominaDTO,
   SolicitudAdelantoDTO,
   SolicitudDetalleDTO,
   TendenciaMensualDTO,
@@ -108,6 +109,16 @@ export const adelantosEndpoints = {
   miTendenciaMensual: () =>
     http.get<TendenciaMensualDTO[]>("/adelantos/mi-tendencia-mensual/"),
   empleadoMe: () => http.get<EmpleadoMeDTO>("/empleados/me/"),
+  /**
+   * Empresa: cuotas a descontar en nómina por periodo (fecha_corte).
+   * Sin periodo → mes calendario actual.
+   */
+  getReferenciaNominaEmpresa: (periodo?: string) => {
+    const base = "/adelantos/empresa/referencia-nomina/";
+    if (!periodo) return http.get<ReferenciaNominaDTO>(base);
+    const search = new URLSearchParams({ periodo });
+    return http.get<ReferenciaNominaDTO>(`${base}?${search.toString()}`);
+  },
 };
 
 /** @deprecated Use adelantosEndpoints */

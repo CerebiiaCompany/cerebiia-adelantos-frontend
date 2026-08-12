@@ -1,10 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { NotificationItem } from "@/components/header/NotificationItem";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useNotifications } from "@/features/notifications";
+import { ROUTES } from "@/shared/config/routes";
 import { Bell } from "lucide-react";
 
 export default function Notificaciones() {
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
 
@@ -51,11 +54,10 @@ export default function Notificaciones() {
             <NotificationItem
               key={notification.id}
               notification={notification}
-              onClick={
-                !notification.read
-                  ? () => markAsRead(notification.id)
-                  : undefined
-              }
+              onClick={() => {
+                markAsRead(notification.id);
+                navigate(notification.href || ROUTES.employee.notificaciones);
+              }}
             />
           ))
         )}

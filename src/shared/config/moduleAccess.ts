@@ -20,6 +20,7 @@ export type EmployerModuleId =
   | "employer.seguimientoCuotas"
   | "employer.historialMovimientos"
   | "employer.retencionesCierres"
+  | "employer.notificaciones"
   | "employer.auditorias"
   | "employer.soportes";
 
@@ -96,6 +97,10 @@ export const APP_MODULES: Record<AppModuleId, ModuleDefinition> = {
   },
   "employer.retencionesCierres": {
     path: ROUTES.employer.retencionesCierres,
+    roles: ["employer"],
+  },
+  "employer.notificaciones": {
+    path: ROUTES.employer.notificaciones,
     roles: ["employer"],
   },
   "employer.auditorias": {

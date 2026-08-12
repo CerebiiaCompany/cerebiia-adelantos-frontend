@@ -128,25 +128,28 @@ export function PayrollClosureView() {
           "Empleado",
           "Documento",
           "Cantidad de adelantos",
-          "Valor de adelantos",
-          "Comisión (descontada al empleado)",
-          "Cuotas del mes",
+          "Monto adelantado",
+          "Comisión por cuota (informativa)",
+          "Cuota a pagar este mes",
+          "Valor a descontar por cuota",
           "Total a descontar",
         ],
         rows: snapshot.employeeSummaries.map((summary) => [
           summary.employeeName,
           summary.employeeDocument,
           summary.advancesCount,
-          summary.advancesTotal,
+          summary.principalTotal,
           summary.feesTotal,
+          summary.installmentProgressLabel ?? "—",
           summary.loanInstallmentsTotal,
           summary.grandTotal,
         ]),
-        currencyColumnIndexes: [3, 4, 5, 6],
-        columnWidths: [28, 16, 18, 18, 28, 16, 18],
+        currencyColumnIndexes: [3, 4, 6, 7],
+        columnWidths: [28, 16, 18, 18, 28, 20, 24, 18],
         footerRows: [
           [
             "Total acumulado nómina",
+            "",
             "",
             "",
             "",
@@ -156,6 +159,7 @@ export function PayrollClosureView() {
           ],
           [
             "Reembolso proveedor",
+            "",
             "",
             "",
             "",
@@ -331,7 +335,7 @@ export function PayrollClosureView() {
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[860px] text-sm">
+          <table className="w-full min-w-[1080px] text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50 text-left">
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
@@ -341,13 +345,19 @@ export function PayrollClosureView() {
                   Cantidad de adelantos
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Valor de adelantos
+                  Monto adelantado
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Comisión (descontada al empleado)
+                  Comisión por cuota
+                  <span className="mt-0.5 block text-[11px] font-normal normal-case tracking-normal text-muted-foreground/80">
+                    Informativa · no suma al total
+                  </span>
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Cuotas del mes
+                  Cuota a pagar este mes
+                </th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">
+                  Valor a descontar por cuota
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Total a descontar
@@ -358,7 +368,7 @@ export function PayrollClosureView() {
               {snapshot.employeeSummaries.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-10 text-center text-sm text-muted-foreground"
                   >
                     No hay adelantos registrados en {snapshot.monthLabel}
@@ -399,10 +409,15 @@ export function PayrollClosureView() {
                       {summary.advancesCount}
                     </td>
                     <td className="px-4 py-3.5 tabular-nums text-foreground">
-                      {formatCOP(summary.advancesTotal)}
+                      {formatCOP(summary.principalTotal)}
                     </td>
                     <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
-                      {formatCOP(summary.feesTotal)}
+                      {summary.feesTotal === 0
+                        ? "Gratis"
+                        : formatCOP(summary.feesTotal)}
+                    </td>
+                    <td className="px-4 py-3.5 text-foreground">
+                      {summary.installmentProgressLabel ?? "—"}
                     </td>
                     <td className="px-4 py-3.5 tabular-nums text-foreground">
                       {formatCOP(summary.loanInstallmentsTotal)}
@@ -417,7 +432,7 @@ export function PayrollClosureView() {
             <tfoot>
               <tr className="border-t border-border bg-primary/[0.03]">
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-3.5 font-semibold text-foreground"
                 >
                   <span className="inline-flex items-center gap-2">

@@ -7,6 +7,10 @@ import {
 import { useEmployeeDashboard } from "@/features/dashboard";
 import { useEmployeeAdvanceHistory } from "@/features/advance/model/useEmployeeAdvanceHistory";
 import { buildControlMonthlyAdvanceData } from "./buildControlMonthlyAdvanceData";
+import {
+  calculateCurrentMonthPayrollDeduction,
+  calculateNextPaymentNet,
+} from "./calculateNextPaymentNet";
 
 export function useEmployeeControlData() {
   const dashboard = useEmployeeDashboard();
@@ -27,11 +31,19 @@ export function useEmployeeControlData() {
     const usedPercent =
       limitAmount > 0 ? Math.round((usedAmount / limitAmount) * 100) : 0;
 
+    const payrollDeductionThisMonth =
+      calculateCurrentMonthPayrollDeduction(advanceHistory);
+    const nextPaymentNet = calculateNextPaymentNet(
+      dashboard.salary,
+      payrollDeductionThisMonth,
+    );
+
     return {
       limitAmount,
       usedAmount,
       usedPercent,
-      nextPaymentNet: Math.max(dashboard.salary - usedAmount, 0),
+      payrollDeductionThisMonth,
+      nextPaymentNet,
       limitDelta: 0,
       monthlyAdvanceData: buildControlMonthlyAdvanceData(
         advanceHistory,
