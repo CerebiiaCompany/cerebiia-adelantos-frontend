@@ -9,17 +9,49 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/model/AuthProvider";
 import { resolveAppRole } from "@/shared/api";
 import { notificacionesEndpoints } from "@/shared/api/endpoints";
+import type { ListadoNotificacionesDTO } from "@/shared/api/types";
 import { env } from "@/shared/config/env";
 import { ROUTES } from "@/shared/config/routes";
 import type { AppNotification } from "./types";
 import { mapNotificacionDtosToApp } from "./mapStoredNotifications";
+import { useNotificationWebSocket } from "./useNotificationWebSocket";
+import { useNotificationSound } from "./useNotificationSound";
 
 export const NOTIFICACIONES_ME_QUERY_KEY = ["notificaciones", "me"] as const;
+export const REPORTES_DATOS_QUERY_KEY = ["empleados", "reportes-datos"] as const;
 
 function getUnreadNotifications(
   notifications: AppNotification[],
 ): AppNotification[] {
   return notifications.filter((notification) => !notification.read);
+}
+
+function markIdsAsReadInCache(
+  data: ListadoNotificacionesDTO | undefined,
+  ids: string[],
+): ListadoNotificacionesDTO | undefined {
+  if (!data) return data;
+
+  const idSet = new Set(ids);
+  const items = data.items.map((item) =>
+    idSet.has(item.id) ? { ...item, leida: true } : item,
+  );
+
+  return {
+    items,
+    unread_count: items.filter((item) => !item.leida).length,
+  };
+}
+
+function markAllAsReadInCache(
+  data: ListadoNotificacionesDTO | undefined,
+): ListadoNotificacionesDTO | undefined {
+  if (!data) return data;
+
+  return {
+    items: data.items.map((item) => ({ ...item, leida: true })),
+    unread_count: 0,
+  };
 }
 
 interface NotificationsContextValue {
@@ -43,19 +75,35 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const enabled =
     Boolean(env.apiUrl) && (appRole === "employee" || appRole === "employer");
 
+  const invalidate = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: REPORTES_DATOS_QUERY_KEY });
+  }, [queryClient]);
+
+  const { isConnected: wsConnected } = useNotificationWebSocket({
+    enabled,
+    accessToken: session?.accessToken,
+    onUpdated: invalidate,
+  });
+
   const listQuery = useQuery({
     queryKey: NOTIFICACIONES_ME_QUERY_KEY,
     queryFn: () => notificacionesEndpoints.listMe(),
     enabled,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
-    refetchInterval: 60_000,
+    refetchInterval: wsConnected ? false : 30_000,
   });
 
   const notifications = useMemo(
     () => mapNotificacionDtosToApp(listQuery.data?.items ?? []),
     [listQuery.data?.items],
   );
+
+  useNotificationSound(notifications, {
+    enabled,
+    isInitialLoadComplete: listQuery.isSuccess,
+  });
 
   const unreadNotifications = useMemo(
     () => getUnreadNotifications(notifications),
@@ -65,25 +113,67 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const unreadCount =
     listQuery.data?.unread_count ?? unreadNotifications.length;
 
-  const invalidate = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
-  }, [queryClient]);
-
   const markReadMutation = useMutation({
     mutationFn: (ids: string[]) =>
       notificacionesEndpoints.marcarLeidas({ ids }),
-    onSuccess: invalidate,
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
+      const previous = queryClient.getQueryData<ListadoNotificacionesDTO>(
+        NOTIFICACIONES_ME_QUERY_KEY,
+      );
+      queryClient.setQueryData<ListadoNotificacionesDTO>(
+        NOTIFICACIONES_ME_QUERY_KEY,
+        (current) => markIdsAsReadInCache(current, ids),
+      );
+      return { previous };
+    },
+    onError: (_error, _ids, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          NOTIFICACIONES_ME_QUERY_KEY,
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: NOTIFICACIONES_ME_QUERY_KEY,
+      });
+    },
   });
 
   const markAllMutation = useMutation({
     mutationFn: () => notificacionesEndpoints.marcarTodasLeidas(),
-    onSuccess: invalidate,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
+      const previous = queryClient.getQueryData<ListadoNotificacionesDTO>(
+        NOTIFICACIONES_ME_QUERY_KEY,
+      );
+      queryClient.setQueryData<ListadoNotificacionesDTO>(
+        NOTIFICACIONES_ME_QUERY_KEY,
+        (current) => markAllAsReadInCache(current),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          NOTIFICACIONES_ME_QUERY_KEY,
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
+        queryKey: NOTIFICACIONES_ME_QUERY_KEY,
+      });
+    },
   });
 
   const markAsRead = useCallback(
     (id: string) => {
       const target = notifications.find((item) => item.id === id);
-      if (!target || target.read) return;
+      if (target?.read) return;
       markReadMutation.mutate([id]);
     },
     [notifications, markReadMutation],

@@ -21,15 +21,36 @@ describe("normalizeNotificationHref", () => {
     );
   });
 
-  it("mantiene /adelanto solo para cambios de configuración", () => {
+  it("redirige cambios de configuración según actor", () => {
     expect(normalizeNotificationHref("/adelanto", "config_fee_updated")).toBe(
       ROUTES.employee.adelanto,
     );
+    expect(
+      normalizeNotificationHref("/empleador/panel", "config_fee_updated"),
+    ).toBe(ROUTES.employer.panel);
+    expect(
+      normalizeNotificationHref(
+        "/empleador/panel",
+        "config_advance_percent_updated",
+      ),
+    ).toBe(ROUTES.employer.panel);
+    expect(
+      normalizeNotificationHref("/adelanto", "config_min_amount_updated"),
+    ).toBe(ROUTES.employee.adelanto);
   });
 
   it("redirige soporte respondido a mi-soporte", () => {
     expect(normalizeNotificationHref("/soportes", "support_replied")).toBe(
       ROUTES.employee.soportes,
+    );
+  });
+
+  it("redirige cupo bajo y agotado a control", () => {
+    expect(normalizeNotificationHref("/control", "cupo_low")).toBe(
+      ROUTES.employee.control,
+    );
+    expect(normalizeNotificationHref("/control", "cupo_exhausted")).toBe(
+      ROUTES.employee.control,
     );
   });
 
