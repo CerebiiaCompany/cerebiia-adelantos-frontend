@@ -44,7 +44,9 @@ export function useAdelantoConfig() {
       return mapAdelantoConfiguracion(dto);
     },
     enabled: Boolean(env.apiUrl),
-    staleTime: 60_000,
+    staleTime: 0,
+    refetchInterval: 5_000,
+    refetchOnWindowFocus: true,
   });
 
   const data = useMemo(() => {
