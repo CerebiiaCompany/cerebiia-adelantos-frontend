@@ -9,6 +9,8 @@ export function useSolicitudDetalle(solicitudId: string | null) {
     queryKey: [...SOLICITUD_DETALLE_QUERY_KEY, solicitudId],
     queryFn: () => adelantosEndpoints.getSolicitud(solicitudId!),
     enabled: Boolean(env.apiUrl) && Boolean(solicitudId),
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchInterval: 3_000,
+    refetchOnWindowFocus: true,
   });
 }

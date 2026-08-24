@@ -9,10 +9,10 @@ export const EMPLOYER_CONFIG_QUERY_KEY = ["employer", "configuracion"] as const;
 
 export function useEmployerConfig() {
   const { session } = useAuth();
-  const isEmpresa =
+  const isSystemUser =
     session &&
     isSystemUserSession(session) &&
-    session.user.role === "empresa";
+    (session.user.role === "empresa" || session.user.role === "super_admin");
 
   return useQuery({
     queryKey: EMPLOYER_CONFIG_QUERY_KEY,
@@ -20,7 +20,13 @@ export function useEmployerConfig() {
       const dto = await configuracionEndpoints.getAdelantos();
       return mapAdelantoConfiguracion(dto);
     },
-    enabled: Boolean(env.apiUrl) && Boolean(isEmpresa),
-    staleTime: 60_000,
+    enabled: Boolean(env.apiUrl) && Boolean(isSystemUser),
+    staleTime: 0,
+    refetchInterval: 5_000,
+    refetchOnWindowFocus: true,
   });
 }
+
+/** Alias para useEmployerConfig según convención de configuración efectiva */
+export const useConfiguracion = useEmployerConfig;
+

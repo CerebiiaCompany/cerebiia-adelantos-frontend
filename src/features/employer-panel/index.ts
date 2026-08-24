@@ -1,6 +1,6 @@
 export { useEmpleadosList } from "./model/useEmpleadosList";
 export { useEmpleadosMetricas } from "./model/useEmpleadosMetricas";
-export { useEmployerConfig } from "./model/useEmployerConfig";
+export { useEmployerConfig, useConfiguracion } from "./model/useEmployerConfig";
 export { useEmpresaReferenciaNomina } from "./model/useEmpresaReferenciaNomina";
 export { useExcelBranding } from "./model/useExcelBranding";
 export { useCreateEmpleado } from "./model/useCreateEmpleado";
