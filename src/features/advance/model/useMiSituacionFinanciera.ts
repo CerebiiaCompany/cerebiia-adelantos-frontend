@@ -17,7 +17,8 @@ export function useMiSituacionFinanciera() {
     queryKey: MI_SITUACION_FINANCIERA_QUERY_KEY,
     queryFn: () => adelantosEndpoints.miSituacionFinanciera(),
     enabled: Boolean(env.apiUrl) && isEmpleado,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchInterval: 4_000,
     refetchOnWindowFocus: true,
   });
 }

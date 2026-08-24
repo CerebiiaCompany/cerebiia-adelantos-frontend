@@ -50,6 +50,8 @@ export {
   buildConfigFeeUpdatedNotification,
   buildConfigAdvancePercentUpdatedNotification,
   buildConfigMinAmountUpdatedNotification,
+  buildConfigInstallmentsUpdatedNotification,
+  buildConfigCustomUpdatedNotification,
   buildEmployeeActivatedNotification,
   buildEmployeeSuspendedNotification,
   buildEmployerAdvanceRequestedNotification,

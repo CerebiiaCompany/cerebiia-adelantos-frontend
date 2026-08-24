@@ -20,7 +20,8 @@ export function useSolicitudesAdelanto() {
       return solicitudes.map(mapSolicitudToHistoryRecord);
     },
     enabled: Boolean(env.apiUrl) && isEmpleado,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchInterval: 3_000,
     refetchOnWindowFocus: true,
   });
 }

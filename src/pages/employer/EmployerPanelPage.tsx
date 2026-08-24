@@ -106,9 +106,11 @@ export default function EmployerPanelPage() {
             <Percent className="h-4 w-4 text-primary" strokeWidth={2.25} />
           </div>
           {isLoadingConfig ? (
-            <div className="space-y-2">
-              <Skeleton className="h-5 w-40 rounded-md" />
-              <Skeleton className="h-4 w-52 rounded-md" />
+            <div className="mt-auto space-y-2.5 py-1">
+              <Skeleton className="h-4 w-44 rounded-md" />
+              <Skeleton className="h-4 w-32 rounded-md" />
+              <Skeleton className="h-4 w-36 rounded-md" />
+              <Skeleton className="h-4 w-40 rounded-md" />
             </div>
           ) : isConfigError || !adelantoConfig ? (
             <p className="text-sm text-muted-foreground">

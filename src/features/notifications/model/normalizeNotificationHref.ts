@@ -66,7 +66,9 @@ export function normalizeNotificationHref(
   if (
     kind === "config_fee_updated" ||
     kind === "config_advance_percent_updated" ||
-    kind === "config_min_amount_updated"
+    kind === "config_min_amount_updated" ||
+    kind === "config_installments_updated" ||
+    kind === "config_custom_updated"
   ) {
     if (pathOnly.startsWith("/empleador")) {
       return ROUTES.employer.panel;

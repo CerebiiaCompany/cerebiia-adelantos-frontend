@@ -18,6 +18,8 @@ const KIND_ICON_COLORS: Record<string, string> = {
   config_fee_updated: "text-primary",
   config_advance_percent_updated: "text-primary",
   config_min_amount_updated: "text-primary",
+  config_installments_updated: "text-primary",
+  config_custom_updated: "text-primary",
   employee_activated: "text-emerald-600",
   employee_suspended: "text-destructive",
   employer_advance_requested: "text-primary",

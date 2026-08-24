@@ -78,6 +78,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
     void queryClient.invalidateQueries({ queryKey: REPORTES_DATOS_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: ["adelantos"] });
+    void queryClient.invalidateQueries({ queryKey: ["empleados"] });
+    void queryClient.invalidateQueries({ queryKey: ["configuracion"] });
+    void queryClient.invalidateQueries({ queryKey: ["logros"] });
   }, [queryClient]);
 
   const { isConnected: wsConnected } = useNotificationWebSocket({
@@ -90,9 +94,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     queryKey: NOTIFICACIONES_ME_QUERY_KEY,
     queryFn: () => notificacionesEndpoints.listMe(),
     enabled,
-    staleTime: 30_000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: wsConnected ? false : 30_000,
+    refetchInterval: wsConnected ? 10_000 : 4_000,
   });
 
   const notifications = useMemo(

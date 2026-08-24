@@ -78,11 +78,11 @@ export function useNotificationWebSocket({
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(String(event.data)) as { type?: string };
-          if (data.type === "notifications.updated") {
+          if (data) {
             onUpdatedRef.current();
           }
         } catch {
-          // Ignorar mensajes mal formados
+          onUpdatedRef.current();
         }
       };
 

@@ -15,31 +15,41 @@ const DEFAULT_PORCENTAJE_MAXIMO = 30;
 const DEFAULT_NUMERO_MAXIMO_CUOTAS = 3;
 const DEFAULT_PLAZO_MAXIMO_DIAS = 90;
 
+function parseNumericValue(val: unknown): number {
+  if (val === null || val === undefined) return Number.NaN;
+  if (typeof val === "number") return Number.isFinite(val) ? val : Number.NaN;
+  const str = String(val).replace(/[^0-9.-]/g, "").trim();
+  if (!str) return Number.NaN;
+  const parsed = Number.parseFloat(str);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
 export function mapAdelantoConfiguracion(
   dto: AdelantoConfiguracionDTO,
 ): ParsedAdelantoConfiguracion {
-  const tarifa = Number.parseFloat(dto.tarifa_fija_por_cuota);
-  const porcentaje = Number.parseFloat(dto.porcentaje_maximo_adelanto);
-  const minimoRaw = dto.monto_minimo_adelanto?.trim();
-  const minimo = minimoRaw ? Number.parseFloat(minimoRaw) : Number.NaN;
+  const tarifa = parseNumericValue(dto.tarifa_fija_por_cuota);
+  const porcentaje = parseNumericValue(dto.porcentaje_maximo_adelanto);
+  const cuotas = parseNumericValue(dto.numero_maximo_cuotas);
+  const plazo = parseNumericValue(dto.plazo_maximo_dias);
+  const minimo = parseNumericValue(dto.monto_minimo ?? dto.monto_minimo_adelanto);
 
   return {
     porcentajeMaximoAdelanto: Number.isNaN(porcentaje)
       ? DEFAULT_PORCENTAJE_MAXIMO
       : porcentaje,
     numeroMaximoCuotas:
-      dto.numero_maximo_cuotas > 0
-        ? dto.numero_maximo_cuotas
+      !Number.isNaN(cuotas) && cuotas > 0
+        ? cuotas
         : DEFAULT_NUMERO_MAXIMO_CUOTAS,
     plazoMaximoDias:
-      dto.plazo_maximo_dias > 0
-        ? dto.plazo_maximo_dias
+      !Number.isNaN(plazo) && plazo > 0
+        ? plazo
         : DEFAULT_PLAZO_MAXIMO_DIAS,
     tarifaFijaPorCuota: Number.isNaN(tarifa)
       ? DEFAULT_TARIFA_FIJA_POR_CUOTA
       : Math.round(tarifa),
     montoMinimoAdelanto: Number.isNaN(minimo) ? null : Math.round(minimo),
-    updatedAt: dto.updated_at,
+    updatedAt: dto.updated_at ?? "",
   };
 }
 
