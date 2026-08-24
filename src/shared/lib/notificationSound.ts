@@ -61,23 +61,27 @@ function playTone(
   duration: number,
   peakGain: number,
   wave: OscillatorType = "sine",
-  attack = 0.012,
+  attack = 0.015,
 ): void {
+  const startTime = Math.max(startAt, ctx.currentTime) + 0.005;
+  const attackEnd = startTime + attack;
+  const stopTime = startTime + duration;
+
   const oscillator = ctx.createOscillator();
   const envelope = ctx.createGain();
 
   oscillator.type = wave;
-  oscillator.frequency.setValueAtTime(frequency, startAt);
+  oscillator.frequency.setValueAtTime(frequency, startTime);
 
-  envelope.gain.setValueAtTime(0.0001, startAt);
-  envelope.gain.exponentialRampToValueAtTime(peakGain, startAt + attack);
-  envelope.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+  envelope.gain.setValueAtTime(0.0001, startTime);
+  envelope.gain.linearRampToValueAtTime(peakGain, attackEnd);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, stopTime);
 
   oscillator.connect(envelope);
   envelope.connect(destination);
 
-  oscillator.start(startAt);
-  oscillator.stop(startAt + duration + 0.02);
+  oscillator.start(startTime);
+  oscillator.stop(stopTime + 0.05);
 }
 
 function playWithContext(run: (ctx: AudioContext, now: number) => void): void {
@@ -87,11 +91,21 @@ function playWithContext(run: (ctx: AudioContext, now: number) => void): void {
       return;
     }
 
+    const execute = () => {
+      try {
+        const now = ctx.currentTime;
+        run(ctx, now);
+      } catch {
+        // audio node error
+      }
+    };
+
     if (ctx.state === "suspended") {
-      void ctx.resume();
+      void ctx.resume().then(execute).catch(() => {});
+      return;
     }
 
-    run(ctx, ctx.currentTime);
+    execute();
   } catch {
     // Autoplay policy u otro bloqueo del navegador
   }
@@ -101,23 +115,23 @@ function playWithContext(run: (ctx: AudioContext, now: number) => void): void {
 export function playSupportNotificationSound(): void {
   playWithContext((ctx, now) => {
     const master = ctx.createGain();
-    master.gain.setValueAtTime(1, now);
+    master.gain.setValueAtTime(0.9, now);
     master.connect(ctx.destination);
 
-    playTone(ctx, master, 987.77, now, 0.11, 0.32, "triangle");
-    playTone(ctx, master, 1318.51, now + 0.08, 0.3, 0.28, "triangle");
+    playTone(ctx, master, 987.77, now, 0.12, 0.45, "triangle", 0.012);
+    playTone(ctx, master, 1318.51, now + 0.08, 0.32, 0.4, "triangle", 0.012);
   });
 }
 
-/** General: campana suave pero claramente audible (≈650 ms). */
+/** General: campana clara y agradable (≈650 ms). */
 export function playGeneralNotificationSound(): void {
   playWithContext((ctx, now) => {
     const master = ctx.createGain();
-    master.gain.setValueAtTime(1, now);
+    master.gain.setValueAtTime(0.9, now);
     master.connect(ctx.destination);
 
-    playTone(ctx, master, 523.25, now, 0.62, 0.48, "triangle", 0.025);
-    playTone(ctx, master, 659.25, now + 0.1, 0.48, 0.28, "sine", 0.03);
+    playTone(ctx, master, 523.25, now, 0.62, 0.5, "triangle", 0.025);
+    playTone(ctx, master, 659.25, now + 0.1, 0.48, 0.38, "sine", 0.03);
   });
 }
 

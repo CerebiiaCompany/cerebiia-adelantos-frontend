@@ -38,6 +38,8 @@ const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
   config_fee_updated: Settings2,
   config_advance_percent_updated: Percent,
   config_min_amount_updated: Settings2,
+  config_installments_updated: Calendar,
+  config_custom_updated: Settings2,
   employee_activated: UserCheck,
   employee_suspended: UserX,
   employer_advance_requested: Zap,

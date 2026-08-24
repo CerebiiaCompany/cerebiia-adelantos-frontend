@@ -21,6 +21,22 @@ describe("mapAdelantoConfiguracion", () => {
     expect(parsed.montoMinimoAdelanto).toBeNull();
     expect(parsed.updatedAt).toContain("2026-06-26");
   });
+
+  it("parsea respuestas con monto_minimo y porcentaje con signo % o números puros", () => {
+    const parsed = mapAdelantoConfiguracion({
+      porcentaje_maximo_adelanto: "20.00%",
+      numero_maximo_cuotas: "4",
+      plazo_maximo_dias: "60",
+      tarifa_fija_por_cuota: 8500,
+      monto_minimo: "50000.00",
+    });
+
+    expect(parsed.porcentajeMaximoAdelanto).toBe(20);
+    expect(parsed.numeroMaximoCuotas).toBe(4);
+    expect(parsed.plazoMaximoDias).toBe(60);
+    expect(parsed.tarifaFijaPorCuota).toBe(8500);
+    expect(parsed.montoMinimoAdelanto).toBe(50_000);
+  });
 });
 
 describe("resolveAdelantoConfigFromEmpleadoMe", () => {

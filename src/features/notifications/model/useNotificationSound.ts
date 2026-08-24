@@ -48,13 +48,19 @@ export function useNotificationSound(
     };
 
     window.addEventListener("pointerdown", unlock, { passive: true });
+    window.addEventListener("mousedown", unlock, { passive: true });
+    window.addEventListener("click", unlock, { passive: true });
     window.addEventListener("keydown", unlock);
     window.addEventListener("touchstart", unlock, { passive: true });
+    window.addEventListener("focus", unlock);
 
     return () => {
       window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("mousedown", unlock);
+      window.removeEventListener("click", unlock);
       window.removeEventListener("keydown", unlock);
       window.removeEventListener("touchstart", unlock);
+      window.removeEventListener("focus", unlock);
     };
   }, [enabled]);
 

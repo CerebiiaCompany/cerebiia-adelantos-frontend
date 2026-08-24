@@ -17,6 +17,8 @@ export type NotificationKind =
   | "config_fee_updated"
   | "config_advance_percent_updated"
   | "config_min_amount_updated"
+  | "config_installments_updated"
+  | "config_custom_updated"
   | "employee_activated"
   | "employee_suspended"
   | "employer_advance_requested"
@@ -303,6 +305,38 @@ export function buildConfigMinAmountUpdatedNotification(
     kind: "config_min_amount_updated",
     title: "Monto mínimo de adelanto actualizado",
     description: `El monto mínimo de adelanto pasó de ${formatNotificationAmount(previousMonto)} a ${formatNotificationAmount(montoMinimo)}.`,
+    createdAt,
+    href,
+  };
+}
+
+export function buildConfigInstallmentsUpdatedNotification(
+  maxCuotas: number,
+  previousCuotas: number,
+  createdAt: string,
+  href?: string,
+): StoredNotification {
+  return {
+    id: `config-installments:${maxCuotas}`,
+    kind: "config_installments_updated",
+    title: "Número de cuotas actualizado",
+    description: `El número máximo de cuotas para adelantos pasó de ${previousCuotas} a ${maxCuotas}.`,
+    createdAt,
+    href,
+  };
+}
+
+export function buildConfigCustomUpdatedNotification(
+  title: string,
+  description: string,
+  createdAt: string,
+  href?: string,
+): StoredNotification {
+  return {
+    id: `config-custom:${Date.now()}`,
+    kind: "config_custom_updated",
+    title,
+    description,
     createdAt,
     href,
   };

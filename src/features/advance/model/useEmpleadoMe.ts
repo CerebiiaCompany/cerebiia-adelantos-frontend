@@ -13,7 +13,8 @@ export function useEmpleadoMe() {
     queryKey: EMPLEADO_ME_QUERY_KEY,
     queryFn: () => adelantosEndpoints.empleadoMe(),
     enabled: Boolean(env.apiUrl) && isEmpleado,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
   });
 }
