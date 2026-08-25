@@ -56,10 +56,9 @@ export function AdvanceDataSupportDialog({
   const canSubmit = useMemo(
     () =>
       selectedFields.length > 0 &&
-      mensaje.trim().length >= 10 &&
-      files.length > 0 &&
+      mensaje.trim().length >= 3 &&
       !isPending,
-    [selectedFields, mensaje, files, isPending],
+    [selectedFields, mensaje, isPending],
   );
 
   const reset = () => {
@@ -99,7 +98,7 @@ export function AdvanceDataSupportDialog({
       {
         campos_reportados: selectedFields,
         mensaje: mensaje.trim(),
-        evidencias: files,
+        evidencias: files.length > 0 ? files : undefined,
       },
       {
         onSuccess: () => {
@@ -135,8 +134,8 @@ export function AdvanceDataSupportDialog({
             Enviar mensaje a soporte
           </DialogTitle>
           <DialogDescription>
-            Indica qué dato está incorrecto, describe el problema y anexa
-            evidencias. Tu empresa recibirá el reporte para corregirlo.
+            Indica qué dato está incorrecto y describe el problema. Tu empresa
+            recibirá el reporte para coordinar la corrección.
           </DialogDescription>
         </DialogHeader>
 
@@ -178,15 +177,15 @@ export function AdvanceDataSupportDialog({
               value={mensaje}
               onChange={(event) => setMensaje(event.target.value)}
               placeholder="Explica qué está mal y cuál debería ser el dato correcto..."
-              className="min-h-[110px] resize-none"
+              className="min-h-[100px] resize-none"
             />
-            <p className="text-xs text-muted-foreground">
-              Mínimo 10 caracteres.
-            </p>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Evidencias</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">Evidencias</Label>
+              <span className="text-xs text-muted-foreground">Opcional</span>
+            </div>
             <input
               ref={inputRef}
               type="file"
@@ -205,7 +204,7 @@ export function AdvanceDataSupportDialog({
             >
               <FileUp className="h-5 w-5 text-primary" aria-hidden />
               <span className="text-sm font-medium text-foreground">
-                Adjuntar evidencias
+                Adjuntar evidencias (opcional)
               </span>
               <span className="text-xs text-muted-foreground">
                 PDF o imagen · máx. {MAX_FILES} archivos · {MAX_FILE_MB} MB c/u

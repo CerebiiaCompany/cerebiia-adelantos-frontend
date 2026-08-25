@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Paperclip, Search, Send } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { useProfileView } from "@/features/auth";
 import { useReportesDatoIncorrectoMe } from "@/features/soporte/model/useReportesDatoIncorrectoMe";
+import { useEnviarMensajeSoporteMe } from "@/features/soporte/model/useEnviarMensajeSoporteMe";
 import { SoporteAlertDot } from "@/features/soporte/ui/SoporteAlertDot";
 import { SoporteChatThread } from "@/widgets/soporte-chat";
 import type { ReporteDatoIncorrectoDTO } from "@/shared/api/types/empleado";
@@ -29,7 +33,8 @@ const ESTADO_LABELS: Record<string, string> = {
   pendiente: "Pendiente",
   en_revision: "En revisión",
   respondido: "Respondido",
-  resuelto: "Resuelto",
+  resuelto: "Finalizado",
+  finalizado: "Finalizado",
 };
 
 function formatDateTime(iso: string): string {
@@ -46,7 +51,10 @@ function formatDateTime(iso: string): string {
 }
 
 function estadoTone(estado: string): string {
-  if (estado === "respondido" || estado === "resuelto") {
+  if (estado === "respondido") {
+    return "bg-primary/10 text-primary";
+  }
+  if (estado === "resuelto" || estado === "finalizado") {
     return "bg-success/10 text-success";
   }
   return "bg-warning/10 text-warning";
@@ -231,6 +239,44 @@ function SupportRow({
   empresaNombreFallback: string;
   onToggle: () => void;
 }) {
+  const [mensaje, setMensaje] = useState("");
+  const [archivos, setArchivos] = useState<File[]>([]);
+  const { mutate: enviarMensaje, isPending } = useEnviarMensajeSoporteMe();
+
+  const isFinalizado =
+    row.estado === "resuelto" ||
+    row.estado === "finalizado" ||
+    Boolean(row.finalizado);
+
+  const handleEnviar = () => {
+    const text = mensaje.trim();
+    if (text.length < 3) {
+      toast.error("Por favor escribe tu mensaje antes de enviar.");
+      return;
+    }
+    enviarMensaje(
+      {
+        reporteId: row.id,
+        mensaje: text,
+        evidencias: archivos.length > 0 ? archivos : undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Mensaje enviado a la empresa.");
+          setMensaje("");
+          setArchivos([]);
+        },
+        onError: (err) => {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "No se pudo enviar el mensaje a la empresa.",
+          );
+        },
+      },
+    );
+  };
+
   return (
     <>
       <tr
@@ -276,11 +322,78 @@ function SupportRow({
       </tr>
       {isExpanded ? (
         <tr className="border-b border-border/40 bg-muted/10">
-          <td colSpan={4} className="px-4 py-3">
+          <td colSpan={4} className="space-y-4 px-4 py-3">
             <SoporteChatThread
               reporte={row}
               empresaNombreFallback={empresaNombreFallback}
             />
+
+            {!isFinalizado ? (
+              <div className="space-y-2.5 rounded-xl border border-primary/20 bg-background/90 p-3.5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-foreground">
+                    Enviar mensaje adicional a la empresa
+                  </p>
+                  <span className="text-[11px] text-muted-foreground">
+                    Chat abierto hasta resolución
+                  </span>
+                </div>
+
+                <Textarea
+                  value={mensaje}
+                  onChange={(event) => setMensaje(event.target.value)}
+                  placeholder="Escribe más detalles o responde a lo solicitado por la empresa..."
+                  className="min-h-[80px] resize-none text-sm"
+                />
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+                    <Paperclip className="h-3.5 w-3.5" />
+                    <span>
+                      {archivos.length > 0
+                        ? `${archivos.length} archivo(s) seleccionado(s)`
+                        : "Adjuntar evidencia (opcional)"}
+                    </span>
+                    <input
+                      type="file"
+                      multiple
+                      className="sr-only"
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          setArchivos(Array.from(e.target.files));
+                        }
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    disabled={isPending || mensaje.trim().length < 3}
+                    onClick={handleEnviar}
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#6366f1] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-200 hover:from-[#6d28d9] hover:via-[#4f46e5] hover:to-[#1d4ed8] hover:shadow-lg hover:shadow-indigo-500/35 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                  >
+                    {isPending ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Enviando...
+                      </span>
+                    ) : (
+                      <>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="h-4 w-4 shrink-0 -rotate-12 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
+                        <span>Enviar mensaje</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </td>
         </tr>
       ) : null}

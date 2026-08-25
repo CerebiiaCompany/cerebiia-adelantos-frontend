@@ -6,33 +6,44 @@ import type {
   EmployeeDashboardMetrics,
 } from "./types";
 
-export function getAdvanceMonthKey(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  return `${date.getFullYear()}-${month}`;
+function toSafeDate(d: unknown): Date {
+  if (d instanceof Date && !Number.isNaN(d.getTime())) return d;
+  if (typeof d === "string" || typeof d === "number") {
+    const parsed = new Date(d);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return new Date();
+}
+
+export function getAdvanceMonthKey(date?: Date | string | null): string {
+  const safe = toSafeDate(date);
+  const month = String(safe.getMonth() + 1).padStart(2, "0");
+  return `${safe.getFullYear()}-${month}`;
 }
 
 export function countsTowardAdvanceLimit(
-  status: AdvanceHistoryRecord["status"],
+  status?: AdvanceHistoryRecord["status"] | string | null,
 ): boolean {
   return status !== "no_aprobado";
 }
 
-function formatAdvanceActivityDate(date: Date): string {
+function formatAdvanceActivityDate(date?: Date | string | null): string {
+  const safe = toSafeDate(date);
   const now = new Date();
   const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
+    safe.getDate() === now.getDate() &&
+    safe.getMonth() === now.getMonth() &&
+    safe.getFullYear() === now.getFullYear();
 
   if (isToday) {
-    return `Hoy, ${date.toLocaleTimeString("es-CO", {
+    return `Hoy, ${safe.toLocaleTimeString("es-CO", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
     })}`;
   }
 
-  return date.toLocaleDateString("es-CO", {
+  return safe.toLocaleDateString("es-CO", {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -46,12 +57,12 @@ export function buildMonthlyAdvancesFromHistory(
 ): Record<string, number> {
   const monthlyAdvances: Record<string, number> = {};
 
-  for (const record of records) {
-    if (!countsTowardAdvanceLimit(record.status)) continue;
+  for (const record of records || []) {
+    if (!record || !countsTowardAdvanceLimit(record.status)) continue;
 
     const monthKey = getAdvanceMonthKey(record.requestedAt);
     monthlyAdvances[monthKey] =
-      (monthlyAdvances[monthKey] ?? 0) + record.amount;
+      (monthlyAdvances[monthKey] ?? 0) + (Number(record.amount) || 0);
   }
 
   return monthlyAdvances;
@@ -61,17 +72,24 @@ export function buildActivityFromAdvanceHistory(
   records: AdvanceHistoryRecord[],
   limit = 10,
 ): DashboardActivityItem[] {
-  return [...records]
-    .filter((record) => countsTowardAdvanceLimit(record.status))
-    .sort((a, b) => b.requestedAt.getTime() - a.requestedAt.getTime())
+  return [...(records || [])]
+    .filter((record) => record && countsTowardAdvanceLimit(record.status))
+    .sort(
+      (a, b) =>
+        toSafeDate(b.requestedAt).getTime() -
+        toSafeDate(a.requestedAt).getTime(),
+    )
     .slice(0, limit)
-    .map((record) => ({
-      type: "adelanto",
-      amount: -record.amount,
-      date: formatAdvanceActivityDate(record.requestedAt),
-      desc: "Adelanto de nómina",
-      createdAt: record.requestedAt.toISOString(),
-    }));
+    .map((record) => {
+      const safeDate = toSafeDate(record.requestedAt);
+      return {
+        type: "adelanto",
+        amount: -(Number(record.amount) || 0),
+        date: formatAdvanceActivityDate(safeDate),
+        desc: "Adelanto de nómina",
+        createdAt: safeDate.toISOString(),
+      };
+    });
 }
 
 export function deriveAdvanceMetricsFromHistory(

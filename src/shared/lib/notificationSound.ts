@@ -1,9 +1,7 @@
-// ⚠️ AGNOSTIC — sonidos de notificación (Web Audio API)
-
 let audioContext: AudioContext | null = null;
 let unlocked = false;
 
-function getAudioContext(): AudioContext | null {
+function getAudioContext(createIfMissing = true): AudioContext | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -17,34 +15,49 @@ function getAudioContext(): AudioContext | null {
     return null;
   }
 
-  if (!audioContext) {
-    audioContext = new AudioContextCtor();
+  if (!audioContext || audioContext.state === "closed") {
+    if (!createIfMissing) return null;
+    try {
+      audioContext = new AudioContextCtor();
+    } catch {
+      return null;
+    }
   }
 
   return audioContext;
 }
 
 function playSilentUnlockBuffer(ctx: AudioContext): void {
-  const buffer = ctx.createBuffer(1, 1, 22050);
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-  source.connect(ctx.destination);
-  source.start(0);
+  try {
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start(0);
+  } catch {
+    // Ignore unlock buffer errors
+  }
 }
 
 /** Activa el audio del navegador (requerido tras login / primera interacción). */
 export function unlockNotificationSound(): void {
   try {
-    const ctx = getAudioContext();
+    const ctx = getAudioContext(true);
     if (!ctx) {
       return;
     }
 
     if (ctx.state === "suspended") {
-      void ctx.resume();
+      ctx.resume().then(() => {
+        playSilentUnlockBuffer(ctx);
+        unlocked = true;
+      }).catch(() => {
+        // Autoplay policy pending user gesture
+      });
+      return;
     }
 
-    if (!unlocked) {
+    if (ctx.state === "running") {
       playSilentUnlockBuffer(ctx);
       unlocked = true;
     }

@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { env } from "@/shared/config/env";
 import { unlockNotificationSound } from "@/shared/lib/notificationSound";
 
-const RECONNECT_BASE_MS = 1_000;
+const RECONNECT_BASE_MS = 2_000;
 const RECONNECT_MAX_MS = 30_000;
+const MAX_CONSECUTIVE_FAILURES = 5;
 
 function buildNotificationsWebSocketUrl(accessToken: string): string {
   const token = encodeURIComponent(accessToken);
@@ -54,10 +55,16 @@ export function useNotificationWebSocket({
     const scheduleReconnect = () => {
       if (disposed) return;
       clearReconnectTimer();
-      const delay = Math.min(
-        RECONNECT_BASE_MS * 2 ** reconnectAttempt,
-        RECONNECT_MAX_MS,
-      );
+
+      // Si falla repetidamente (ej: backend 500), pausar reintentos a intervalos de 30s
+      const delay =
+        reconnectAttempt >= MAX_CONSECUTIVE_FAILURES
+          ? RECONNECT_MAX_MS
+          : Math.min(
+              RECONNECT_BASE_MS * 2 ** reconnectAttempt,
+              RECONNECT_MAX_MS,
+            );
+
       reconnectAttempt += 1;
       reconnectTimer = setTimeout(connect, delay);
     };
