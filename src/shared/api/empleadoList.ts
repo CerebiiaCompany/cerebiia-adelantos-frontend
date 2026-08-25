@@ -48,23 +48,51 @@ export function extractPaginatedResults<T>(
 }
 
 export async function fetchAllEmpleadosPages(
-  listPage: (params: EmpleadosListParams) => Promise<PaginatedResponse<EmpleadoDTO>>,
+  listPage: (params: EmpleadosListParams) => Promise<PaginatedResponse<EmpleadoDTO> | EmpleadoDTO[]>,
   baseParams?: Omit<EmpleadosListParams, "page" | "page_size">,
 ): Promise<EmpleadoDTO[]> {
   const all: EmpleadoDTO[] = [];
-  let page = 1;
+  let currentPage = 1;
+  const maxIterations = 50;
 
-  while (true) {
+  for (let iter = 0; iter < maxIterations; iter += 1) {
     const response = await listPage({
       ...baseParams,
-      page,
+      page: currentPage,
       page_size: MAX_PAGE_SIZE,
     });
+
+    if (Array.isArray(response)) {
+      return response;
+    }
+
     const results = extractPaginatedResults(response);
     all.push(...results);
 
-    if (response.next === null || results.length === 0) break;
-    page = response.next;
+    // Si no hay más páginas, no hay campo next, o los resultados están vacíos
+    if (!response || !response.next || results.length === 0) {
+      break;
+    }
+
+    if (typeof response.next === "number") {
+      if (response.next <= currentPage) break;
+      currentPage = response.next;
+    } else if (typeof response.next === "string") {
+      try {
+        const parsedUrl = new URL(response.next, "http://localhost");
+        const nextPageParam = parsedUrl.searchParams.get("page");
+        const parsedPage = nextPageParam ? Number.parseInt(nextPageParam, 10) : Number.NaN;
+        if (!Number.isNaN(parsedPage) && parsedPage > currentPage) {
+          currentPage = parsedPage;
+        } else {
+          currentPage += 1;
+        }
+      } catch {
+        currentPage += 1;
+      }
+    } else {
+      break;
+    }
   }
 
   return all;

@@ -3,6 +3,7 @@ import {
   ADVANCE_HISTORY_STATUS_LABEL,
   type AdvanceHistoryStatus,
 } from "@/shared/config/advanceHistory";
+import { toSafeDate } from "@/shared/utils/payrollPeriod";
 
 export type AdvanceHistoryStatusFilter = AdvanceHistoryStatus | "all";
 
@@ -56,25 +57,31 @@ export function hasActiveAdvanceHistoryFilters(
 }
 
 export function filterAdvanceHistory(
-  records: AdvanceHistoryRecord[],
+  records: AdvanceHistoryRecord[] | undefined,
   filters: AdvanceHistoryFilters,
 ): AdvanceHistoryRecord[] {
   const from = parseDateInputStart(filters.dateFrom);
   const to = parseDateInputEnd(filters.dateTo);
 
-  return records.filter((record) => {
+  return (records || []).filter((record) => {
+    if (!record) return false;
+
     if (filters.status !== "all" && record.status !== filters.status) {
       return false;
     }
 
-    if (from && record.requestedAt < from) {
+    const requestedAt = toSafeDate(record.requestedAt);
+    if (!requestedAt) return !from && !to;
+
+    if (from && requestedAt < from) {
       return false;
     }
 
-    if (to && record.requestedAt > to) {
+    if (to && requestedAt > to) {
       return false;
     }
 
     return true;
   });
 }
+

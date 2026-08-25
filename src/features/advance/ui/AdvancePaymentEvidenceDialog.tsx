@@ -9,13 +9,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getComprobanteFileKind } from "@/shared/lib/comprobantePago";
+import { toSafeDate } from "@/shared/utils/payrollPeriod";
 
 type AdvancePaymentEvidenceDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   evidenceUrl: string | null;
   amount?: number;
-  requestedAt?: Date;
+  requestedAt?: Date | string | null;
 };
 
 export function AdvancePaymentEvidenceDialog({
@@ -33,9 +34,10 @@ export function AdvancePaymentEvidenceDialog({
 
   const subtitle = useMemo(() => {
     const parts: string[] = [];
-    if (requestedAt) {
+    const safeDate = toSafeDate(requestedAt);
+    if (safeDate) {
       parts.push(
-        requestedAt.toLocaleDateString("es-CO", {
+        safeDate.toLocaleDateString("es-CO", {
           day: "numeric",
           month: "long",
           year: "numeric",

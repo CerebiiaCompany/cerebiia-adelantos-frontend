@@ -16,7 +16,10 @@ import {
   ADVANCE_HISTORY_STATUS_BADGE_CLASS,
   ADVANCE_HISTORY_STATUS_LABEL,
 } from "@/shared/config/advanceHistory";
-import { formatAdvanceRequestDate } from "@/shared/utils/payrollPeriod";
+import {
+  formatAdvanceRequestDate,
+  getPayrollPeriodLabel,
+} from "@/shared/utils/payrollPeriod";
 import { formatAdvanceInstallmentsLabel } from "@/features/advance/utils/enrichAdvanceHistoryRecords";
 
 type AdvanceHistoryTableProps = {
@@ -66,7 +69,7 @@ function DateCell({ record }: { record: AdvanceHistoryRecord }) {
         {formatAdvanceRequestDate(record.requestedAt)}
       </p>
       <p className="mt-0.5 text-xs capitalize text-muted-foreground">
-        {record.periodLabel}
+        {record.periodLabel || getPayrollPeriodLabel(record.requestedAt)}
       </p>
     </div>
   );

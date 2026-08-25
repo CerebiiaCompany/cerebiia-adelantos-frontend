@@ -23,22 +23,38 @@ export function resolveAdvanceLimitsFromNomina(
   nomina: EmpleadoMeDTO,
   totalAdvancedThisMonth = 0,
 ): EmployeeAdvanceLimits {
+  const salary = parseDecimalAmount(nomina.salario) ?? 0;
+  const parsedPercentage = Number.parseFloat(nomina.porcentaje_maximo_adelanto);
+  const advancePercentage =
+    !Number.isNaN(parsedPercentage) && parsedPercentage > 0
+      ? parsedPercentage
+      : 30;
+
+  const rawMax = parseDecimalAmount(nomina.monto_maximo_adelanto);
   const maxAdvanceLimit =
-    parseDecimalAmount(nomina.monto_maximo_adelanto) ?? 0;
+    rawMax !== undefined && rawMax > 0
+      ? rawMax
+      : salary > 0
+        ? Math.round(salary * (advancePercentage / 100))
+        : 0;
+
   const saldoDisponible = parseDecimalAmount(nomina.saldo_disponible);
-  let availableAdvance =
-    saldoDisponible !== undefined
-      ? saldoDisponible
-      : Math.max(0, maxAdvanceLimit - totalAdvancedThisMonth);
+  const calculatedAvailable = Math.max(0, maxAdvanceLimit - totalAdvancedThisMonth);
+
+  let availableAdvance: number;
+  if (saldoDisponible !== undefined) {
+    if (totalAdvancedThisMonth === 0 && saldoDisponible < maxAdvanceLimit) {
+      availableAdvance = maxAdvanceLimit;
+    } else {
+      availableAdvance = Math.min(saldoDisponible, maxAdvanceLimit);
+    }
+  } else {
+    availableAdvance = calculatedAvailable;
+  }
 
   if (maxAdvanceLimit > 0) {
     availableAdvance = Math.min(availableAdvance, maxAdvanceLimit);
   }
-
-  const parsedPercentage = Number.parseFloat(nomina.porcentaje_maximo_adelanto);
-  const advancePercentage = Number.isNaN(parsedPercentage)
-    ? 0
-    : parsedPercentage;
 
   return {
     maxAdvanceLimit,
@@ -46,3 +62,4 @@ export function resolveAdvanceLimitsFromNomina(
     advancePercentage,
   };
 }
+

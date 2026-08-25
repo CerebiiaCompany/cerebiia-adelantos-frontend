@@ -27,6 +27,18 @@ describe("formatAdvanceRequestDate", () => {
     expect(formatted).toMatch(/2026/);
     expect(formatted.toLowerCase()).toContain("jun");
   });
+
+  it("acepta strings ISO de fecha", () => {
+    const formatted = formatAdvanceRequestDate("2026-06-10T14:30:00");
+    expect(formatted).toMatch(/2026/);
+    expect(formatted.toLowerCase()).toContain("jun");
+  });
+
+  it("retorna raya para valores indefinidos o nulos sin lanzar excepción", () => {
+    expect(formatAdvanceRequestDate(undefined)).toBe("—");
+    expect(formatAdvanceRequestDate(null)).toBe("—");
+    expect(formatAdvanceRequestDate("invalid-date")).toBe("—");
+  });
 });
 
 describe("buildAdvanceReceiptFolio", () => {
@@ -34,4 +46,10 @@ describe("buildAdvanceReceiptFolio", () => {
     const folio = buildAdvanceReceiptFolio(new Date("2026-06-10T14:30:00"));
     expect(folio).toMatch(/^ADV-\d{8}-\d+$/);
   });
+
+  it("no lanza error con fecha undefined", () => {
+    const folio = buildAdvanceReceiptFolio(undefined);
+    expect(folio).toMatch(/^ADV-\d{8}-\d+$/);
+  });
 });
+

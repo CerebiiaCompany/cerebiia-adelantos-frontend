@@ -3,6 +3,7 @@ import { useAuth } from "@/features/auth/model/AuthProvider";
 import { registerCompanyAdvance } from "@/entities/employer-audit";
 import {
   buildEmployeeDashboardSnapshot,
+  createEmptyDashboardMetrics,
   deriveAdvanceMetricsFromHistory,
   parseEmployeeSalary,
   resolveAdvanceLimitsFromNomina,
@@ -44,13 +45,14 @@ export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
       empleadoMe?.salario ?? session.empleado.salario,
     );
 
-    const metrics =
-      env.apiUrl && hasApiHistory && apiHistory
-        ? {
-            ...localMetrics,
-            ...deriveAdvanceMetricsFromHistory(apiHistory),
-          }
-        : localMetrics;
+    const metrics = env.apiUrl
+      ? {
+          ...createEmptyDashboardMetrics(),
+          ...(hasApiHistory && apiHistory
+            ? deriveAdvanceMetricsFromHistory(apiHistory)
+            : {}),
+        }
+      : localMetrics;
 
     const fechaIngreso = resolveEmpleadoFechaIngreso(
       empleadoMe,
