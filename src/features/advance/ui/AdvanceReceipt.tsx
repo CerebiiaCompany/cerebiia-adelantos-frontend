@@ -20,6 +20,7 @@ import { amountInWordsSpanish } from "@/shared/utils/amountInWords";
 import {
   buildAdvanceReceiptFolio,
   getPayrollPeriodLabel,
+  toSafeDate,
 } from "@/shared/utils/payrollPeriod";
 import { cn } from "@/lib/utils";
 import { ADVANCE_RECEIPT_STATUS_CONFIG } from "@/shared/config/advanceStatusStyles";
@@ -27,8 +28,9 @@ import type { AdvanceReceiptStatus } from "@/shared/config/advanceHistory.types"
 
 export type { AdvanceReceiptStatus } from "@/shared/config/advanceHistory.types";
 
-function formatReceiptDate(date: Date): string {
-  return date.toLocaleString("es-CO", {
+function formatReceiptDate(date?: Date | string | number | null): string {
+  const safe = toSafeDate(date) ?? new Date();
+  return safe.toLocaleString("es-CO", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -37,8 +39,9 @@ function formatReceiptDate(date: Date): string {
   });
 }
 
-function formatDisbursementDate(date: Date): string {
-  return date.toLocaleDateString("es-CO", {
+function formatDisbursementDate(date?: Date | string | number | null): string {
+  const safe = toSafeDate(date) ?? new Date();
+  return safe.toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "long",
     year: "numeric",

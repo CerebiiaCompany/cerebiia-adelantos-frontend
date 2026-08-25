@@ -37,9 +37,13 @@ export function useEmployeeAdvanceHistory(): AdvanceHistoryRecord[] {
   const profile = useProfileView();
 
   return useMemo(() => {
-    const base =
-      env.apiUrl && isSuccess && apiHistory ? apiHistory : localHistory;
+    // Si hay conexión con el backend (env.apiUrl), el backend es la ÚNICA fuente de verdad.
+    // Nunca se usa localStorage como fallback para no mezclar datos ni simular información desactualizada.
+    const base = env.apiUrl
+      ? (isSuccess && apiHistory ? apiHistory : [])
+      : localHistory;
 
     return enrichAdvanceHistoryRecords(base, empleadoMe, profile);
   }, [apiHistory, isSuccess, localHistory, empleadoMe, profile]);
 }
+

@@ -50,17 +50,19 @@ export function useAdelantoConfig() {
   });
 
   const data = useMemo(() => {
-    // Fuente de verdad del super admin
-    if (configuracionQuery.data) {
-      return configuracionQuery.data;
-    }
-
+    // 1. Prioridad: Configuración personalizada de la empresa / empleado
     if (situacionQuery.data) {
       return mapSituacionToConfig(situacionQuery.data);
     }
 
     if (empleadoQuery.data) {
-      return resolveAdelantoConfigFromEmpleadoMe(empleadoQuery.data) ?? undefined;
+      const fromEmpleado = resolveAdelantoConfigFromEmpleadoMe(empleadoQuery.data);
+      if (fromEmpleado) return fromEmpleado;
+    }
+
+    // 2. Fallback: Configuración global de la plataforma
+    if (configuracionQuery.data) {
+      return configuracionQuery.data;
     }
 
     return undefined;

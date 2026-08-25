@@ -4,46 +4,85 @@ import {
   DEFAULT_TARIFA_FIJA_POR_CUOTA,
 } from "@/shared/config/advanceFees";
 import { resolveSolicitudComprobanteUrl } from "@/shared/lib/comprobantePago";
+import { getPayrollPeriodLabel, toSafeDate } from "@/shared/utils/payrollPeriod";
 import { isSolicitudCancellable } from "./solicitudAdelanto";
 import type { SolicitudAdelantoDTO, EstadoSolicitud } from "./types/adelanto";
 
 function mapEstadoToHistoryStatus(
-  estado: EstadoSolicitud,
+  estado: unknown,
 ): AdvanceHistoryRecord["status"] {
-  if (estado === "rechazado") return "no_aprobado";
+  if (estado === "rechazado" || estado === "no_aprobado") return "no_aprobado";
   if (estado === "aprobado" || estado === "pagado") return "aprobado";
   return "en_curso";
 }
 
 function mapEstadoToReceiptStatus(
-  estado: EstadoSolicitud,
+  estado: unknown,
 ): AdvanceHistoryRecord["receiptStatus"] {
-  if (estado === "pagado") return "transferido";
+  if (estado === "pagado" || estado === "transferido") return "transferido";
   if (estado === "aprobado") return "aprobado";
-  if (estado === "rechazado") return null;
+  if (estado === "rechazado" || estado === "no_aprobado") return null;
   return "en_curso";
 }
 
 export function mapSolicitudToHistoryRecord(
-  solicitud: SolicitudAdelantoDTO,
+  solicitud: SolicitudAdelantoDTO | Record<string, unknown>,
 ): AdvanceHistoryRecord {
-  const amount = Number.parseFloat(solicitud.monto);
-  const safeAmount = Number.isNaN(amount) ? 0 : amount;
-  const parsedNet = solicitud.monto_a_recibir
-    ? Number.parseFloat(solicitud.monto_a_recibir)
-    : solicitud.monto_neto
-      ? Number.parseFloat(solicitud.monto_neto)
+  const rawAmount =
+    solicitud.monto ??
+    (solicitud as Record<string, unknown>).amount ??
+    (solicitud as Record<string, unknown>).monto_solicitado ??
+    (solicitud as Record<string, unknown>).valor ??
+    (solicitud as Record<string, unknown>).monto_aprobado ??
+    0;
+  const parsedAmount =
+    typeof rawAmount === "number"
+      ? rawAmount
+      : Number.parseFloat(String(rawAmount));
+  const safeAmount = Number.isFinite(parsedAmount) ? parsedAmount : 0;
+
+  const rawNet =
+    solicitud.monto_a_recibir ??
+    solicitud.monto_neto ??
+    (solicitud as Record<string, unknown>).netAmount ??
+    (solicitud as Record<string, unknown>).neto ??
+    (solicitud as Record<string, unknown>).valor_a_recibir;
+  const parsedNet =
+    rawNet != null
+      ? typeof rawNet === "number"
+        ? rawNet
+        : Number.parseFloat(String(rawNet))
       : Number.NaN;
-  const installments = solicitud.numero_cuotas_snapshot > 0
-    ? solicitud.numero_cuotas_snapshot
-    : 1;
-  const parsedTarifaTotal = solicitud.tarifa_total
-    ? Number.parseFloat(solicitud.tarifa_total)
-    : Number.NaN;
+
+  const rawInstallments =
+    solicitud.numero_cuotas_snapshot ??
+    (solicitud as Record<string, unknown>).installments ??
+    (solicitud as Record<string, unknown>).numero_cuotas ??
+    (solicitud as Record<string, unknown>).cuotas ??
+    1;
+  const parsedInstallments = Number(rawInstallments);
+  const installments =
+    Number.isFinite(parsedInstallments) && parsedInstallments > 0
+      ? parsedInstallments
+      : 1;
+
+  const rawTarifaTotal =
+    solicitud.tarifa_total ??
+    (solicitud as Record<string, unknown>).transactionFeeAmount ??
+    (solicitud as Record<string, unknown>).tarifa ??
+    (solicitud as Record<string, unknown>).fee ??
+    (solicitud as Record<string, unknown>).comision;
+  const parsedTarifaTotal =
+    rawTarifaTotal != null
+      ? typeof rawTarifaTotal === "number"
+        ? rawTarifaTotal
+        : Number.parseFloat(String(rawTarifaTotal))
+      : Number.NaN;
+
   const transactionFeeAmount =
-    !Number.isNaN(parsedTarifaTotal) && parsedTarifaTotal >= 0
+    Number.isFinite(parsedTarifaTotal) && parsedTarifaTotal >= 0
       ? Math.round(parsedTarifaTotal)
-      : !Number.isNaN(parsedNet) && parsedNet >= 0
+      : Number.isFinite(parsedNet) && parsedNet >= 0
         ? Math.max(0, safeAmount - parsedNet)
         : calculateAdvanceTotalFee(
             DEFAULT_TARIFA_FIJA_POR_CUOTA,
@@ -51,35 +90,61 @@ export function mapSolicitudToHistoryRecord(
             safeAmount,
           );
   const netAmount =
-    !Number.isNaN(parsedNet) && parsedNet >= 0
+    Number.isFinite(parsedNet) && parsedNet >= 0
       ? Math.round(parsedNet)
       : Math.max(0, safeAmount - transactionFeeAmount);
 
+  const rawDate =
+    solicitud.created_at ||
+    (solicitud as Record<string, unknown>).requestedAt ||
+    (solicitud as Record<string, unknown>).fecha_creacion ||
+    (solicitud as Record<string, unknown>).fecha_solicitud ||
+    (solicitud as Record<string, unknown>).fecha ||
+    (solicitud as Record<string, unknown>).createdAt ||
+    (solicitud as Record<string, unknown>).date ||
+    solicitud.updated_at ||
+    solicitud.pagado_en ||
+    solicitud.decidido_en;
+  const requestedAt = toSafeDate(rawDate as string | Date) ?? new Date();
+
+  const rawEstado =
+    solicitud.estado ??
+    (solicitud as Record<string, unknown>).status ??
+    (solicitud as Record<string, unknown>).estadoApi;
+
+  const id = String(solicitud.id ?? `adv-${requestedAt.getTime()}`);
+
   return {
-    id: solicitud.id,
+    id,
     amount: safeAmount,
     netAmount,
-    requestedAt: new Date(solicitud.created_at),
-    periodLabel: new Date(solicitud.created_at).toLocaleDateString("es-CO", {
-      month: "long",
-      year: "numeric",
-    }),
-    status: mapEstadoToHistoryStatus(solicitud.estado),
+    requestedAt,
+    periodLabel: getPayrollPeriodLabel(requestedAt),
+    status: mapEstadoToHistoryStatus(rawEstado),
     transactionFeeAmount,
-    folio: solicitud.id.slice(0, 8).toUpperCase(),
-    receiptStatus: mapEstadoToReceiptStatus(solicitud.estado),
-    paymentMethod: "Transferencia bancaria",
-    installments: solicitud.numero_cuotas_snapshot,
-    bankName: "—",
-    accountTypeLabel: "—",
-    accountNumber: "—",
-    estadoApi: solicitud.estado,
-    canCancel: isSolicitudCancellable(solicitud.estado),
+    folio: id.slice(0, 8).toUpperCase(),
+    receiptStatus: mapEstadoToReceiptStatus(rawEstado),
+    paymentMethod:
+      (solicitud as Record<string, unknown>).paymentMethod as string ||
+      "Transferencia bancaria",
+    installments,
+    bankName:
+      (solicitud as Record<string, unknown>).bankName as string || "—",
+    accountTypeLabel:
+      (solicitud as Record<string, unknown>).accountTypeLabel as string || "—",
+    accountNumber:
+      (solicitud as Record<string, unknown>).accountNumber as string || "—",
+    estadoApi: (solicitud.estado ?? rawEstado) as EstadoSolicitud,
+    canCancel: isSolicitudCancellable(rawEstado as EstadoSolicitud),
     rejectionReason: solicitud.motivo_rechazo?.trim() || null,
-    paymentEvidenceUrl: resolveSolicitudComprobanteUrl(solicitud),
+    paymentEvidenceUrl: resolveSolicitudComprobanteUrl(
+      solicitud as SolicitudAdelantoDTO,
+    ),
   };
 }
 
 export function formatMontoForApi(amount: number): string {
   return amount.toFixed(2);
 }
+
+

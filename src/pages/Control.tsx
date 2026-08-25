@@ -22,6 +22,7 @@ export default function Control() {
     usedPercent,
     usedAmount,
     limitAmount,
+    advancePercentage,
     nextPaymentNet,
     payrollDeductionThisMonth,
     limitDelta,
@@ -115,7 +116,7 @@ export default function Control() {
           <p className="text-xs leading-relaxed text-muted-foreground">
             {usedAmount === 0 ? (
               <>
-                Tu cuenta está limpia. Puedes adelantar hasta el 30% de tu salario
+                Tu cuenta está limpia. Puedes adelantar hasta el {advancePercentage}% de tu salario
                 cuando lo necesites.
               </>
             ) : (

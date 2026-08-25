@@ -108,11 +108,6 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const invalidate = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
     void queryClient.invalidateQueries({ queryKey: REPORTES_DATOS_QUERY_KEY });
-    void queryClient.invalidateQueries({ queryKey: SOLICITUDES_ADELANTO_QUERY_KEY });
-    void queryClient.invalidateQueries({ queryKey: ["adelantos"] });
-    void queryClient.invalidateQueries({ queryKey: ["empleados"] });
-    void queryClient.invalidateQueries({ queryKey: ["configuracion"] });
-    void queryClient.invalidateQueries({ queryKey: ["logros"] });
   }, [queryClient]);
 
   const { isConnected: wsConnected } = useNotificationWebSocket({
@@ -125,9 +120,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     queryKey: NOTIFICACIONES_ME_QUERY_KEY,
     queryFn: () => notificacionesEndpoints.listMe(),
     enabled,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchInterval: wsConnected ? 6_000 : 3_000,
+    staleTime: 10_000,
+    refetchOnWindowFocus: false,
+    refetchInterval: wsConnected ? 30_000 : 15_000,
   });
 
   const soporteQuery = useQuery({
@@ -135,18 +130,18 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     queryFn: () =>
       empleadosEndpoints.listReportesDatoIncorrectoMe({ page: 1, page_size: 50 }),
     enabled: enabled && (appRole === "employee" || isEmpleado),
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchInterval: wsConnected ? 6_000 : 3_000,
+    staleTime: 15_000,
+    refetchOnWindowFocus: false,
+    refetchInterval: wsConnected ? 30_000 : 15_000,
   });
 
   const adelantosQuery = useQuery({
     queryKey: SOLICITUDES_ADELANTO_QUERY_KEY,
     queryFn: () => adelantosEndpoints.listSolicitudes(),
     enabled: enabled && (appRole === "employee" || isEmpleado),
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchInterval: wsConnected ? 6_000 : 3_000,
+    staleTime: 10_000,
+    refetchOnWindowFocus: false,
+    refetchInterval: wsConnected ? 30_000 : 15_000,
   });
 
   const notifications = useMemo(() => {

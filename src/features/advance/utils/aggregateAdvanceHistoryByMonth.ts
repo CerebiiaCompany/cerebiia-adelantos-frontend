@@ -1,4 +1,5 @@
 import type { AdvanceHistoryRecord } from "@/shared/config/advanceHistory.types";
+import { toSafeDate } from "@/shared/utils/payrollPeriod";
 
 export type MonthlyAdvanceChartPoint = {
   name: string;
@@ -20,10 +21,10 @@ export function aggregateAdvanceHistoryByMonth(
     { adelantos: number; count: number; name: string; sortKey: string }
   >();
 
-  for (const record of records) {
-    if (record.status === "no_aprobado") continue;
+  for (const record of records || []) {
+    if (!record || record.status === "no_aprobado") continue;
 
-    const date = record.requestedAt;
+    const date = toSafeDate(record.requestedAt) ?? new Date();
     const sortKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const name = date.toLocaleDateString("es-CO", { month: "short" });
     const existing = buckets.get(sortKey);
