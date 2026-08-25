@@ -71,12 +71,9 @@ export function FirstFreeAdvanceBanner({
             title="Ver logro Primera vez en Logros"
           >
             <div className="relative shrink-0">
-              <img
-                src="/images/badge-copa.svg"
-                alt=""
-                className="h-12 w-12 object-contain drop-shadow-[0_4px_10px_rgba(75,111,255,0.35)] sm:h-[3.25rem] sm:w-[3.25rem]"
-                draggable={false}
-              />
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 shadow-[0_0_20px_rgba(245,158,11,0.25)] sm:h-[3.25rem] sm:w-[3.25rem]">
+                <Sparkles className="h-6 w-6 text-amber-500" strokeWidth={2.25} />
+              </div>
               <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-[hsl(220_25%_22%)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm">
                 Nivel 1
               </span>

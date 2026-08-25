@@ -11,14 +11,32 @@ export type AchievementIconKey =
   | "shield"
   | "flame"
   | "target"
-  | "award";
+  | "award"
+  | "trophy"
+  | "rocket"
+  | "wallet"
+  | "coins"
+  | "piggy-bank"
+  | "crown"
+  | "clock"
+  | "timer"
+  | "shield-check"
+  | "medal"
+  | "gem"
+  | "zap"
+  | "sparkles"
+  | string;
 
 export interface AchievementDefinition {
   id: AchievementId;
+  codigo?: string;
   title: string;
   description: string;
   points: number;
   icon: AchievementIconKey;
+  iconKey?: string;
+  orden?: number;
+  activo?: boolean;
 }
 
 export interface AchievementProgressItem extends AchievementDefinition {

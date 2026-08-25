@@ -47,20 +47,20 @@ export function useNotificationSound(
       unlockNotificationSound();
     };
 
-    window.addEventListener("pointerdown", unlock, { passive: true });
-    window.addEventListener("mousedown", unlock, { passive: true });
-    window.addEventListener("click", unlock, { passive: true });
-    window.addEventListener("keydown", unlock);
-    window.addEventListener("touchstart", unlock, { passive: true });
-    window.addEventListener("focus", unlock);
+    window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
+    window.addEventListener("mousedown", unlock, { capture: true, passive: true });
+    window.addEventListener("click", unlock, { capture: true, passive: true });
+    window.addEventListener("keydown", unlock, { capture: true });
+    window.addEventListener("touchstart", unlock, { capture: true, passive: true });
+    window.addEventListener("focus", unlock, { capture: true });
 
     return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("mousedown", unlock);
-      window.removeEventListener("click", unlock);
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("touchstart", unlock);
-      window.removeEventListener("focus", unlock);
+      window.removeEventListener("pointerdown", unlock, true);
+      window.removeEventListener("mousedown", unlock, true);
+      window.removeEventListener("click", unlock, true);
+      window.removeEventListener("keydown", unlock, true);
+      window.removeEventListener("touchstart", unlock, true);
+      window.removeEventListener("focus", unlock, true);
     };
   }, [enabled]);
 
