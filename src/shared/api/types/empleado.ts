@@ -169,12 +169,22 @@ export type EstadoReporteDatoIncorrecto =
   | "pendiente"
   | "en_revision"
   | "respondido"
-  | "resuelto";
+  | "resuelto"
+  | "finalizado";
 
 export interface EvidenciaAdjuntoDTO {
   nombre: string;
   path: string;
   url: string;
+}
+
+export interface SoporteMensajeDTO {
+  id: string;
+  remitente: "empleado" | "empresa" | string;
+  remitente_nombre?: string;
+  mensaje: string;
+  created_at: string;
+  evidencias?: EvidenciaAdjuntoDTO[];
 }
 
 export interface ReporteDatoIncorrectoDTO {
@@ -191,7 +201,10 @@ export interface ReporteDatoIncorrectoDTO {
   respondido_por_nombre?: string;
   empresa_nombre?: string;
   respondido_en?: string | null;
+  mensajes?: SoporteMensajeDTO[];
+  finalizado?: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface ListadoReporteDatoIncorrectoDTO {

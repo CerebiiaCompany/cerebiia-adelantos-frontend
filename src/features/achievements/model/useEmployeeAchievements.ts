@@ -11,42 +11,81 @@ import { env } from "@/shared/config/env";
 
 const LOGROS_ME_QUERY_KEY = ["logros", "me"] as const;
 
-const ICON_MAP: Record<string, AchievementIconKey> = {
-  star: "star",
-  milestone5: "milestone5",
-  milestone15: "milestone15",
-  milestone30: "milestone30",
-  shield: "shield",
-  flame: "flame",
-  target: "target",
-  award: "award",
+const LEVEL_LABELS: Record<number, string> = {
+  1: "Nuevo usuario",
+  2: "Usuario activo",
+  3: "Usuario constante",
+  4: "Usuario experto",
+  5: "Maestro del adelanto",
 };
 
-function mapIcon(iconKey: string): AchievementIconKey {
-  return ICON_MAP[iconKey] ?? "star";
-}
+const POINTS_PER_LEVEL = 500;
 
 function mapSnapshot(
   dto: LogrosEmpleadoSnapshotDTO,
 ): EmployeeAchievementsSnapshot {
+  const activeItems = (dto.items || []).filter(
+    (item) => item.activo !== false,
+  );
+
+  const sortedItems = [...activeItems].sort((a, b) => {
+    const ordenA = typeof a.orden === "number" ? a.orden : 999;
+    const ordenB = typeof b.orden === "number" ? b.orden : 999;
+    return ordenA - ordenB;
+  });
+
+  const items: EmployeeAchievementsSnapshot["items"] = sortedItems.map((item) => ({
+    id: item.codigo || item.id,
+    codigo: item.codigo,
+    title: item.titulo,
+    description: item.descripcion,
+    points: item.puntos,
+    icon: item.icon_key as AchievementIconKey,
+    iconKey: item.icon_key,
+    orden: item.orden,
+    activo: item.activo,
+    unlocked: Boolean(item.unlocked),
+    unlockedAt: item.unlocked_at ? item.unlocked_at.slice(0, 10) : null,
+  }));
+
+  const totalPoints = items
+    .filter((item) => item.unlocked)
+    .reduce((sum, item) => sum + item.points, 0);
+
+  const maxPointsForLevel =
+    dto.max_points_for_level && dto.max_points_for_level > 0
+      ? dto.max_points_for_level
+      : POINTS_PER_LEVEL;
+
+  const level =
+    dto.level && dto.level > 0
+      ? dto.level
+      : Math.floor(totalPoints / maxPointsForLevel) + 1;
+
+  const levelLabel =
+    dto.level_label ||
+    LEVEL_LABELS[level] ||
+    `Nivel ${level}`;
+
+  const pointsIntoLevel = totalPoints % maxPointsForLevel;
+  const pointsToNextLevel = maxPointsForLevel - pointsIntoLevel;
+
+  const firstAdvanceUnlocked = items.some(
+    (i) => (i.codigo === "primera_vez" || i.id === "primera_vez") && i.unlocked,
+  );
+
   return {
-    items: dto.items.map((item) => ({
-      id: item.codigo as EmployeeAchievementsSnapshot["items"][number]["id"],
-      title: item.titulo,
-      description: item.descripcion,
-      points: item.puntos,
-      icon: mapIcon(item.icon_key),
-      unlocked: item.unlocked,
-      unlockedAt: item.unlocked_at
-        ? item.unlocked_at.slice(0, 10)
-        : null,
-    })),
-    totalPoints: dto.total_points,
-    level: dto.level,
-    levelLabel: dto.level_label,
-    pointsToNextLevel: dto.points_to_next_level,
-    maxPointsForLevel: dto.max_points_for_level,
-    firstAdvance: dto.first_advance,
+    items,
+    totalPoints,
+    level,
+    levelLabel,
+    pointsToNextLevel,
+    maxPointsForLevel,
+    firstAdvance: dto.first_advance ?? {
+      unlocked: firstAdvanceUnlocked,
+      completed: firstAdvanceUnlocked ? 1 : 0,
+      required: 1,
+    },
   };
 }
 
@@ -76,7 +115,8 @@ export function useEmployeeAchievements(): {
     queryKey: LOGROS_ME_QUERY_KEY,
     queryFn: () => logrosEndpoints.me(),
     enabled,
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchInterval: 5_000,
     refetchOnWindowFocus: true,
   });
 

@@ -36,3 +36,4 @@ export { EmployerSolicitudDetalleDialog } from "./ui/audit/EmployerSolicitudDeta
 export { ReportesDatosIncorrectosTable } from "./ui/ReportesDatosIncorrectosTable";
 export { useReportesDatoIncorrectoEmpresa } from "./model/useReportesDatoIncorrectoEmpresa";
 export { useResponderReporteDatoIncorrecto } from "./model/useResponderReporteDatoIncorrecto";
+export { useFinalizarReporteDatoIncorrecto } from "./model/useFinalizarReporteDatoIncorrecto";

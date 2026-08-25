@@ -148,7 +148,11 @@ export function mapEmpleadoLoginResponseToSession(
 
 export function resolveAppRole(session: AuthSession): AppUserRole | null {
   if (isEmpleadoSession(session)) {
-    return session.empleado.estado === "activo" ? "employee" : null;
+    const estado = session.empleado?.estado?.toLowerCase();
+    if (estado === "inactivo" || estado === "bloqueado" || estado === "suspendido") {
+      return null;
+    }
+    return "employee";
   }
 
   if (!session.user.is_active || session.user.role !== "empresa") {
