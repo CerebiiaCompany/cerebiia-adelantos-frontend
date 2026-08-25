@@ -9,6 +9,7 @@ import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { useProfileView } from "@/features/auth";
 import { useReportesDatoIncorrectoEmpresa } from "@/features/employer-panel/model/useReportesDatoIncorrectoEmpresa";
 import { useResponderReporteDatoIncorrecto } from "@/features/employer-panel/model/useResponderReporteDatoIncorrecto";
+import { useFinalizarReporteDatoIncorrecto } from "@/features/employer-panel/model/useFinalizarReporteDatoIncorrecto";
 import { SoporteChatThread } from "@/widgets/soporte-chat";
 import { ApiError } from "@/shared/api";
 import type { ReporteDatoIncorrectoDTO } from "@/shared/api/types/empleado";
@@ -26,7 +27,8 @@ const ESTADO_LABELS: Record<string, string> = {
   pendiente: "Pendiente",
   en_revision: "En revisión",
   respondido: "Respondido",
-  resuelto: "Resuelto",
+  resuelto: "Finalizado",
+  finalizado: "Finalizado",
 };
 
 function formatDateTime(iso: string): string {
@@ -43,7 +45,10 @@ function formatDateTime(iso: string): string {
 }
 
 function estadoTone(estado: string): string {
-  if (estado === "respondido" || estado === "resuelto") {
+  if (estado === "respondido") {
+    return "bg-primary/10 text-primary";
+  }
+  if (estado === "resuelto" || estado === "finalizado") {
     return "bg-success/10 text-success";
   }
   return "bg-warning/10 text-warning";
@@ -207,13 +212,20 @@ function ReportRow({
   onToggle: () => void;
 }) {
   const [respuesta, setRespuesta] = useState("");
-  const { mutate: responder, isPending } = useResponderReporteDatoIncorrecto();
-  const yaRespondido = Boolean(row.respuesta_empresa?.trim()) || row.estado === "respondido";
+  const { mutate: responder, isPending: isResponding } =
+    useResponderReporteDatoIncorrecto();
+  const { mutate: finalizar, isPending: isFinalizing } =
+    useFinalizarReporteDatoIncorrecto();
+
+  const isFinalizado =
+    row.estado === "resuelto" ||
+    row.estado === "finalizado" ||
+    Boolean(row.finalizado);
 
   const handleResponder = () => {
     const text = respuesta.trim();
-    if (text.length < 5) {
-      toast.error("La respuesta debe tener al menos 5 caracteres.");
+    if (text.length < 3) {
+      toast.error("La respuesta debe tener al menos 3 caracteres.");
       return;
     }
     responder(
@@ -228,6 +240,28 @@ function ReportRow({
             error instanceof ApiError
               ? error.message
               : "No pudimos enviar la respuesta.";
+          toast.error(message);
+        },
+      },
+    );
+  };
+
+  const handleFinalizar = () => {
+    finalizar(
+      {
+        reporteId: row.id,
+        conclusion: respuesta.trim() || undefined,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Chat de soporte marcado como finalizado.");
+          setRespuesta("");
+        },
+        onError: (error) => {
+          const message =
+            error instanceof ApiError
+              ? error.message
+              : "No pudimos finalizar la solicitud de soporte.";
           toast.error(message);
         },
       },
@@ -290,30 +324,73 @@ function ReportRow({
               reporte={row}
               empresaNombreFallback={empresaNombreFallback}
             />
-            {!yaRespondido ? (
-              <div className="space-y-2 rounded-xl border border-border/50 bg-background/80 p-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Responder al empleado
-                </p>
+
+            {!isFinalizado ? (
+              <div className="space-y-3 rounded-xl border border-border/50 bg-background/90 p-3.5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-foreground">
+                    Responder al empleado en este chat
+                  </p>
+                  <span className="text-[11px] text-muted-foreground">
+                    El chat permanece activo hasta que lo finalices
+                  </span>
+                </div>
+
                 <Textarea
                   value={respuesta}
                   onChange={(event) => setRespuesta(event.target.value)}
-                  placeholder="Indica cómo van a corregir el dato o qué información necesitan..."
-                  className="min-h-[90px] resize-none"
+                  placeholder="Indica cómo van a corregir el dato, solicita detalles o confirma la solución..."
+                  className="min-h-[85px] resize-none text-sm"
                 />
-                <PrimaryActionButton
-                  type="button"
-                  showArrow={false}
-                  className="w-full sm:w-auto"
-                  loading={isPending}
-                  loadingText="Enviando..."
-                  disabled={isPending || respuesta.trim().length < 5}
-                  onClick={handleResponder}
-                >
-                  Enviar respuesta
-                </PrimaryActionButton>
+
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
+                    disabled={isResponding || isFinalizing}
+                    onClick={handleFinalizar}
+                  >
+                    {isFinalizing ? "Finalizando..." : "Marcar caso como finalizado"}
+                  </Button>
+
+                  <button
+                    type="button"
+                    disabled={
+                      isResponding ||
+                      isFinalizing ||
+                      respuesta.trim().length < 3
+                    }
+                    onClick={handleResponder}
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#6366f1] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-200 hover:from-[#6d28d9] hover:via-[#4f46e5] hover:to-[#1d4ed8] hover:shadow-lg hover:shadow-indigo-500/35 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                  >
+                    {isResponding ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Enviando...
+                      </span>
+                    ) : (
+                      <>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="h-4 w-4 shrink-0 -rotate-12 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
+                        <span>Enviar respuesta</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            ) : null}
+            ) : (
+              <div className="rounded-xl border border-border/40 bg-background/50 p-3 text-center text-xs text-muted-foreground">
+                Caso finalizado. No requiere más respuestas.
+              </div>
+            )}
           </td>
         </tr>
       ) : null}

@@ -80,7 +80,7 @@ export const empleadosEndpoints = {
   createReporteDatoIncorrecto: (payload: {
     campos_reportados: string[];
     mensaje: string;
-    evidencias: File[];
+    evidencias?: File[];
   }) => {
     const formData = new FormData();
     formData.append("mensaje", payload.mensaje);
@@ -88,9 +88,11 @@ export const empleadosEndpoints = {
       "campos_reportados",
       JSON.stringify(payload.campos_reportados),
     );
-    payload.evidencias.forEach((file) => {
-      formData.append("evidencias", file);
-    });
+    if (payload.evidencias && payload.evidencias.length > 0) {
+      payload.evidencias.forEach((file) => {
+        formData.append("evidencias", file);
+      });
+    }
     return http.postForm<ReporteDatoIncorrectoDTO>(
       "/empleados/me/reportes-datos/",
       formData,
@@ -122,10 +124,35 @@ export const empleadosEndpoints = {
       `/empleados/reportes-datos/${query ? `?${query}` : ""}`,
     );
   },
+  enviarMensajeReporteDatoIncorrectoMe: (
+    reporteId: string,
+    payload: { mensaje: string; evidencias?: File[] },
+  ) => {
+    if (payload.evidencias && payload.evidencias.length > 0) {
+      const formData = new FormData();
+      formData.append("mensaje", payload.mensaje);
+      payload.evidencias.forEach((file) => {
+        formData.append("evidencias", file);
+      });
+      return http.postForm<ReporteDatoIncorrectoDTO>(
+        `/empleados/me/reportes-datos/${reporteId}/mensajes/`,
+        formData,
+      );
+    }
+    return http.post<ReporteDatoIncorrectoDTO>(
+      `/empleados/me/reportes-datos/${reporteId}/mensajes/`,
+      { mensaje: payload.mensaje },
+    );
+  },
   responderReporteDatoIncorrecto: (reporteId: string, respuesta: string) =>
     http.post<ReporteDatoIncorrectoDTO>(
       `/empleados/reportes-datos/${reporteId}/responder/`,
       { respuesta },
+    ),
+  finalizarReporteDatoIncorrecto: (reporteId: string, conclusion?: string) =>
+    http.post<ReporteDatoIncorrectoDTO>(
+      `/empleados/reportes-datos/${reporteId}/finalizar/`,
+      { conclusion: conclusion || "Caso finalizado por la empresa", estado: "resuelto" },
     ),
   cargarNomina: (archivo: File) => {
     const formData = new FormData();

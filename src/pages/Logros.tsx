@@ -1,4 +1,4 @@
-import { Trophy } from "lucide-react";
+import { CheckCircle2, Lock, Sparkles, Trophy } from "lucide-react";
 import {
   AnimatedNumber,
   AnimatedProgressBar,
@@ -6,24 +6,15 @@ import {
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useEmployeeAchievements } from "@/features/achievements";
-import type { AchievementIconKey } from "@/entities/achievement";
+import {
+  useEmployeeAchievements,
+  resolveAchievementIcon,
+} from "@/features/achievements";
 import { cn } from "@/lib/utils";
-
-const ACHIEVEMENT_BADGE_SRC: Record<AchievementIconKey, string> = {
-  star: "/images/badge-copa.svg",
-  milestone5: "/images/badge-5.svg",
-  milestone15: "/images/badge-15.svg",
-  milestone30: "/images/badge-30.svg",
-  shield: "/images/badge-escudo.svg",
-  flame: "/images/badge-llama.svg",
-  target: "/images/badge-meta.svg",
-  award: "/images/badge-award.svg",
-};
 
 export default function Logros() {
   const { hash } = useLocation();
-  const { data } = useEmployeeAchievements();
+  const { data, isLoading } = useEmployeeAchievements();
 
   useEffect(() => {
     if (!hash) return;
@@ -47,122 +38,184 @@ export default function Logros() {
     maxPointsForLevel,
   } = data;
 
+  const unlockedCount = items.filter((i) => i.unlocked).length;
+
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
       <PageHeader
         icon={Trophy}
         title="Logros y puntos"
-        description="Badges, niveles y recompensas"
+        description="Insignias, niveles y recompensas por tu actividad"
       />
 
-      <div className="glass-card glow-border p-6 text-center">
-        <img
-          src="/images/badge-copa.svg"
-          alt=""
-          className="mx-auto mb-3 h-[4.5rem] w-[4.5rem] object-contain drop-shadow-[0_8px_18px_rgba(79,70,229,0.28)]"
-          draggable={false}
+      {/* Tarjeta de Nivel y Progreso */}
+      <div className="glass-card glow-border relative overflow-hidden p-6 text-center shadow-lg">
+        <div
+          className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-48 w-48 rounded-full bg-amber-500/15 blur-3xl"
+          aria-hidden="true"
         />
-        <p className="text-sm text-muted-foreground">Nivel actual</p>
-        <AnimatedNumber
-          value={level}
-          className="font-display text-4xl font-bold text-gradient"
-        />
-        <p className="mt-1 text-sm text-muted-foreground">{levelLabel}</p>
-        <div className="mt-4">
-          <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-            <span>
+
+        <div className="relative mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-2xl border border-amber-500/30 bg-amber-500/10 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
+          <Trophy className="h-10 w-10 text-amber-500" strokeWidth={2.25} />
+        </div>
+
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Nivel actual
+        </p>
+        <div className="my-1">
+          <AnimatedNumber
+            value={level}
+            className="font-display text-4xl font-extrabold text-gradient"
+          />
+        </div>
+        <p className="text-sm font-medium text-foreground">{levelLabel}</p>
+
+        <div className="mt-5 space-y-2">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">
               <AnimatedNumber value={totalPoints} className="inline" /> pts
+              ganados
             </span>
             <span>
-              <AnimatedNumber
-                value={maxPointsForLevel}
-                className="inline"
-                duration={800}
-              />{" "}
-              pts
+              {unlockedCount} de {items.length} insignias
             </span>
           </div>
+
           <AnimatedProgressBar
             value={totalPoints % maxPointsForLevel}
             max={maxPointsForLevel}
-            className="h-2"
+            className="h-2.5 rounded-full"
           />
-          <p className="mt-1 text-xs text-muted-foreground">
-            <AnimatedNumber
-              value={pointsToNextLevel}
-              className="inline font-medium text-foreground"
-              duration={850}
-            />{" "}
-            pts para nivel {level + 1}
-          </p>
+
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              Meta: {maxPointsForLevel} pts
+            </span>
+            <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+              <Sparkles className="h-3 w-3" />
+              <AnimatedNumber
+                value={pointsToNextLevel}
+                className="inline font-bold"
+                duration={850}
+              />{" "}
+              pts para nivel {level + 1}
+            </span>
+          </div>
         </div>
       </div>
 
+      {/* Lista de Insignias Dinámicas */}
       <div className="space-y-3">
-        {items.map((achievement, i) => {
-          const badgeSrc = ACHIEVEMENT_BADGE_SRC[achievement.icon];
-          const unlocked = achievement.unlocked;
+        {isLoading && items.length === 0 ? (
+          <div className="glass-card p-8 text-center text-sm text-muted-foreground">
+            Cargando catálogo de logros...
+          </div>
+        ) : items.length === 0 ? (
+          <div className="glass-card p-8 text-center text-sm text-muted-foreground">
+            No hay logros disponibles en este momento.
+          </div>
+        ) : (
+          items.map((achievement, i) => {
+            const unlocked = achievement.unlocked;
+            const iconInfo = resolveAchievementIcon(
+              achievement.iconKey || achievement.icon,
+            );
+            const Icon = iconInfo.Icon;
+            const color = iconInfo.color;
 
-          return (
-            <div
-              key={achievement.id}
-              id={`logro-${achievement.id}`}
-              className={cn(
-                "glass-card flex items-center gap-4 p-4 transition-opacity",
-                unlocked ? "opacity-100 ring-1 ring-primary/15" : "opacity-50",
-              )}
-            >
+            return (
               <div
+                key={achievement.id}
+                id={`logro-${achievement.id}`}
                 className={cn(
-                  "flex h-12 w-12 shrink-0 items-center justify-center",
+                  "glass-card relative flex items-center gap-4 rounded-xl p-4 transition-all duration-300",
                   unlocked
-                    ? "drop-shadow-[0_6px_14px_rgba(79,70,229,0.3)]"
-                    : "opacity-70 grayscale-[0.25]",
+                    ? "glow-border opacity-100 ring-1 ring-primary/15 shadow-sm"
+                    : "opacity-60 grayscale-[0.4] hover:opacity-80",
                 )}
               >
-                <img
-                  src={badgeSrc}
-                  alt=""
-                  className="h-12 w-12 object-contain"
-                  draggable={false}
-                />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">
-                  {achievement.title}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {achievement.description}
-                </p>
-              </div>
-              <div className="text-right">
-                <p
+                {/* Contenedor del Icono con Glow */}
+                <div
                   className={cn(
-                    "text-sm font-bold",
-                    unlocked ? "text-primary" : "text-muted-foreground",
+                    "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border transition-all",
                   )}
+                  style={
+                    unlocked
+                      ? {
+                          backgroundColor: `${color}18`,
+                          borderColor: `${color}40`,
+                          boxShadow: `0 0 20px ${color}35`,
+                        }
+                      : {
+                          backgroundColor: "hsl(var(--muted) / 0.5)",
+                          borderColor: "hsl(var(--border) / 0.6)",
+                        }
+                  }
                 >
-                  +
-                  <AnimatedNumber
-                    value={achievement.points}
-                    className="inline"
-                    duration={650}
-                    delay={i * 70 + 60}
+                  <Icon
+                    className="h-7 w-7 transition-transform"
+                    style={{ color: unlocked ? color : "hsl(var(--muted-foreground))" }}
+                    strokeWidth={2.25}
                   />
-                </p>
-                <p
-                  className={cn(
-                    "text-xs font-medium",
-                    unlocked ? "text-emerald-600" : "text-muted-foreground",
-                  )}
-                >
-                  {unlocked ? "Desbloqueado" : "Bloqueado"}
-                </p>
+                </div>
+
+                {/* Título y Descripción */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={cn(
+                        "font-semibold leading-tight",
+                        unlocked
+                          ? "text-sm text-foreground"
+                          : "text-sm text-muted-foreground",
+                      )}
+                    >
+                      {achievement.title}
+                    </p>
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    {achievement.description}
+                  </p>
+                </div>
+
+                {/* Puntos y Estado */}
+                <div className="shrink-0 text-right space-y-1.5">
+                  <div
+                    className={cn(
+                      "font-display text-sm font-bold tracking-tight",
+                      unlocked ? "text-amber-500 dark:text-amber-400" : "text-muted-foreground/60",
+                    )}
+                  >
+                    +
+                    <AnimatedNumber
+                      value={achievement.points}
+                      className="inline"
+                      duration={650}
+                      delay={i * 60 + 50}
+                    />{" "}
+                    pts
+                  </div>
+
+                  <div>
+                    {unlocked ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Desbloqueado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-secondary/70 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                        <Lock className="h-3 w-3" />
+                        Bloqueado
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     </div>
   );
 }
+
