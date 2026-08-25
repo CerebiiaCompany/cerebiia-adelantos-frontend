@@ -85,17 +85,29 @@ export function useNotificationWebSocket({
       socket.onmessage = (event) => {
         try {
           const data = JSON.parse(String(event.data)) as { type?: string };
-          if (data) {
+          // Solo refrescar notificaciones si el evento es notifications.updated o similar
+          if (
+            data?.type === "notifications.updated" ||
+            data?.type === "notification" ||
+            data?.type === "notificacion"
+          ) {
             onUpdatedRef.current();
           }
         } catch {
-          onUpdatedRef.current();
+          // Ignorar frames no estructurados
         }
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         setIsConnected(false);
         socket = null;
+
+        // Si el token es inválido o no autorizado, no reintentar
+        if (event.code === 4401 || event.code === 4003) {
+          console.warn("WebSocket no autorizado. No se reintentará.");
+          return;
+        }
+
         scheduleReconnect();
       };
 

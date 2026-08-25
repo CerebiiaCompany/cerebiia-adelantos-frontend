@@ -9,9 +9,16 @@ export function useAuditoriaCambiosEmpresa(
   },
   options?: { enabled?: boolean },
 ) {
+  const page = params?.page ?? 1;
+  const pageSize = params?.page_size ?? 20;
+  const empleadoId = params?.empleado_id ?? "";
+
   return useQuery({
-    queryKey: ["empleados", "empresa", "auditoria-cambios", params ?? {}],
+    queryKey: ["empleados", "empresa", "auditoria-cambios", page, pageSize, empleadoId],
     queryFn: () => empleadosEndpoints.listAuditoriaCambiosEmpresa(params),
     enabled: options?.enabled ?? true,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
 }
+

@@ -5,12 +5,14 @@ import {
   countUnreadAuditoriaCambios,
 } from "@/shared/lib/auditoriaSeenStorage";
 
+const DEFAULT_AUDITORIA_PARAMS = { page: 1, page_size: 100 } as const;
+
 /** Count of employee/system data changes the company has not opened yet. */
 export function useUnreadAuditoriaCambiosCount(enabled = true): number {
   const [seenVersion, setSeenVersion] = useState(0);
 
   const query = useAuditoriaCambiosEmpresa(
-    { page: 1, page_size: 100 },
+    DEFAULT_AUDITORIA_PARAMS,
     { enabled },
   );
 

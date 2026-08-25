@@ -13,6 +13,15 @@ interface AnimatedNumberProps extends UseAnimatedNumberOptions {
   suffix?: ReactNode;
 }
 
+function sanitizeNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return 0;
+}
+
 export function AnimatedNumber({
   value,
   className,
@@ -24,16 +33,18 @@ export function AnimatedNumber({
   decimals,
   delay,
 }: AnimatedNumberProps) {
-  const animatedValue = useAnimatedNumber(value, {
+  const safeTarget = sanitizeNumber(value);
+  const animatedValue = useAnimatedNumber(safeTarget, {
     duration,
     enabled,
     decimals,
     delay,
   });
 
+  const displayNum = sanitizeNumber(animatedValue);
   const formatted = formatter
-    ? formatter(animatedValue)
-    : animatedValue.toLocaleString("es-CO");
+    ? formatter(displayNum)
+    : displayNum.toLocaleString("es-CO");
 
   return (
     <span className={cn("tabular-nums", className)}>
@@ -54,11 +65,12 @@ export function AnimatedCurrency({
   className,
   ...options
 }: AnimatedCurrencyProps) {
+  const safeValue = sanitizeNumber(value);
   return (
     <AnimatedNumber
-      value={Math.abs(value)}
+      value={Math.abs(safeValue)}
       className={className}
-      formatter={(amount) => `$${amount.toLocaleString("es-CO")}`}
+      formatter={(amount) => `$${sanitizeNumber(amount).toLocaleString("es-CO")}`}
       prefix={sign}
       {...options}
     />
@@ -76,9 +88,10 @@ export function AnimatedPercent({
   decimals = 0,
   ...options
 }: AnimatedPercentProps) {
+  const safeValue = sanitizeNumber(value);
   return (
     <AnimatedNumber
-      value={value}
+      value={safeValue}
       decimals={decimals}
       className={className}
       suffix={showSymbol ? "%" : undefined}
@@ -102,8 +115,10 @@ export function AnimatedProgressBar({
   barClassName,
   duration = 1000,
 }: AnimatedProgressBarProps) {
+  const safeVal = sanitizeNumber(value);
+  const safeMax = Math.max(sanitizeNumber(max), 1);
   const percent = useAnimatedNumber(
-    Math.min(Math.max((value / max) * 100, 0), 100),
+    Math.min(Math.max((safeVal / safeMax) * 100, 0), 100),
     { duration },
   );
 
@@ -116,3 +131,4 @@ export function AnimatedProgressBar({
     </div>
   );
 }
+

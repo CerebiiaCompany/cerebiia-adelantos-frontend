@@ -19,7 +19,11 @@ export function useEmployeeControlData() {
   return useMemo(() => {
     if (!dashboard) return null;
 
-    const limitAmount = calculateMaxAdvanceLimit(dashboard.salary);
+    const limitAmount =
+      dashboard.maxAdvanceLimit > 0
+        ? dashboard.maxAdvanceLimit
+        : calculateMaxAdvanceLimit(dashboard.salary);
+    const advancePercentage = dashboard.advancePercentage ?? 30;
     const currentMonthKey = getAdvanceMonthKey(new Date());
     const usedAmount = advanceHistory
       .filter(
@@ -40,6 +44,7 @@ export function useEmployeeControlData() {
 
     return {
       limitAmount,
+      advancePercentage,
       usedAmount,
       usedPercent,
       payrollDeductionThisMonth,
