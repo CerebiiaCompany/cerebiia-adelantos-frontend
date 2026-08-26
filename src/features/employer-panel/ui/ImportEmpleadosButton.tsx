@@ -100,7 +100,7 @@ function ImportResultSummary({ result }: { result: ImportEmpleadosResult }) {
       {totalErrors > 0 ? (
         <div className="max-h-72 space-y-4 overflow-y-auto rounded-xl border border-border/80 bg-secondary/20 p-3">
           <ImportErrorSection
-            title="Ya registrados en tu empresa"
+            title="Ya registrados o duplicados"
             errors={grouped.duplicate}
           />
           <ImportErrorSection

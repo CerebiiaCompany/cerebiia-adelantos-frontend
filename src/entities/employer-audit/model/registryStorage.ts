@@ -29,6 +29,14 @@ export interface RegisteredCompanyAdvance {
   paymentEvidenceUrl: string | null;
   /** Motivo ingresado al rechazar (solo aplica si status = rechazado). */
   rejectionReason: string | null;
+  /** Estado real de la solicitud en API (pagado, aprobado, etc.). */
+  estadoApi?: string;
+  /** True si las cuotas del adelanto ya fueron liberadas/pagadas. */
+  isPaid?: boolean;
+  /** Fecha en que se realizó el pago/liberación (ISO date string). */
+  pagadoEn?: string | null;
+  /** Fecha en que se aprobó la solicitud (ISO date string). */
+  decididoEn?: string | null;
 }
 
 export interface RegisterCompanyAdvanceInput {

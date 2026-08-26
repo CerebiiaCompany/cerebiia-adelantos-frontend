@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Calculator, Eye, Receipt } from "lucide-react";
+import { ArrowRightLeft, Calculator, CheckCircle2, Eye, Receipt } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
@@ -133,6 +133,7 @@ export function PayrollClosureView() {
           "Cuota a pagar este mes",
           "Valor a descontar por cuota",
           "Total a descontar",
+          "Estado de pago",
         ],
         rows: snapshot.employeeSummaries.map((summary) => [
           summary.employeeName,
@@ -143,9 +144,10 @@ export function PayrollClosureView() {
           summary.installmentProgressLabel ?? "—",
           summary.loanInstallmentsTotal,
           summary.grandTotal,
+          summary.statusLabel,
         ]),
         currencyColumnIndexes: [3, 4, 6, 7],
-        columnWidths: [28, 16, 18, 18, 28, 20, 24, 18],
+        columnWidths: [28, 16, 18, 18, 28, 20, 24, 18, 16],
         footerRows: [
           [
             "Total acumulado nómina",
@@ -156,6 +158,18 @@ export function PayrollClosureView() {
             "",
             "",
             snapshot.totalPayrollDeductions,
+            snapshot.isAllSettled ? "Paz y salvo" : "Pendiente",
+          ],
+          [
+            "Total pendiente de liquidar",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            snapshot.totalPending,
+            "",
           ],
           [
             "Reembolso proveedor",
@@ -166,6 +180,7 @@ export function PayrollClosureView() {
             "",
             "",
             snapshot.providerReimbursement,
+            snapshot.isAllSettled ? "Paz y salvo" : "Pendiente",
           ],
         ],
       });
@@ -203,20 +218,35 @@ export function PayrollClosureView() {
           <div className="mb-4 flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Total acumulado a descontar en nómina
+                Total pendiente a descontar en nómina
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Adelantos + comisiones + cuotas — {snapshot.monthLabel}
+                {snapshot.isAllSettled
+                  ? `Cuotas liberadas y saldadas con Super Admin — ${snapshot.monthLabel}`
+                  : `Adelantos + comisiones + cuotas — ${snapshot.monthLabel}`}
               </p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/15 bg-primary/10">
               <Calculator className="h-5 w-5 text-primary" strokeWidth={2.25} />
             </div>
           </div>
-          <AnimatedCurrency
-            value={snapshot.totalPayrollDeductions}
-            className="font-display text-3xl font-bold text-gradient"
-          />
+          <div className="flex items-baseline gap-3">
+            <AnimatedCurrency
+              value={snapshot.totalPending}
+              className="font-display text-3xl font-bold text-gradient"
+            />
+            {snapshot.isAllSettled && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Paz y salvo
+              </span>
+            )}
+          </div>
+          {snapshot.totalPaid > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Total consolidado: {formatCOP(snapshot.totalPayrollDeductions)} · Saldado por liberación: {formatCOP(snapshot.totalPaid)}
+            </p>
+          )}
         </div>
 
         <div className="rounded-xl border border-border/80 bg-background p-5 shadow-sm sm:p-6">
@@ -226,8 +256,9 @@ export function PayrollClosureView() {
                 Monto de reembolso al proveedor
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Igual al descuento del mes: completo en 1 cuota; cuota del mes
-                en planes de 2+ (la comisión la paga la empresa)
+                {snapshot.isAllSettled
+                  ? `Reembolso liquidado — La empresa está a paz y salvo con Cerebiia`
+                  : `Pendiente de pago al proveedor para liberar cuotas`}
               </p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[hsl(260_70%_50%)]/20 bg-[hsl(260_70%_50%)]/10">
@@ -237,10 +268,23 @@ export function PayrollClosureView() {
               />
             </div>
           </div>
-          <AnimatedCurrency
-            value={snapshot.providerReimbursement}
-            className="font-display text-3xl font-bold text-gradient"
-          />
+          <div className="flex items-baseline gap-3">
+            <AnimatedCurrency
+              value={snapshot.providerReimbursement}
+              className="font-display text-3xl font-bold text-gradient"
+            />
+            {snapshot.isAllSettled && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Al día
+              </span>
+            )}
+          </div>
+          {snapshot.totalPaid > 0 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Total reembolsado: {formatCOP(snapshot.totalPaid)}
+            </p>
+          )}
         </div>
       </div>
 
@@ -335,7 +379,7 @@ export function PayrollClosureView() {
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[1080px] text-sm">
+          <table className="w-full min-w-[1140px] text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50 text-left">
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
@@ -362,13 +406,16 @@ export function PayrollClosureView() {
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Total a descontar
                 </th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">
+                  Estado
+                </th>
               </tr>
             </thead>
             <tbody>
               {snapshot.employeeSummaries.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-10 text-center text-sm text-muted-foreground"
                   >
                     No hay adelantos registrados en {snapshot.monthLabel}
@@ -425,6 +472,22 @@ export function PayrollClosureView() {
                     <td className="px-4 py-3.5 tabular-nums font-semibold text-foreground">
                       {formatCOP(summary.grandTotal)}
                     </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      {summary.isSettled ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Saldado
+                        </span>
+                      ) : summary.paidAmount > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          Parcial ({formatCOP(summary.paidAmount)} saldado)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                          Pendiente
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
@@ -442,6 +505,14 @@ export function PayrollClosureView() {
                 </td>
                 <td className="px-4 py-3.5 font-display text-base font-bold text-gradient tabular-nums">
                   {formatCOP(snapshot.totalPayrollDeductions)}
+                </td>
+                <td className="px-4 py-3.5">
+                  {snapshot.isAllSettled ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Paz y salvo
+                    </span>
+                  ) : null}
                 </td>
               </tr>
             </tfoot>

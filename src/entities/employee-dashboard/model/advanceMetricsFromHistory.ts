@@ -24,7 +24,13 @@ export function getAdvanceMonthKey(date?: Date | string | null): string {
 export function countsTowardAdvanceLimit(
   status?: AdvanceHistoryRecord["status"] | string | null,
 ): boolean {
-  return status !== "no_aprobado";
+  return (
+    Boolean(status) &&
+    status !== "no_aprobado" &&
+    status !== "rechazado" &&
+    status !== "cancelado" &&
+    status !== "pagado"
+  );
 }
 
 function formatAdvanceActivityDate(date?: Date | string | null): string {
@@ -94,12 +100,13 @@ export function buildActivityFromAdvanceHistory(
 
 export function deriveAdvanceMetricsFromHistory(
   records: AdvanceHistoryRecord[],
+  referenceDate: Date = new Date(),
 ): Pick<
   EmployeeDashboardMetrics,
   "totalAdvancedThisMonth" | "monthlyAdvances" | "activity"
 > {
   const monthlyAdvances = buildMonthlyAdvancesFromHistory(records);
-  const currentMonthKey = getAdvanceMonthKey(new Date());
+  const currentMonthKey = getAdvanceMonthKey(referenceDate);
 
   return {
     totalAdvancedThisMonth: monthlyAdvances[currentMonthKey] ?? 0,

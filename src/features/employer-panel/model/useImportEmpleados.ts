@@ -3,6 +3,7 @@ import { empleadosEndpoints, ApiError } from "@/shared/api";
 import { env } from "@/shared/config/env";
 import {
   buildApiImportRowError,
+  isDuplicateDocumentError,
   mapEmpleadoImportMatrix,
   parseEmpleadoImportFile,
   prepareEmpleadoImportFileForUpload,
@@ -20,12 +21,15 @@ export interface ImportEmpleadosResult {
 function mapCargaNominaErrors(
   errores: Array<{ fila: number; documento: string; errores: string[] }>,
 ): EmpleadoImportRowError[] {
-  return errores.map((error) => ({
-    rowNumber: error.fila,
-    kind: "api" as const,
-    message: error.errores.join(". "),
-    documento: error.documento,
-  }));
+  return errores.map((error) => {
+    const message = error.errores.join(". ");
+    return {
+      rowNumber: error.fila,
+      kind: isDuplicateDocumentError(message) ? ("duplicate" as const) : ("api" as const),
+      message,
+      documento: error.documento,
+    };
+  });
 }
 
 export function useImportEmpleados() {
