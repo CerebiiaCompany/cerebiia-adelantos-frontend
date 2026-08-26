@@ -21,10 +21,15 @@ describe("employer-audit calculations", () => {
 
   it("calcula total a descontar en nómina (solo valor del adelanto)", () => {
     expect(calculateTotalWithholding(400_000)).toBe(400_000);
+    // Para periodo mensual con 2 cuotas: $200.000 / 2 = $100.000
+    expect(calculateTotalWithholding(200_000, "procesado", 2, true)).toBe(100_000);
+    // Para todos los periodos con 2 cuotas: $200.000
+    expect(calculateTotalWithholding(200_000, "procesado", 2, false)).toBe(200_000);
   });
 
   it("rechazado no genera descuento en monitoreo", () => {
     expect(calculateTotalWithholding(500_000, "rechazado")).toBe(0);
+    expect(calculateTotalWithholding(500_000, "rechazado", 2, true)).toBe(0);
     expect(calculateTotalWithholding(100_000, "procesado")).toBe(100_000);
   });
 

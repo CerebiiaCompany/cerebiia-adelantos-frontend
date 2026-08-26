@@ -26,12 +26,18 @@ const baseInput = {
 };
 
 describe("deriveEmployeeNotifications", () => {
-  it("deriva aprobado, pagado, rechazado y evidencia sin duplicar aprobado en pagado", () => {
+  it("deriva aprobado, pagado, rechazado y no emite notificación en estado solicitado", () => {
     const { notifications } = deriveEmployeeNotifications({
       ...baseInput,
       nextPaymentNet: 1_000_000,
       previousNextPaymentNet: 1_000_000,
       solicitudes: [
+        {
+          id: "s0",
+          monto: 80000,
+          estado: "solicitado",
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
         {
           id: "s1",
           monto: 100000,
@@ -58,11 +64,18 @@ describe("deriveEmployeeNotifications", () => {
     });
 
     const kinds = notifications.map((n) => n.kind);
+    expect(kinds).not.toContain("advance_requested");
     expect(kinds).toContain("advance_approved");
     expect(kinds).toContain("advance_paid");
     expect(kinds).toContain("advance_rejected");
-    expect(kinds).toContain("payment_evidence");
     expect(notifications.find((n) => n.id === "advance-approved:s2")).toBeUndefined();
+    
+    const approvedNotification = notifications.find((n) => n.id === "advance-approved:s1");
+    expect(approvedNotification?.description).toContain("24 horas");
+
+    const paidNotification = notifications.find((n) => n.id === "advance-paid:s2");
+    expect(paidNotification?.description).toContain("Revisa la evidencia");
+
     expect(
       notifications.find((n) => n.id === "advance-rejected:s3")?.description,
     ).toContain("Datos incompletos");

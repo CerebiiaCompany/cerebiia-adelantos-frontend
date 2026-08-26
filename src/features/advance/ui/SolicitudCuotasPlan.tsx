@@ -7,12 +7,18 @@ type SolicitudCuotasPlanProps = {
   cuotas: CuotaAdelantoDTO[];
   /** Fecha de la solicitud: la cuota 1 debe caer en el mes de esta fecha. */
   requestedAt?: string | Date | null;
+  /** Estado general de la solicitud (pagado, procesado, etc.). */
+  solicitudEstado?: string | null;
+  /** True si el adelanto completo está pagado o liquidado. */
+  isPaid?: boolean;
   className?: string;
 };
 
 export function SolicitudCuotasPlan({
   cuotas,
   requestedAt,
+  solicitudEstado,
+  isPaid,
   className,
 }: SolicitudCuotasPlanProps) {
   const sorted = useMemo(
@@ -84,16 +90,39 @@ export function SolicitudCuotasPlan({
                     {formatDate(fechaCorte)}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "inline-flex rounded-md border px-2 py-0.5 text-xs font-medium",
-                        cuota.estado === "pagado"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : "border-amber-200 bg-amber-50 text-amber-700",
-                      )}
-                    >
-                      {cuota.estado === "pagado" ? "Pagada" : "Pendiente"}
-                    </span>
+                    {(() => {
+                      const st = (cuota.estado || "").toLowerCase().trim();
+                      const isCuotaPaid =
+                        st === "pagado" ||
+                        st === "pagada" ||
+                        st === "liberado" ||
+                        st === "liberada" ||
+                        st === "descontado" ||
+                        st === "descontada" ||
+                        Boolean(cuota.fecha_pago);
+
+                      // El estado de retención en nómina proviene estrictamente de la liberación de la cuota por Super Admin
+                      const isDescontado = isCuotaPaid;
+
+                      return (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
+                            isDescontado
+                              ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "h-1.5 w-1.5 rounded-full",
+                              isDescontado ? "bg-rose-500" : "bg-emerald-500",
+                            )}
+                          />
+                          {isDescontado ? "Descontado" : "No descontado"}
+                        </span>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

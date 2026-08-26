@@ -41,3 +41,4 @@ export function buildAdvanceReceiptFolio(
   return `ADV-${stamp}-${suffix}`;
 }
 
+ 

@@ -7,14 +7,12 @@ export type MovementLedgerStatusFilter = EmployerAdvanceAuditStatus | "all";
 
 export type MovementLedgerFilters = {
   status: MovementLedgerStatusFilter;
-  dateFrom: string;
-  dateTo: string;
+  period: string;
 };
 
 export const DEFAULT_MOVEMENT_LEDGER_FILTERS: MovementLedgerFilters = {
   status: "all",
-  dateFrom: "",
-  dateTo: "",
+  period: "all",
 };
 
 export const MOVEMENT_LEDGER_STATUS_FILTER_OPTIONS: {
@@ -27,28 +25,31 @@ export const MOVEMENT_LEDGER_STATUS_FILTER_OPTIONS: {
   { value: "rechazado", label: "Rechazado" },
 ];
 
-function parseDateInputStart(value: string): Date | null {
-  if (!value) return null;
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return null;
-  return new Date(year, month - 1, day, 0, 0, 0, 0);
+export function extractMonthKey(isoDate: string): string {
+  if (!isoDate) return "";
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return isoDate.slice(0, 7);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
 }
 
-function parseDateInputEnd(value: string): Date | null {
-  if (!value) return null;
-  const [year, month, day] = value.split("-").map(Number);
-  if (!year || !month || !day) return null;
-  return new Date(year, month - 1, day, 23, 59, 59, 999);
+export function formatPeriodOptionLabel(periodKey: string): string {
+  if (periodKey === "all") return "Todos los periodos";
+  const [year, month] = periodKey.split("-").map(Number);
+  if (!year || !month) return periodKey;
+  const date = new Date(year, month - 1, 1);
+  const label = date.toLocaleDateString("es-CO", {
+    month: "long",
+    year: "numeric",
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 export function hasActiveMovementLedgerFilters(
   filters: MovementLedgerFilters,
 ): boolean {
-  return (
-    filters.status !== "all" ||
-    filters.dateFrom !== "" ||
-    filters.dateTo !== ""
-  );
+  return filters.status !== "all" || filters.period !== "all";
 }
 
 export function filterMovementLedgerRecords(
@@ -57,17 +58,18 @@ export function filterMovementLedgerRecords(
   filters: MovementLedgerFilters,
 ): EmployerMovementRecord[] {
   const normalized = searchQuery.trim().toLowerCase();
-  const from = parseDateInputStart(filters.dateFrom);
-  const to = parseDateInputEnd(filters.dateTo);
 
   return records.filter((record) => {
     if (filters.status !== "all" && record.status !== filters.status) {
       return false;
     }
 
-    const occurredAt = new Date(record.occurredAt);
-    if (from && occurredAt < from) return false;
-    if (to && occurredAt > to) return false;
+    if (filters.period && filters.period !== "all") {
+      const recordMonth = extractMonthKey(record.occurredAt);
+      if (recordMonth !== filters.period) {
+        return false;
+      }
+    }
 
     if (!normalized) return true;
 

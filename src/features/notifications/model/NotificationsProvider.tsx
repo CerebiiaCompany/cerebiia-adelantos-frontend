@@ -150,29 +150,115 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         void queryClient.invalidateQueries({ queryKey: SOLICITUDES_ADELANTO_QUERY_KEY });
 
         if (isCuotaLiberada) {
-          const desc =
-            (typeof eventData?.payload?.message === "string" && eventData.payload.message) ||
-            (typeof eventData?.message === "string" && eventData.message) ||
-            "Se ha registrado el pago de tu cuota de nómina y tu saldo para solicitar adelantos ha aumentado.";
+          const payload =
+            (eventData?.payload as Record<string, unknown> | undefined) ??
+            (eventData as Record<string, unknown> | undefined);
 
-          toast.success("¡Cupo disponible actualizado!", {
+          const rawMonto =
+            payload?.monto_liberado ??
+            payload?.valor_cuota ??
+            payload?.monto;
+          const rawDisponible =
+            payload?.nuevo_disponible ??
+            payload?.cupo_disponible ??
+            payload?.disponible;
+
+          const montoNum = Number(rawMonto);
+          const dispNum = Number(rawDisponible);
+
+          let desc =
+            (typeof payload?.message === "string" && payload.message) || "";
+
+          if (!desc) {
+            if (Number.isFinite(montoNum) && montoNum > 0 && Number.isFinite(dispNum) && dispNum > 0) {
+              desc = `Se te ha liberado correctamente ${formatCOP(montoNum)}. Ahora tienes disponible ${formatCOP(dispNum)} para solicitar adelantos.`;
+            } else if (Number.isFinite(montoNum) && montoNum > 0) {
+              desc = `Se te ha liberado correctamente ${formatCOP(montoNum)}. Tu saldo disponible para solicitar adelantos ha aumentado.`;
+            } else {
+              desc =
+                "Se ha registrado la liberación de tu cuota de nómina y tu saldo para solicitar adelantos ha aumentado.";
+            }
+          }
+
+          toast.success("¡Cuota liberada!", {
             description: desc,
-            duration: 6000,
+            duration: 7000,
           });
         }
       } else if (appRole === "employer") {
         // Revalidación para la empresa: listado de empleados, cartera y retenciones
         if (isCuotaLiberada) {
           void queryClient.invalidateQueries({ queryKey: ["empleados"] });
+          void queryClient.invalidateQueries({ queryKey: ["employer", "audit"] });
 
-          const desc =
-            (typeof eventData?.payload?.message === "string" && eventData.payload.message) ||
-            (typeof eventData?.message === "string" && eventData.message) ||
-            "Se ha registrado la liberación de cuotas de nómina para tus empleados.";
+          const payload =
+            (eventData?.payload as Record<string, unknown> | undefined) ??
+            (eventData as Record<string, unknown> | undefined);
+
+          const rawMonto =
+            payload?.monto_liberado ??
+            payload?.valor_cuota ??
+            payload?.monto;
+          const empleadoNombre =
+            typeof payload?.empleado_nombre === "string"
+              ? payload.empleado_nombre
+              : typeof payload?.nombre === "string"
+                ? payload.nombre
+                : "";
+
+          const rawPeriodo =
+            typeof payload?.periodo === "string"
+              ? payload.periodo
+              : typeof payload?.mes === "string"
+                ? payload.mes
+                : typeof payload?.fecha_corte === "string"
+                  ? payload.fecha_corte
+                  : "";
+
+          let periodoLabel = "";
+          if (rawPeriodo) {
+            const parts = rawPeriodo.split("-").map(Number);
+            if (parts.length >= 2 && parts[0] && parts[1]) {
+              const d = new Date(parts[0], parts[1] - 1, parts[2] || 1);
+              const l = d.toLocaleDateString("es-CO", {
+                month: "long",
+                year: "numeric",
+              });
+              periodoLabel = l.charAt(0).toUpperCase() + l.slice(1);
+            } else {
+              periodoLabel = rawPeriodo;
+            }
+          } else {
+            const now = new Date();
+            const l = now.toLocaleDateString("es-CO", {
+              month: "long",
+              year: "numeric",
+            });
+            periodoLabel = l.charAt(0).toUpperCase() + l.slice(1);
+          }
+
+          const montoNum = Number(rawMonto);
+
+          let desc =
+            (typeof payload?.message === "string" && payload.message) || "";
+
+          if (!desc) {
+            const mesPart = periodoLabel ? ` correspondiente a ${periodoLabel}` : "";
+            if (empleadoNombre && Number.isFinite(montoNum) && montoNum > 0) {
+              desc = `Se ha registrado la liberación de la cuota de ${empleadoNombre} por ${formatCOP(montoNum)}${mesPart}.`;
+            } else if (Number.isFinite(montoNum) && montoNum > 0) {
+              desc = `Se ha registrado la liberación de cuotas por ${formatCOP(montoNum)}${mesPart} para tus empleados.`;
+            } else if (periodoLabel) {
+              desc = `Se ha registrado la liberación de cuotas de nómina para tus empleados correspondiente a ${periodoLabel}.`;
+            } else {
+              desc =
+                "Se ha registrado la liberación de cuotas de nómina para tus empleados.";
+            }
+          }
 
           toast.success("¡Liberación de cuotas procesada!", {
             description: desc,
-            duration: 6000,
+            duration: 7000,
           });
         }
       }
@@ -215,7 +301,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   });
 
   const notifications = useMemo(() => {
-    const backendItems = mapNotificacionDtosToApp(listQuery.data?.items ?? []);
+    const rawItems = listQuery.data?.items ?? [];
+    const filteredItems =
+      appRole === "employee" || isEmpleado
+        ? rawItems.filter(
+            (item) =>
+              item.kind !== "advance_requested" &&
+              item.kind !== "payment_evidence",
+          )
+        : rawItems;
+    const backendItems = mapNotificacionDtosToApp(filteredItems);
 
     if (appRole !== "employee" && !isEmpleado) {
       return backendItems;
@@ -277,7 +372,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           estado === "aprobado"
             ? "Adelanto aprobado"
             : estado === "pagado"
-              ? "Adelanto desembolsado"
+              ? "Adelanto pagado"
               : "Adelanto rechazado";
 
         const icon =
@@ -289,9 +384,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
         const description =
           estado === "aprobado"
-            ? `Tu adelanto por $${Number(sol.monto_solicitado || 0).toLocaleString("es-CO")} ha sido aprobado.`
+            ? `Tu adelanto por $${Number(sol.monto_solicitado || 0).toLocaleString("es-CO")} ha sido aprobado. La transferencia se realizará en un tiempo máximo de 24 horas.`
             : estado === "pagado"
-              ? `Tu adelanto por $${Number(sol.monto_solicitado || 0).toLocaleString("es-CO")} ya fue transferido a tu cuenta.`
+              ? `Se ha realizado el pago de tu adelanto por $${Number(sol.monto_solicitado || 0).toLocaleString("es-CO")}. Revisa la evidencia en el módulo Mis adelantos.`
               : `Tu adelanto ha sido rechazado${sol.motivo_rechazo ? `: ${sol.motivo_rechazo}` : "."}`;
 
         merged.push({

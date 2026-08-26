@@ -243,6 +243,8 @@ export function mapToAdvanceAuditRecords(
     installments: advance.installments,
     status: advance.status,
     processedAt: advance.requestedAt,
+    cuotas: advance.cuotas,
+    isPaid: advance.isPaid,
   }));
 }
 
@@ -464,17 +466,6 @@ function isAdvanceInstallmentPaidForMonth(
         Boolean(cuota.fecha_pago)
       );
     }
-  }
-
-  // Solo la cuota del periodo actual/solicitud (offset === 0) fue liberada por el Super Admin
-  // Las cuotas de meses posteriores (offset >= 1) quedan pendientes en sus respectivos meses
-  if (offset === 0) {
-    return Boolean(
-      advance.isPaid ||
-        advance.estadoApi === "pagado" ||
-        (advance.status === "procesado" &&
-          (advance as Record<string, unknown>).isPaid),
-    );
   }
 
   return false;
@@ -737,16 +728,35 @@ export function buildNominaDescuentosSnapshot(
 
   const resumen: EmployerNominaEmpleadoResumen[] = [...employeeMap.values()]
     .map((entry) => {
-      const totalDescontar = entry.cuotas.reduce(
+      // Suma solo las cuotas no descontadas (pendientes)
+      const totalDescontar = entry.cuotas.reduce((sum, c) => {
+        if (c.estado_cuota === "pagada") return sum;
+        return sum + (Number.parseFloat(c.monto_a_descontar) || 0);
+      }, 0);
+
+      const totalDescontado = entry.cuotas.reduce((sum, c) => {
+        if (c.estado_cuota !== "pagada") return sum;
+        return sum + (Number.parseFloat(c.monto_a_descontar) || 0);
+      }, 0);
+
+      const totalGeneral = entry.cuotas.reduce(
         (sum, c) => sum + (Number.parseFloat(c.monto_a_descontar) || 0),
         0,
       );
+
+      const isAllDescontado =
+        entry.cuotas.length > 0 &&
+        entry.cuotas.every((c) => c.estado_cuota === "pagada");
+
       return {
         fullName: entry.fullName,
         documento: entry.documento,
         cantidadAdelantos: entry.advanceIds.size,
         cuotasMes: entry.cuotas.length,
         totalDescontar,
+        totalDescontado,
+        totalGeneral,
+        isAllDescontado,
         cuotas: entry.cuotas.sort((a, b) => a.cuota_numero - b.cuota_numero),
       };
     })
@@ -756,14 +766,40 @@ export function buildNominaDescuentosSnapshot(
     (sum, item) => sum + item.totalDescontar,
     0,
   );
+  const totalDescontado = resumen.reduce(
+    (sum, item) => sum + item.totalDescontado,
+    0,
+  );
+  const totalGeneral = resumen.reduce(
+    (sum, item) => sum + item.totalGeneral,
+    0,
+  );
+
   const cuotasDelMes = resumen.reduce((sum, item) => sum + item.cuotasMes, 0);
-  const empleadosConDescuento = resumen.length;
+  const cuotasPendientes = resumen.reduce(
+    (sum, item) =>
+      sum + item.cuotas.filter((c) => c.estado_cuota !== "pagada").length,
+    0,
+  );
+  const cuotasDescontadas = resumen.reduce(
+    (sum, item) =>
+      sum + item.cuotas.filter((c) => c.estado_cuota === "pagada").length,
+    0,
+  );
+
+  const empleadosConDescuento = resumen.filter(
+    (item) => item.totalDescontar > 0,
+  ).length;
 
   return {
     periodo,
     totalDescontar,
+    totalDescontado,
+    totalGeneral,
     empleadosConDescuento,
     cuotasDelMes,
+    cuotasPendientes,
+    cuotasDescontadas,
     resumen,
   };
 }

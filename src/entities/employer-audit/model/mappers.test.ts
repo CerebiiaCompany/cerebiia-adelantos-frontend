@@ -348,6 +348,14 @@ describe("employer audit mappers", () => {
         requestedAt: "2026-08-10T10:00:00-05:00",
         isPaid: true,
         estadoApi: "pagado",
+        cuotas: [
+          {
+            numero: 1,
+            monto: 300_000,
+            estado: "pagada",
+            fecha_pago: "2026-08-10",
+          },
+        ],
       },
       {
         ...sampleAdvances[0],
@@ -360,6 +368,14 @@ describe("employer audit mappers", () => {
         requestedAt: "2026-08-10T10:00:00-05:00",
         isPaid: true,
         estadoApi: "pagado",
+        cuotas: [
+          {
+            numero: 1,
+            monto: 600_000,
+            estado: "pagada",
+            fecha_pago: "2026-08-10",
+          },
+        ],
       },
     ];
 
@@ -392,6 +408,20 @@ describe("employer audit mappers", () => {
         requestedAt: "2026-08-10T10:00:00-05:00",
         isPaid: true,
         estadoApi: "pagado",
+        cuotas: [
+          {
+            numero: 1,
+            monto: 100_000,
+            estado: "pagada",
+            fecha_pago: "2026-08-10",
+          },
+          {
+            numero: 2,
+            monto: 100_000,
+            estado: "pendiente",
+            fecha_pago: null,
+          },
+        ],
       },
     ];
 
@@ -519,7 +549,9 @@ describe("employer audit mappers", () => {
     const snapshot = buildNominaDescuentosSnapshot(danielaAdvances, "2026-08");
 
     expect(snapshot.periodo).toBe("2026-08");
-    expect(snapshot.totalDescontar).toBe(400_000);
+    expect(snapshot.totalDescontar).toBe(300_000);
+    expect(snapshot.totalDescontado).toBe(100_000);
+    expect(snapshot.totalGeneral).toBe(400_000);
     expect(snapshot.empleadosConDescuento).toBe(2);
     expect(snapshot.cuotasDelMes).toBe(3);
 
@@ -530,7 +562,9 @@ describe("employer audit mappers", () => {
     expect(daniela?.fullName).toBe("Daniela Gonzales");
     expect(daniela?.cantidadAdelantos).toBe(2);
     expect(daniela?.cuotasMes).toBe(2);
-    expect(daniela?.totalDescontar).toBe(300_000);
+    expect(daniela?.totalDescontar).toBe(200_000);
+    expect(daniela?.totalDescontado).toBe(100_000);
+    expect(daniela?.totalGeneral).toBe(300_000);
     expect(daniela?.cuotas).toHaveLength(2);
     expect(daniela?.cuotas[0].cuota_numero).toBe(1);
     expect(daniela?.cuotas[0].total_cuotas).toBe(3);

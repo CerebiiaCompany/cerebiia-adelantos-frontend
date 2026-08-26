@@ -117,14 +117,8 @@ export function deriveEmployeeNotifications(
     const estado = solicitud.estado;
     const href = routes.misAdelantos;
 
-    if (estado === "solicitado" || estado === "en_revision") {
-      notifications.push(
-        buildAdvanceRequestedNotification(amount, solicitud.createdAt, {
-          solicitudId: solicitud.id,
-          href,
-        }),
-      );
-    } else if (estado === "aprobado") {
+    // Solo notificar al empleado cuando el estado cambie a aprobado, pagado o rechazado (no al solicitar)
+    if (estado === "aprobado") {
       notifications.push(
         buildAdvanceApprovedNotification(
           solicitud.id,
@@ -153,19 +147,6 @@ export function deriveEmployeeNotifications(
           solicitud.decididoEn || solicitud.updatedAt || solicitud.createdAt,
           href,
           solicitud.motivoRechazo,
-        ),
-      );
-    }
-
-    if (solicitud.comprobantePagoUrl) {
-      notifications.push(
-        buildPaymentEvidenceNotification(
-          solicitud.id,
-          amount,
-          solicitud.pagadoEn ||
-            solicitud.updatedAt ||
-            solicitud.createdAt,
-          href,
         ),
       );
     }

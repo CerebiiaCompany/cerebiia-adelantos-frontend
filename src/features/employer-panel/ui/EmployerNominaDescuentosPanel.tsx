@@ -37,10 +37,54 @@ function parseMoney(value: string | number | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function estadoCuotaLabel(estado: string): string {
-  if (estado === "pagada" || estado === "pagado") return "Pagada";
-  if (estado === "pendiente") return "Pendiente";
-  return estado;
+function CuotaRetencionBadge({ isDiscounted }: { isDiscounted: boolean }) {
+  if (isDiscounted) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-500 dark:text-rose-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+        Descontado
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500 dark:text-emerald-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      No descontado
+    </span>
+  );
+}
+
+function EmpleadoRetencionBadge({
+  isAllDescontado,
+  totalDescontado,
+  totalDescontar,
+}: {
+  isAllDescontado: boolean;
+  totalDescontado: number;
+  totalDescontar: number;
+}) {
+  if (isAllDescontado) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-500 dark:text-rose-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+        Descontado
+      </span>
+    );
+  }
+  if (totalDescontado > 0 && totalDescontar > 0) {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+        Parcial
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-500 dark:text-emerald-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+      No descontado
+    </span>
+  );
 }
 
 function TableSkeleton() {
@@ -53,8 +97,18 @@ function TableSkeleton() {
   );
 }
 
-export function EmployerNominaDescuentosPanel() {
-  const periodo = currentNominaPeriodoKey();
+type EmployerNominaDescuentosPanelProps = {
+  selectedPeriod?: string;
+  onPeriodChange?: (periodo: string) => void;
+  periodOptions?: Array<{ value: string; label: string }>;
+};
+
+export function EmployerNominaDescuentosPanel({
+  selectedPeriod,
+}: EmployerNominaDescuentosPanelProps = {}) {
+  const [internalPeriod] = useState(currentNominaPeriodoKey);
+  const periodo = selectedPeriod ?? internalPeriod;
+
   const { data, isLoading, isError } = useEmployerCompanyAdvances();
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
 
@@ -63,8 +117,14 @@ export function EmployerNominaDescuentosPanel() {
     return buildNominaDescuentosSnapshot(advances, periodo);
   }, [data?.advances, periodo]);
 
-  const { resumen, totalDescontar, empleadosConDescuento, cuotasDelMes } =
-    snapshot;
+  const {
+    resumen,
+    totalDescontar,
+    empleadosConDescuento,
+    cuotasDelMes,
+    cuotasPendientes,
+    cuotasDescontadas,
+  } = snapshot;
 
   return (
     <section className="glass-card glow-border space-y-5 rounded-xl p-5 sm:p-6">
@@ -77,7 +137,7 @@ export function EmployerNominaDescuentosPanel() {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground">
-            Informe de descuentos de nómina según fecha de corte del mes actual.
+            Informe de descuentos de nómina según fecha de corte del mes seleccionado.
             Expande cada empleado para ver el detalle de cuotas.
           </p>
         </div>
@@ -102,6 +162,11 @@ export function EmployerNominaDescuentosPanel() {
                 value={totalDescontar}
                 className="mt-1 font-display text-xl font-bold text-foreground"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {totalDescontar === 0
+                  ? "Al día — No hay cuotas pendientes"
+                  : `${cuotasPendientes} cuota${cuotasPendientes === 1 ? "" : "s"} pendiente${cuotasPendientes === 1 ? "" : "s"} por descontar`}
+              </p>
             </div>
             <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -110,6 +175,9 @@ export function EmployerNominaDescuentosPanel() {
               <p className="mt-1 font-display text-xl font-bold text-foreground">
                 {empleadosConDescuento}
               </p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                de {resumen.length} empleado{resumen.length === 1 ? "" : "s"} con cuotas este mes
+              </p>
             </div>
             <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -117,6 +185,9 @@ export function EmployerNominaDescuentosPanel() {
               </p>
               <p className="mt-1 font-display text-xl font-bold text-foreground">
                 {cuotasDelMes}
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {cuotasPendientes} pendiente{cuotasPendientes === 1 ? "" : "s"} · {cuotasDescontadas} descontada{cuotasDescontadas === 1 ? "" : "s"}
               </p>
             </div>
           </div>
@@ -128,7 +199,7 @@ export function EmployerNominaDescuentosPanel() {
           ) : (
             <div className="overflow-hidden rounded-xl border border-border/60">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px] text-left text-sm">
+                <table className="w-full min-w-[760px] text-left text-sm">
                   <thead className="border-b border-border/60 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
                       <th className="w-10 px-3 py-3" />
@@ -136,6 +207,7 @@ export function EmployerNominaDescuentosPanel() {
                       <th className="px-3 py-3 font-medium">Documento</th>
                       <th className="px-3 py-3 font-medium">Adelantos</th>
                       <th className="px-3 py-3 font-medium">Cuotas mes</th>
+                      <th className="px-3 py-3 font-medium">Estado</th>
                       <th className="px-3 py-3 font-medium text-right">
                         A descontar
                       </th>
@@ -152,6 +224,9 @@ export function EmployerNominaDescuentosPanel() {
                           cantidadAdelantos={row.cantidadAdelantos}
                           cuotasMes={row.cuotasMes}
                           totalDescontar={row.totalDescontar}
+                          totalDescontado={row.totalDescontado}
+                          totalGeneral={row.totalGeneral}
+                          isAllDescontado={row.isAllDescontado}
                           isExpanded={isExpanded}
                           cuotas={row.cuotas}
                           onToggle={() =>
@@ -177,6 +252,9 @@ function EmployeeDeductionRows({
   cantidadAdelantos,
   cuotasMes,
   totalDescontar,
+  totalDescontado,
+  totalGeneral,
+  isAllDescontado,
   isExpanded,
   cuotas,
   onToggle,
@@ -186,6 +264,9 @@ function EmployeeDeductionRows({
   cantidadAdelantos: number;
   cuotasMes: number;
   totalDescontar: number;
+  totalDescontado: number;
+  totalGeneral: number;
+  isAllDescontado: boolean;
   isExpanded: boolean;
   cuotas: EmployerNominaCuotaDetalle[];
   onToggle: () => void;
@@ -213,17 +294,36 @@ function EmployeeDeductionRows({
           </button>
         </td>
         <td className="px-3 py-3 font-medium text-foreground">{fullName}</td>
-        <td className="px-3 py-3 text-muted-foreground">{documento}</td>
+        <td className="px-3 py-3 font-mono text-xs text-muted-foreground">{documento}</td>
         <td className="px-3 py-3 text-foreground">{cantidadAdelantos}</td>
         <td className="px-3 py-3 text-foreground">{cuotasMes}</td>
-        <td className="px-3 py-3 text-right font-semibold text-foreground">
-          {formatCOP(totalDescontar)}
+        <td className="px-3 py-3">
+          <EmpleadoRetencionBadge
+            isAllDescontado={isAllDescontado}
+            totalDescontado={totalDescontado}
+            totalDescontar={totalDescontar}
+          />
+        </td>
+        <td className="px-3 py-3 text-right">
+          <span
+            className={cn(
+              "font-semibold tabular-nums",
+              totalDescontar > 0 ? "text-foreground" : "text-muted-foreground",
+            )}
+          >
+            {formatCOP(totalDescontar)}
+          </span>
+          {totalDescontado > 0 && totalDescontar > 0 && (
+            <p className="mt-0.5 text-[11px] font-normal text-muted-foreground">
+              ({formatCOP(totalDescontado)} descontado)
+            </p>
+          )}
         </td>
       </tr>
       {isExpanded ? (
         <tr className="border-b border-border/40 bg-muted/10">
-          <td colSpan={6} className="px-4 py-3">
-            <div className="overflow-hidden rounded-lg border border-border/50">
+          <td colSpan={7} className="px-4 py-3">
+            <div className="overflow-hidden rounded-lg border border-border/50 bg-background/50">
               <table className="w-full text-sm">
                 <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
@@ -237,28 +337,39 @@ function EmployeeDeductionRows({
                   </tr>
                 </thead>
                 <tbody>
-                  {cuotas.map((cuota) => (
-                    <tr
-                      key={`${cuota.solicitud_id}-${cuota.cuota_numero}`}
-                      className="border-t border-border/40"
-                    >
-                      <td className="px-3 py-2 text-foreground">
-                        {cuota.cuota_numero}/{cuota.total_cuotas}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {formatFechaCorte(cuota.fecha_corte)}
-                      </td>
-                      <td className="px-3 py-2 text-foreground">
-                        {estadoCuotaLabel(cuota.estado_cuota)}
-                      </td>
-                      <td className="px-3 py-2 text-muted-foreground">
-                        {formatCOP(parseMoney(cuota.monto_solicitud))}
-                      </td>
-                      <td className="px-3 py-2 text-right font-medium text-foreground">
-                        {formatCOP(parseMoney(cuota.monto_a_descontar))}
-                      </td>
-                    </tr>
-                  ))}
+                  {cuotas.map((cuota) => {
+                    const isDiscounted = cuota.estado_cuota === "pagada";
+                    return (
+                      <tr
+                        key={`${cuota.solicitud_id}-${cuota.cuota_numero}`}
+                        className="border-t border-border/40"
+                      >
+                        <td className="px-3 py-2 text-foreground font-medium">
+                          {cuota.cuota_numero}/{cuota.total_cuotas}
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {formatFechaCorte(cuota.fecha_corte)}
+                        </td>
+                        <td className="px-3 py-2">
+                          <CuotaRetencionBadge isDiscounted={isDiscounted} />
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground tabular-nums">
+                          {formatCOP(parseMoney(cuota.monto_solicitud))}
+                        </td>
+                        <td className="px-3 py-2 text-right font-medium tabular-nums">
+                          {isDiscounted ? (
+                            <span className="text-muted-foreground line-through opacity-70">
+                              {formatCOP(parseMoney(cuota.monto_a_descontar))}
+                            </span>
+                          ) : (
+                            <span className="text-foreground font-semibold">
+                              {formatCOP(parseMoney(cuota.monto_a_descontar))}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
