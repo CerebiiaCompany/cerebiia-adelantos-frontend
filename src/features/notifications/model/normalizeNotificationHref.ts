@@ -18,6 +18,9 @@ const KIND_CANONICAL_HREF: Record<string, string> = {
   advance_paid: ROUTES.employee.misAdelantos,
   advance_rejected: ROUTES.employee.misAdelantos,
   payment_evidence: ROUTES.employee.misAdelantos,
+  cuota_liberada: ROUTES.employee.adelanto,
+  cuotas_liberadas: ROUTES.employee.adelanto,
+  saldo_liberado: ROUTES.employee.adelanto,
   // Empleado — otros módulos
   support_replied: ROUTES.employee.soportes,
   payroll_due_3d: ROUTES.employee.control,
@@ -32,6 +35,8 @@ const KIND_CANONICAL_HREF: Record<string, string> = {
   employer_advance_approved: ROUTES.employer.historialMovimientos,
   employer_advance_rejected: ROUTES.employer.historialMovimientos,
   employer_support_message: ROUTES.employer.soportes,
+  employer_cuota_liberada: ROUTES.employer.retencionesCierres,
+  employer_cuotas_liberadas: ROUTES.employer.retencionesCierres,
   provider_week_debt: ROUTES.employer.retencionesCierres,
 };
 

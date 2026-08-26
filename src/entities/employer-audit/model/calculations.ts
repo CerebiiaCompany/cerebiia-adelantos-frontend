@@ -36,12 +36,20 @@ export function isRecoverableCompanyAdvance(
 /**
  * Total a descontar en nómina por fila de monitoreo.
  * Rechazado → $0 (no hay retención).
+ * Si se filtra por un periodo mensual específico (isMonthlyPeriod = true) y el adelanto
+ * es multi-cuota (installments > 1), se descuenta únicamente el valor de la cuota del mes.
  */
 export function calculateTotalWithholding(
   amount: number,
   status?: CompanyAdvanceStatus,
+  installments = 1,
+  isMonthlyPeriod = false,
 ): number {
   if (status === "rechazado") return 0;
+  const safeInstallments = Math.max(1, installments || 1);
+  if (isMonthlyPeriod && safeInstallments > 1) {
+    return Math.round(amount / safeInstallments);
+  }
   return amount;
 }
 

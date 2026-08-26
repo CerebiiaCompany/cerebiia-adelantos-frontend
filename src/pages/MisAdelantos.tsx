@@ -182,6 +182,11 @@ export default function MisAdelantos() {
                 <SolicitudCuotasPlan
                   cuotas={detalle.cuotas}
                   requestedAt={detalle.solicitud.created_at}
+                  solicitudEstado={detalle.solicitud.estado}
+                  isPaid={
+                    detalle.solicitud.estado === "pagado" ||
+                    Boolean(detalle.solicitud.pagado_en)
+                  }
                 />
               ) : null}
               {isDetalleError ? (

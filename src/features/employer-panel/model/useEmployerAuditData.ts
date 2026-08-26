@@ -40,20 +40,18 @@ async function fetchEmployerAdvances(
 
   const historial = await adelantosEndpoints.listHistorialSolicitudesEmpresa();
 
-  const multiCuotaItems = historial.filter(
-    (item) =>
-      item.numero_cuotas_snapshot > 1 &&
-      (!item.cuotas || item.cuotas.length === 0),
+  const missingCuotasItems = historial.filter(
+    (item) => !item.cuotas || item.cuotas.length === 0,
   );
 
-  if (multiCuotaItems.length > 0) {
+  if (missingCuotasItems.length > 0) {
     const details = await Promise.allSettled(
-      multiCuotaItems.map((item) => adelantosEndpoints.getSolicitud(item.id)),
+      missingCuotasItems.map((item) => adelantosEndpoints.getSolicitud(item.id)),
     );
 
     details.forEach((res, index) => {
       if (res.status === "fulfilled" && res.value?.cuotas) {
-        multiCuotaItems[index].cuotas = res.value.cuotas;
+        missingCuotasItems[index].cuotas = res.value.cuotas;
       }
     });
   }

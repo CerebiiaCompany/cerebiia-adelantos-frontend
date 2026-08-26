@@ -13,6 +13,16 @@ export interface EmployerAdvanceAuditRecord {
   installments: number;
   status: EmployerAdvanceAuditStatus;
   processedAt: string;
+  cuotas?: Array<{
+    id?: string;
+    numero: number;
+    monto: string | number;
+    tarifa_cuota?: string | number;
+    fecha_corte?: string;
+    estado: string;
+    fecha_pago?: string | null;
+  }>;
+  isPaid?: boolean;
 }
 
 export type EmployerLoanInstallmentStatus =
@@ -128,14 +138,28 @@ export interface EmployerNominaEmpleadoResumen {
   documento: string;
   cantidadAdelantos: number;
   cuotasMes: number;
+  /** Total pendiente por descontar (suma solo cuotas no descontadas) */
   totalDescontar: number;
+  /** Total que ya fue descontado/liberado */
+  totalDescontado: number;
+  /** Total consolidado generado en el mes */
+  totalGeneral: number;
+  /** True si todas las cuotas del mes ya fueron descontadas */
+  isAllDescontado: boolean;
   cuotas: EmployerNominaCuotaDetalle[];
 }
 
 export interface EmployerNominaDescuentosSnapshot {
   periodo: string;
+  /** Total pendiente a descontar en nómina (suma solo no descontadas) */
   totalDescontar: number;
+  /** Total que ya fue descontado/liberado */
+  totalDescontado: number;
+  /** Total consolidado generado */
+  totalGeneral: number;
   empleadosConDescuento: number;
   cuotasDelMes: number;
+  cuotasPendientes: number;
+  cuotasDescontadas: number;
   resumen: EmployerNominaEmpleadoResumen[];
 }

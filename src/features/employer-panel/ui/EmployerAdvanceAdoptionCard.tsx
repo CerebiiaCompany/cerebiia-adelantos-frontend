@@ -17,6 +17,7 @@ type EmployerAdvanceAdoptionCardProps = {
   totalNomina: number;
   isLoadingMetricas?: boolean;
   hasMetricasError?: boolean;
+  selectedPeriod?: string;
   className?: string;
 };
 
@@ -24,6 +25,7 @@ export function EmployerAdvanceAdoptionCard({
   totalNomina,
   isLoadingMetricas = false,
   hasMetricasError = false,
+  selectedPeriod,
   className,
 }: EmployerAdvanceAdoptionCardProps) {
   const advancesQuery = useEmployerCompanyAdvances();
@@ -35,11 +37,30 @@ export function EmployerAdvanceAdoptionCard({
         .filter((empleado) => empleado.estado !== "inactivo")
         .map((empleado) => empleado.id),
     );
-    const ids = (advancesQuery.data?.advances ?? [])
+    const relevantAdvances = (advancesQuery.data?.advances ?? []).filter(
+      (advance) => {
+        if (!selectedPeriod || selectedPeriod === "all") return true;
+        const reqPeriod = advance.requestedAt?.slice(0, 7);
+        if (reqPeriod === selectedPeriod) return true;
+        if (Array.isArray(advance.cuotas)) {
+          return advance.cuotas.some(
+            (c) => c.fecha_corte?.slice(0, 7) === selectedPeriod,
+          );
+        }
+        return false;
+      },
+    );
+
+    const ids = relevantAdvances
       .map((advance) => advance.employeeId)
       .filter((id) => activeIds.size === 0 || activeIds.has(id));
     return computeAdvanceAdoptionStats(totalNomina, ids);
-  }, [advancesQuery.data?.advances, advancesQuery.data?.empleados, totalNomina]);
+  }, [
+    advancesQuery.data?.advances,
+    advancesQuery.data?.empleados,
+    totalNomina,
+    selectedPeriod,
+  ]);
 
   const chartData = useMemo(() => {
     if (stats.totalNomina <= 0) {

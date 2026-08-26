@@ -54,6 +54,46 @@ const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
   employer_cuotas_liberadas: Wallet,
 };
 
+function enrichNotificationDescription(description: string, kind: string): string {
+  if (!description) return "";
+
+  if (kind === "advance_approved") {
+    if (!description.includes("24 horas")) {
+      const clean = description.trim().replace(/\.$/, "");
+      return `${clean}. La transferencia se realizará en un tiempo máximo de 24 horas.`;
+    }
+  }
+
+  if (kind === "advance_paid") {
+    if (!description.includes("evidencia") && !description.includes("Mis adelantos")) {
+      const match = description.match(/\$[\d.,]+/);
+      const montoPart = match ? ` de ${match[0]}` : "";
+      return `Se ha realizado el pago de tu adelanto${montoPart}. Revisa la evidencia en el módulo Mis adelantos.`;
+    }
+  }
+
+  if (
+    kind === "employer_cuota_liberada" ||
+    kind === "employer_cuotas_liberadas"
+  ) {
+    if (
+      !description.toLowerCase().includes("correspondiente") &&
+      !description.toLowerCase().includes("mes de")
+    ) {
+      const currentMonth = new Date().toLocaleDateString("es-CO", {
+        month: "long",
+        year: "numeric",
+      });
+      const mesCapitalizado =
+        currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
+      const clean = description.trim().replace(/\.$/, "");
+      return `${clean} correspondiente a ${mesCapitalizado}.`;
+    }
+  }
+
+  return description;
+}
+
 export function mapNotificacionDtoToApp(
   notification: NotificacionDTO,
 ): AppNotification {
@@ -62,7 +102,10 @@ export function mapNotificacionDtoToApp(
     kind: notification.kind,
     icon: NOTIFICATION_ICONS[notification.kind] ?? Bell,
     title: notification.title,
-    description: notification.description,
+    description: enrichNotificationDescription(
+      notification.description,
+      notification.kind,
+    ),
     time: formatRelative(notification.created_at),
     read: notification.leida,
     href: normalizeNotificationHref(notification.href, notification.kind),

@@ -1,6 +1,14 @@
-import { Building2, ClipboardList, Percent, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Building2, Calendar, ClipboardList, Percent, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/features/auth";
 import {
   EmployerAdvanceAdoptionCard,
@@ -8,14 +16,34 @@ import {
   EmployerNominaDescuentosPanel,
   EmployerPanelUnavailableNotice,
   useEmpleadosMetricas,
+  useEmployerCompanyAdvances,
   useEmployerConfig,
 } from "@/features/employer-panel";
 import { isSystemUserSession } from "@/shared/api";
 import { useTimeBasedGreeting } from "@/hooks/useTimeBasedGreeting";
 import { formatCOP } from "@/shared/lib";
 
+function currentPeriodKey(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${now.getFullYear()}-${month}`;
+}
+
+function formatPeriodOptionLabel(periodKey: string): string {
+  const [year, month] = periodKey.split("-").map(Number);
+  if (!year || !month) return periodKey;
+  const date = new Date(year, month - 1, 1);
+  const label = date.toLocaleDateString("es-CO", {
+    month: "long",
+    year: "numeric",
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
 export default function EmployerPanelPage() {
   const { session } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = useState(currentPeriodKey);
+
   const {
     data: metricas,
     isLoading: isLoadingMetricas,
@@ -26,6 +54,26 @@ export default function EmployerPanelPage() {
     isLoading: isLoadingConfig,
     isError: isConfigError,
   } = useEmployerConfig();
+  const { data: advancesData } = useEmployerCompanyAdvances();
+
+  const periodOptions = useMemo(() => {
+    const months = new Set<string>();
+    months.add(currentPeriodKey());
+
+    (advancesData?.advances ?? []).forEach((adv) => {
+      const startKey = adv.requestedAt?.slice(0, 7);
+      if (startKey) months.add(startKey);
+
+      if (Array.isArray(adv.cuotas)) {
+        adv.cuotas.forEach((c) => {
+          const cutKey = c.fecha_corte?.slice(0, 7);
+          if (cutKey) months.add(cutKey);
+        });
+      }
+    });
+
+    return Array.from(months).sort((a, b) => b.localeCompare(a));
+  }, [advancesData?.advances]);
 
   const total = metricas?.total ?? 0;
   const activos = metricas?.activos ?? 0;
@@ -42,11 +90,32 @@ export default function EmployerPanelPage() {
 
   return (
     <div className="mx-auto max-w-6xl animate-fade-in space-y-6">
-      <PageHeader
-        icon={Building2}
-        title={greeting.title}
-        description="Gestiona adelantos, empleados y solicitudes de tu empresa"
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <PageHeader
+          icon={Building2}
+          title={greeting.title}
+          description="Gestiona adelantos, empleados y solicitudes de tu empresa"
+        />
+
+        <div className="w-full shrink-0 sm:w-60">
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="h-11 rounded-xl border-border/80 bg-background/80 shadow-sm">
+              <div className="flex items-center gap-2 text-foreground">
+                <Calendar className="h-4 w-4 shrink-0 text-primary" />
+                <SelectValue placeholder="Seleccionar periodo" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {periodOptions.map((period) => (
+                <SelectItem key={period} value={period}>
+                  {formatPeriodOptionLabel(period)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:items-stretch">
         <EmployerMetricStatCard
           label="Empleados en nómina"
@@ -94,6 +163,7 @@ export default function EmployerPanelPage() {
 
         <EmployerAdvanceAdoptionCard
           totalNomina={total}
+          selectedPeriod={selectedPeriod}
           isLoadingMetricas={isLoadingMetricas}
           hasMetricasError={isMetricasError}
         />
@@ -156,7 +226,11 @@ export default function EmployerPanelPage() {
         />
       ) : null}
 
-      <EmployerNominaDescuentosPanel />
+      <EmployerNominaDescuentosPanel
+        selectedPeriod={selectedPeriod}
+        onPeriodChange={setSelectedPeriod}
+      />
     </div>
   );
 }
+

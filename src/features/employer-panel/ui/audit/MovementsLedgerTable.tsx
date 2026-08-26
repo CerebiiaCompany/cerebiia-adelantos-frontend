@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   ArrowDownCircle,
   BookOpen,
+  Calendar,
   RotateCcw,
   Search,
   Zap,
@@ -34,7 +35,9 @@ import { downloadBrandedExcelReport } from "@/shared/lib/excelReport";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_MOVEMENT_LEDGER_FILTERS,
+  extractMonthKey,
   filterMovementLedgerRecords,
+  formatPeriodOptionLabel,
   hasActiveMovementLedgerFilters,
   MOVEMENT_LEDGER_STATUS_FILTER_OPTIONS,
   type MovementLedgerFilters,
@@ -91,6 +94,20 @@ export function MovementsLedgerTable() {
   const [reasonRecord, setReasonRecord] =
     useState<EmployerMovementRecord | null>(null);
   const { data, isLoading, isError } = useEmployerMovementsLedger();
+
+  const periodOptions = useMemo(() => {
+    const months = new Set<string>();
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    months.add(currentMonthKey);
+
+    (data ?? []).forEach((record) => {
+      const monthKey = extractMonthKey(record.occurredAt);
+      if (monthKey) months.add(monthKey);
+    });
+
+    return Array.from(months).sort((a, b) => b.localeCompare(a));
+  }, [data]);
 
   const filtersActive = hasActiveMovementLedgerFilters(filters);
 
@@ -170,7 +187,7 @@ export function MovementsLedgerTable() {
             />
           </div>
 
-          <div className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="movement-filter-status">Estado</Label>
               <Select
@@ -200,39 +217,35 @@ export function MovementsLedgerTable() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="movement-filter-from">Desde</Label>
-              <Input
-                id="movement-filter-from"
-                type="date"
-                value={filters.dateFrom}
-                max={filters.dateTo || undefined}
-                onChange={(event) =>
+              <Label htmlFor="movement-filter-period">Periodo</Label>
+              <Select
+                value={filters.period}
+                onValueChange={(value) =>
                   setFilters((current) => ({
                     ...current,
-                    dateFrom: event.target.value,
+                    period: value,
                   }))
                 }
-                className="h-11 rounded-xl border-border/80 bg-background/80"
                 disabled={isLoading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="movement-filter-to">Hasta</Label>
-              <Input
-                id="movement-filter-to"
-                type="date"
-                value={filters.dateTo}
-                min={filters.dateFrom || undefined}
-                onChange={(event) =>
-                  setFilters((current) => ({
-                    ...current,
-                    dateTo: event.target.value,
-                  }))
-                }
-                className="h-11 rounded-xl border-border/80 bg-background/80"
-                disabled={isLoading}
-              />
+              >
+                <SelectTrigger
+                  id="movement-filter-period"
+                  className="h-11 rounded-xl border-border/80 bg-background/80"
+                >
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Calendar className="h-4 w-4 shrink-0 text-primary" />
+                    <SelectValue placeholder="Seleccionar periodo" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los periodos</SelectItem>
+                  {periodOptions.map((period) => (
+                    <SelectItem key={period} value={period}>
+                      {formatPeriodOptionLabel(period)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-end">

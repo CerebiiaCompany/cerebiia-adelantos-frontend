@@ -67,11 +67,10 @@ describe("movementLedgerFilters", () => {
     expect(result[0].id).toBe("2");
   });
 
-  it("filtra por rango de fechas", () => {
+  it("filtra por periodo", () => {
     const result = filterMovementLedgerRecords(sample, "", {
       ...DEFAULT_MOVEMENT_LEDGER_FILTERS,
-      dateFrom: "2026-07-01",
-      dateTo: "2026-07-14",
+      period: "2026-07",
     });
     expect(result.map((r) => r.id)).toEqual(["1", "2"]);
   });
@@ -80,6 +79,7 @@ describe("movementLedgerFilters", () => {
     const result = filterMovementLedgerRecords(sample, "ana", {
       ...DEFAULT_MOVEMENT_LEDGER_FILTERS,
       status: "procesado",
+      period: "2026-07",
     });
     expect(result).toHaveLength(1);
     expect(result[0].employeeName).toBe("Ana Pérez");

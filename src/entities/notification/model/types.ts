@@ -6,6 +6,9 @@ export type NotificationKind =
   | "advance_paid"
   | "advance_rejected"
   | "payment_evidence"
+  | "cuota_liberada"
+  | "cuotas_liberadas"
+  | "saldo_liberado"
   | "payroll_due_3d"
   | "next_payment_net_updated"
   | "cupo_80"
@@ -25,6 +28,8 @@ export type NotificationKind =
   | "employer_advance_approved"
   | "employer_advance_rejected"
   | "employer_support_message"
+  | "employer_cuota_liberada"
+  | "employer_cuotas_liberadas"
   | "provider_week_debt";
 
 export interface StoredNotification {
@@ -72,7 +77,7 @@ export function buildAdvanceApprovedNotification(
     id: `advance-approved:${solicitudId}`,
     kind: "advance_approved",
     title: "Adelanto aprobado",
-    description: `Tu adelanto de ${formattedAmount} fue aprobado.`,
+    description: `Tu adelanto de ${formattedAmount} fue aprobado. La transferencia se realizará en un tiempo máximo de 24 horas.`,
     createdAt,
     href,
   };
@@ -89,7 +94,7 @@ export function buildAdvancePaidNotification(
     id: `advance-paid:${solicitudId}`,
     kind: "advance_paid",
     title: "Adelanto pagado",
-    description: `Tu adelanto de ${formattedAmount} fue transferido exitosamente.`,
+    description: `Se ha realizado el pago de tu adelanto de ${formattedAmount}. Revisa la evidencia en el módulo Mis adelantos.`,
     createdAt,
     href,
   };
@@ -131,6 +136,29 @@ export function buildPaymentEvidenceNotification(
     description: `Te enviaron la evidencia de transferencia de tu adelanto de ${formattedAmount}.`,
     createdAt,
     href,
+  };
+}
+
+export function buildCuotaLiberadaNotification(
+  cuotaId: string,
+  montoLiberado: number,
+  nuevoDisponible?: number | null,
+  createdAt: string = new Date().toISOString(),
+  href?: string,
+): StoredNotification {
+  const formattedMonto = formatNotificationAmount(montoLiberado);
+  const disponibleText =
+    nuevoDisponible != null && Number.isFinite(nuevoDisponible)
+      ? ` Ahora tienes disponible ${formatNotificationAmount(nuevoDisponible)} para solicitar adelantos.`
+      : ` Tu saldo disponible para solicitar adelantos ha aumentado.`;
+
+  return {
+    id: `cuota-liberada:${cuotaId}`,
+    kind: "cuota_liberada",
+    title: "¡Cuota liberada!",
+    description: `Se te ha liberado correctamente ${formattedMonto}.${disponibleText}`,
+    createdAt,
+    href: href || "/adelanto",
   };
 }
 
@@ -501,5 +529,35 @@ export function buildEmployerDataChangeAuditNotification(
     description,
     createdAt,
     href,
+  };
+}
+
+export function buildEmployerCuotaLiberadaNotification(
+  cuotaId: string,
+  empleadoNombre: string,
+  montoLiberado: number,
+  mesPeriodoLabel?: string | null,
+  createdAt: string = new Date().toISOString(),
+  href?: string,
+): StoredNotification {
+  const name = empleadoNombre.trim() || "Un empleado";
+  const formattedMonto = formatNotificationAmount(montoLiberado);
+  const formattedMes =
+    mesPeriodoLabel && mesPeriodoLabel.trim()
+      ? mesPeriodoLabel.trim()
+      : new Date(createdAt).toLocaleDateString("es-CO", {
+          month: "long",
+          year: "numeric",
+        });
+  const mesCapitalizado =
+    formattedMes.charAt(0).toUpperCase() + formattedMes.slice(1);
+
+  return {
+    id: `employer-cuota-liberada:${cuotaId}`,
+    kind: "employer_cuota_liberada",
+    title: "Cuota liberada",
+    description: `Se ha registrado la liberación de la cuota de ${name} por ${formattedMonto} correspondiente a ${mesCapitalizado}.`,
+    createdAt,
+    href: href || "/retenciones-cierres",
   };
 }

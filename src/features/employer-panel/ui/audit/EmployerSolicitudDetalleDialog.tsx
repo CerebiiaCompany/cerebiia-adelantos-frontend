@@ -125,6 +125,11 @@ export function EmployerSolicitudDetalleDialog({
               <SolicitudCuotasPlan
                 cuotas={data.cuotas}
                 requestedAt={data.solicitud.created_at}
+                solicitudEstado={data.solicitud.estado}
+                isPaid={
+                  data.solicitud.estado === "pagado" ||
+                  Boolean(data.solicitud.pagado_en)
+                }
               />
             </div>
           ) : null}

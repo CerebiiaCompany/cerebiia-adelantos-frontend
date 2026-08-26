@@ -41,6 +41,7 @@ export {
   buildAdvancePaidNotification,
   buildAdvanceRejectedNotification,
   buildPaymentEvidenceNotification,
+  buildCuotaLiberadaNotification,
   buildPayrollDue3dNotification,
   buildNextPaymentNetUpdatedNotification,
   buildCupo80Notification,
@@ -60,6 +61,7 @@ export {
   buildEmployerSupportMessageNotification,
   buildProviderWeekDebtNotification,
   buildEmployerDataChangeAuditNotification,
+  buildEmployerCuotaLiberadaNotification,
   formatNotificationAmount,
 } from "./model/types";
 export { deriveEmployeeNotifications } from "./model/deriveEmployeeNotifications";
