@@ -19,7 +19,8 @@ export type EmployerLoanInstallmentStatus =
   | "al_dia"
   | "pendiente"
   | "vencida"
-  | "pagada";
+  | "pagada"
+  | "completado";
 
 export interface EmployerLoanInstallmentRecord {
   id: string;

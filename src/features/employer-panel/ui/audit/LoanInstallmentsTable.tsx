@@ -24,10 +24,13 @@ function filterRecords(
 function getInstallmentStatus(
   status: EmployerLoanInstallmentRecord["currentMonthStatus"],
 ): { label: string; tone: "success" | "warning" | "danger" | "info" } {
+  if (status === "completado" || status === "pagada") {
+    return { label: "Completado", tone: "success" };
+  }
   if (status === "al_dia") return { label: "Al día", tone: "success" };
   if (status === "pendiente") return { label: "Pendiente", tone: "warning" };
   if (status === "vencida") return { label: "Vencida", tone: "danger" };
-  return { label: "Pagada", tone: "info" };
+  return { label: "Al día", tone: "success" };
 }
 
 function TableSkeleton() {

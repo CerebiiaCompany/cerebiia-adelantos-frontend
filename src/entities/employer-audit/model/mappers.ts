@@ -19,6 +19,7 @@ import {
 } from "@/shared/config/advanceFees";
 import {
   calculateAdvanceFee,
+  calcularEstadoSeguimiento,
   isRecoverableCompanyAdvance,
 } from "./calculations";
 import type {
@@ -76,6 +77,7 @@ function buildRegisteredAdvanceFromAmounts(input: {
   rejectionReason?: string | null;
   pagadoEn?: string | null;
   decididoEn?: string | null;
+  cuotas?: RegisteredCompanyAdvance["cuotas"];
 }): RegisteredCompanyAdvance {
   const advancedAmount = Number.parseFloat(input.monto);
   const safeAmount = Number.isNaN(advancedAmount) ? 0 : advancedAmount;
@@ -126,6 +128,7 @@ function buildRegisteredAdvanceFromAmounts(input: {
     rejectionReason: input.rejectionReason?.trim() || null,
     pagadoEn: input.pagadoEn?.trim() || null,
     decididoEn: input.decididoEn?.trim() || null,
+    cuotas: input.cuotas,
   };
 }
 
@@ -162,6 +165,7 @@ export function mapHistorialEmpresaToRegisteredCompanyAdvances(
       rejectionReason: item.motivo_rechazo,
       pagadoEn: item.pagado_en,
       decididoEn: item.decidido_en,
+      cuotas: item.cuotas,
     });
   });
 }
@@ -240,6 +244,7 @@ export function mapToAdvanceAuditRecords(
 
 export function mapToLoanInstallmentRecords(
   advances: RegisteredCompanyAdvance[],
+  referenceDate?: Date,
 ): EmployerLoanInstallmentRecord[] {
   return sortAdvancesByDate(advances)
     .filter(
@@ -253,71 +258,32 @@ export function mapToLoanInstallmentRecords(
         advance.installments,
         MAX_ADVANCE_INSTALLMENTS,
       );
-      const installmentValue = Math.round(
-        totalToRecover / totalInstallments,
-      );
 
-      let paidCount = 0;
-      if (Array.isArray(advance.cuotas) && advance.cuotas.length > 0) {
-        paidCount = advance.cuotas.filter((c) => {
-          const cEstado = String(c.estado || "").toLowerCase().trim();
-          return (
-            cEstado === "pagado" ||
-            cEstado === "pagada" ||
-            cEstado === "liberado" ||
-            cEstado === "liberada" ||
-            Boolean(c.fecha_pago)
-          );
-        }).length;
-      } else if (
-        advance.isPaid ||
-        advance.estadoApi === "pagado" ||
-        (advance.status === "procesado" &&
-          (advance as Record<string, unknown>).isPaid)
-      ) {
-        // La primera cuota fue liberada por Super Admin
-        paidCount = 1;
-      }
-
-      const paidInstallments = Math.min(
+      const tracking = calcularEstadoSeguimiento(
+        advance.cuotas,
+        totalToRecover,
         totalInstallments,
-        Math.max(0, paidCount),
+        advance.estadoApi || advance.status,
+        referenceDate,
       );
-      const pendingInstallments = Math.max(
-        0,
-        totalInstallments - paidInstallments,
-      );
-      const isFullyPaid = paidInstallments >= totalInstallments;
-      const pendingBalance = isFullyPaid
-        ? 0
-        : Math.max(
-            0,
-            totalToRecover - installmentValue * paidInstallments,
-          );
 
       const firstLiberationDate =
-        paidInstallments > 0
+        tracking.cuotasPagadas > 0
           ? advance.pagadoEn || advance.decididoEn || advance.requestedAt
           : null;
-
-      const currentMonthStatus = isFullyPaid
-        ? "pagada"
-        : advance.status === "en_curso"
-          ? "pendiente"
-          : "al_dia";
 
       return {
         id: advance.id,
         employeeName: advance.employeeName,
         totalLoanAmount: totalToRecover,
-        totalInstallments,
-        paidInstallments,
-        pendingInstallments,
-        installmentValue,
-        pendingBalance,
-        currentMonthStatus,
+        totalInstallments: tracking.totalCuotas,
+        paidInstallments: tracking.cuotasPagadas,
+        pendingInstallments: tracking.pendingInstallments,
+        installmentValue: tracking.installmentValue,
+        pendingBalance: tracking.saldoPorDescontar,
+        currentMonthStatus: tracking.estadoCuotaMes,
         firstLiberationDate,
-        isFullyPaid,
+        isFullyPaid: tracking.isFullyPaid,
       };
     });
 }

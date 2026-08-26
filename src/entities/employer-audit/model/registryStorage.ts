@@ -37,6 +37,16 @@ export interface RegisteredCompanyAdvance {
   pagadoEn?: string | null;
   /** Fecha en que se aprobó la solicitud (ISO date string). */
   decididoEn?: string | null;
+  /** Plan de cuotas detallado (si está disponible desde API). */
+  cuotas?: Array<{
+    id?: string;
+    numero: number;
+    monto: string | number;
+    tarifa_cuota?: string | number;
+    fecha_corte: string;
+    estado: string;
+    fecha_pago: string | null;
+  }>;
 }
 
 export interface RegisterCompanyAdvanceInput {

@@ -55,6 +55,7 @@ export interface HistorialSolicitudEmpresaDTO {
   /** URL usable; nunca null si hay evidencia (FileField o URL externa). */
   comprobante_pago_url: string | null;
   pagado_en: string | null;
+  cuotas?: CuotaAdelantoDTO[];
 }
 
 export interface HistorialSolicitudesEmpresaParams {
