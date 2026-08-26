@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildNominaDescuentosSnapshot,
   buildPayrollClosureSnapshot,
   listPayrollClosureEmployeeAdvances,
   mapSolicitudesToAdvanceAuditRecords,
@@ -430,5 +431,117 @@ describe("employer audit mappers", () => {
     expect(detail).toHaveLength(1);
     expect(detail[0].employeeName).toBe("Luis Gómez");
     expect(detail[0].advancedAmount).toBe(900_000);
+  });
+
+  it("construye el snapshot de cuotas a descontar del dashboard para el periodo actual", () => {
+    const danielaAdvances: RegisteredCompanyAdvance[] = [
+      {
+        id: "adv-daniela-3c",
+        empresaId: "empresa-1",
+        employeeId: "emp-d",
+        employeeName: "Daniela Gonzales",
+        employeeDocument: "1111111111",
+        baseSalary: 3_000_000,
+        advancedAmount: 300_000,
+        installments: 3,
+        feeAmount: 24_000,
+        netDisbursedAmount: 276_000,
+        status: "procesado",
+        requestedAt: "2026-08-10T10:00:00-05:00",
+        transferId: "TRF-D1",
+        paymentEvidenceUrl: null,
+        rejectionReason: null,
+        cuotas: [
+          {
+            id: "c-d1",
+            numero: 1,
+            monto: 100_000,
+            fecha_corte: "2026-08-30",
+            estado: "pagada",
+            fecha_pago: "2026-08-25",
+          },
+          {
+            id: "c-d2",
+            numero: 2,
+            monto: 100_000,
+            fecha_corte: "2026-09-30",
+            estado: "pagada",
+            fecha_pago: "2026-08-25",
+          },
+          {
+            id: "c-d3",
+            numero: 3,
+            monto: 100_000,
+            fecha_corte: "2026-10-30",
+            estado: "pagada",
+            fecha_pago: "2026-08-25",
+          },
+        ],
+      },
+      {
+        id: "adv-daniela-1c",
+        empresaId: "empresa-1",
+        employeeId: "emp-d",
+        employeeName: "Daniela Gonzales",
+        employeeDocument: "1111111111",
+        baseSalary: 3_000_000,
+        advancedAmount: 200_000,
+        installments: 1,
+        feeAmount: 8_000,
+        netDisbursedAmount: 192_000,
+        status: "procesado",
+        requestedAt: "2026-08-15T10:00:00-05:00",
+        transferId: "TRF-D2",
+        paymentEvidenceUrl: null,
+        rejectionReason: null,
+        isPaid: true,
+      },
+      {
+        id: "adv-jesus-1c",
+        empresaId: "empresa-1",
+        employeeId: "emp-j",
+        employeeName: "Jesus Perez",
+        employeeDocument: "1231231231",
+        baseSalary: 1_500_000,
+        advancedAmount: 100_000,
+        installments: 1,
+        feeAmount: 8_000,
+        netDisbursedAmount: 92_000,
+        status: "procesado",
+        requestedAt: "2026-08-12T10:00:00-05:00",
+        transferId: "TRF-J",
+        paymentEvidenceUrl: null,
+        rejectionReason: null,
+        isPaid: true,
+      },
+    ];
+
+    const snapshot = buildNominaDescuentosSnapshot(danielaAdvances, "2026-08");
+
+    expect(snapshot.periodo).toBe("2026-08");
+    expect(snapshot.totalDescontar).toBe(400_000);
+    expect(snapshot.empleadosConDescuento).toBe(2);
+    expect(snapshot.cuotasDelMes).toBe(3);
+
+    const daniela = snapshot.resumen.find(
+      (r) => r.documento === "1111111111",
+    );
+    expect(daniela).toBeDefined();
+    expect(daniela?.fullName).toBe("Daniela Gonzales");
+    expect(daniela?.cantidadAdelantos).toBe(2);
+    expect(daniela?.cuotasMes).toBe(2);
+    expect(daniela?.totalDescontar).toBe(300_000);
+    expect(daniela?.cuotas).toHaveLength(2);
+    expect(daniela?.cuotas[0].cuota_numero).toBe(1);
+    expect(daniela?.cuotas[0].total_cuotas).toBe(3);
+    expect(daniela?.cuotas[0].estado_cuota).toBe("pagada");
+    expect(daniela?.cuotas[0].monto_a_descontar).toBe("100000");
+
+    const jesus = snapshot.resumen.find(
+      (r) => r.documento === "1231231231",
+    );
+    expect(jesus).toBeDefined();
+    expect(jesus?.totalDescontar).toBe(100_000);
+    expect(jesus?.cuotasMes).toBe(1);
   });
 });
