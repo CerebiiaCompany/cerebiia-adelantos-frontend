@@ -5,6 +5,9 @@ export type {
   EmployerLoanInstallmentStatus,
   EmployerMovementRecord,
   EmployerMovementType,
+  EmployerNominaCuotaDetalle,
+  EmployerNominaDescuentosSnapshot,
+  EmployerNominaEmpleadoResumen,
   EmployerPayrollClosureSnapshot,
   EmployerPayrollDeductionSummary,
 } from "./model/types";
@@ -12,9 +15,11 @@ export {
   ADVANCE_FEE_AMOUNT,
   ADVANCE_SALARY_CAP_RATIO,
   calculateAdvanceFee,
+  calcularEstadoSeguimiento,
   calculateSalaryPercentage,
   calculateTotalWithholding,
   exceedsSalaryCap,
+  isCuotaPagada,
   isRecoverableCompanyAdvance,
 } from "./model/calculations";
 export {
@@ -28,6 +33,7 @@ export {
   type RegisterCompanyAdvanceInput,
 } from "./model/registryStorage";
 export {
+  buildNominaDescuentosSnapshot,
   buildPayrollClosureSnapshot,
   listPayrollClosureEmployeeAdvances,
   listPayrollClosureMonthOptions,

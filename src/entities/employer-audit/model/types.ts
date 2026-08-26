@@ -112,3 +112,30 @@ export interface EmployerPayrollClosureSnapshot {
   isAllSettled: boolean;
   employeeSummaries: EmployerPayrollDeductionSummary[];
 }
+
+export interface EmployerNominaCuotaDetalle {
+  solicitud_id: string;
+  cuota_numero: number;
+  total_cuotas: number;
+  fecha_corte: string;
+  estado_cuota: string;
+  monto_solicitud: string;
+  monto_a_descontar: string;
+}
+
+export interface EmployerNominaEmpleadoResumen {
+  fullName: string;
+  documento: string;
+  cantidadAdelantos: number;
+  cuotasMes: number;
+  totalDescontar: number;
+  cuotas: EmployerNominaCuotaDetalle[];
+}
+
+export interface EmployerNominaDescuentosSnapshot {
+  periodo: string;
+  totalDescontar: number;
+  empleadosConDescuento: number;
+  cuotasDelMes: number;
+  resumen: EmployerNominaEmpleadoResumen[];
+}

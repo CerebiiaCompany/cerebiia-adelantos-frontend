@@ -5,6 +5,9 @@ import type {
   EmployerAdvanceAuditRecord,
   EmployerLoanInstallmentRecord,
   EmployerMovementRecord,
+  EmployerNominaCuotaDetalle,
+  EmployerNominaDescuentosSnapshot,
+  EmployerNominaEmpleadoResumen,
   EmployerPayrollClosureSnapshot,
   EmployerPayrollDeductionSummary,
 } from "./types";
@@ -20,6 +23,7 @@ import {
 import {
   calculateAdvanceFee,
   calcularEstadoSeguimiento,
+  isCuotaPagada,
   isRecoverableCompanyAdvance,
 } from "./calculations";
 import type {
@@ -631,5 +635,135 @@ export function buildPayrollClosureSnapshot(
     providerReimbursementTotal,
     isAllSettled,
     employeeSummaries,
+  };
+}
+
+function getDefaultFechaCorte(requestedAt: string, offset = 0): string {
+  const date = new Date(requestedAt);
+  const target = new Date(date.getFullYear(), date.getMonth() + offset + 1, 0);
+  const year = target.getFullYear();
+  const month = String(target.getMonth() + 1).padStart(2, "0");
+  const day = String(target.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Construye el reporte consolidado de cuotas a descontar para el Dashboard de Empresa,
+ * basándose en los adelantos y el plan de cuotas enriquecido.
+ */
+export function buildNominaDescuentosSnapshot(
+  advances: RegisteredCompanyAdvance[],
+  periodo: string,
+): EmployerNominaDescuentosSnapshot {
+  const employeeMap = new Map<
+    string,
+    {
+      fullName: string;
+      documento: string;
+      advanceIds: Set<string>;
+      cuotas: EmployerNominaCuotaDetalle[];
+    }
+  >();
+
+  const recoverable = advances.filter((advance) =>
+    isRecoverableCompanyAdvance(advance.status),
+  );
+
+  recoverable.forEach((advance) => {
+    const doc = advance.employeeDocument || "—";
+    const employeeEntry = employeeMap.get(doc) ?? {
+      fullName: advance.employeeName,
+      documento: doc,
+      advanceIds: new Set<string>(),
+      cuotas: [],
+    };
+
+    if (Array.isArray(advance.cuotas) && advance.cuotas.length > 0) {
+      advance.cuotas.forEach((c) => {
+        const matchesMonth =
+          (c.fecha_corte && c.fecha_corte.startsWith(periodo)) ||
+          (!c.fecha_corte &&
+            getAdvanceInstallmentMonthOffset(advance, periodo) ===
+              c.numero - 1);
+
+        if (matchesMonth) {
+          employeeEntry.advanceIds.add(advance.id);
+          const cuotaMonto =
+            typeof c.monto === "number"
+              ? String(c.monto)
+              : c.monto ||
+                String(
+                  Math.round(advance.advancedAmount / advance.installments),
+                );
+
+          employeeEntry.cuotas.push({
+            solicitud_id: advance.id,
+            cuota_numero: c.numero,
+            total_cuotas: advance.cuotas?.length || advance.installments,
+            fecha_corte:
+              c.fecha_corte ||
+              getDefaultFechaCorte(advance.requestedAt, c.numero - 1),
+            estado_cuota: isCuotaPagada(c) ? "pagada" : "pendiente",
+            monto_solicitud: String(advance.advancedAmount),
+            monto_a_descontar: cuotaMonto,
+          });
+        }
+      });
+    } else {
+      const offset = getAdvanceInstallmentMonthOffset(advance, periodo);
+      if (offset !== null) {
+        employeeEntry.advanceIds.add(advance.id);
+        const installmentValue = Math.round(
+          advance.advancedAmount / Math.max(1, advance.installments),
+        );
+        const isPaid = isAdvanceInstallmentPaidForMonth(advance, offset);
+
+        employeeEntry.cuotas.push({
+          solicitud_id: advance.id,
+          cuota_numero: offset + 1,
+          total_cuotas: Math.max(1, advance.installments),
+          fecha_corte: getDefaultFechaCorte(advance.requestedAt, offset),
+          estado_cuota: isPaid ? "pagada" : "pendiente",
+          monto_solicitud: String(advance.advancedAmount),
+          monto_a_descontar: String(installmentValue),
+        });
+      }
+    }
+
+    if (employeeEntry.cuotas.length > 0) {
+      employeeMap.set(doc, employeeEntry);
+    }
+  });
+
+  const resumen: EmployerNominaEmpleadoResumen[] = [...employeeMap.values()]
+    .map((entry) => {
+      const totalDescontar = entry.cuotas.reduce(
+        (sum, c) => sum + (Number.parseFloat(c.monto_a_descontar) || 0),
+        0,
+      );
+      return {
+        fullName: entry.fullName,
+        documento: entry.documento,
+        cantidadAdelantos: entry.advanceIds.size,
+        cuotasMes: entry.cuotas.length,
+        totalDescontar,
+        cuotas: entry.cuotas.sort((a, b) => a.cuota_numero - b.cuota_numero),
+      };
+    })
+    .sort((a, b) => a.fullName.localeCompare(b.fullName, "es"));
+
+  const totalDescontar = resumen.reduce(
+    (sum, item) => sum + item.totalDescontar,
+    0,
+  );
+  const cuotasDelMes = resumen.reduce((sum, item) => sum + item.cuotasMes, 0);
+  const empleadosConDescuento = resumen.length;
+
+  return {
+    periodo,
+    totalDescontar,
+    empleadosConDescuento,
+    cuotasDelMes,
+    resumen,
   };
 }

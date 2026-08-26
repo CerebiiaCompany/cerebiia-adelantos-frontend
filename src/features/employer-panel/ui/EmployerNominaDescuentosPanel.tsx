@@ -2,12 +2,13 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Receipt } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
+import { currentNominaPeriodoKey } from "@/features/employer-panel/model/useEmpresaReferenciaNomina";
+import { useEmployerCompanyAdvances } from "@/features/employer-panel/model/useEmployerAuditData";
 import {
-  currentNominaPeriodoKey,
-  useEmpresaReferenciaNomina,
-} from "@/features/employer-panel/model/useEmpresaReferenciaNomina";
+  buildNominaDescuentosSnapshot,
+  type EmployerNominaCuotaDetalle,
+} from "@/entities/employer-audit";
 import { EmployerPanelUnavailableNotice } from "@/features/employer-panel/ui/EmployerPanelUnavailableNotice";
-import type { ReferenciaNominaDetalleDTO } from "@/shared/api/types";
 import { formatCOP } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +37,6 @@ function parseMoney(value: string | number | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function employeeFullName(nombre: string, apellido: string): string {
-  return [nombre, apellido].filter(Boolean).join(" ").trim() || "—";
-}
-
 function estadoCuotaLabel(estado: string): string {
   if (estado === "pagada" || estado === "pagado") return "Pagada";
   if (estado === "pendiente") return "Pendiente";
@@ -58,23 +55,16 @@ function TableSkeleton() {
 
 export function EmployerNominaDescuentosPanel() {
   const periodo = currentNominaPeriodoKey();
-  const query = useEmpresaReferenciaNomina(periodo);
+  const { data, isLoading, isError } = useEmployerCompanyAdvances();
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
 
-  const detalleByDoc = useMemo(() => {
-    const map = new Map<string, ReferenciaNominaDetalleDTO[]>();
-    for (const row of query.data?.detalle ?? []) {
-      const list = map.get(row.numero_documento) ?? [];
-      list.push(row);
-      map.set(row.numero_documento, list);
-    }
-    return map;
-  }, [query.data?.detalle]);
+  const snapshot = useMemo(() => {
+    const advances = data?.advances ?? [];
+    return buildNominaDescuentosSnapshot(advances, periodo);
+  }, [data?.advances, periodo]);
 
-  const resumen = query.data?.resumen ?? [];
-  const totalDescontar = parseMoney(query.data?.total_a_descontar);
-  const empleadosConDescuento = resumen.length;
-  const cuotasDelMes = query.data?.detalle?.length ?? 0;
+  const { resumen, totalDescontar, empleadosConDescuento, cuotasDelMes } =
+    snapshot;
 
   return (
     <section className="glass-card glow-border space-y-5 rounded-xl p-5 sm:p-6">
@@ -93,9 +83,9 @@ export function EmployerNominaDescuentosPanel() {
         </div>
       </div>
 
-      {query.isLoading ? (
+      {isLoading ? (
         <TableSkeleton />
-      ) : query.isError ? (
+      ) : isError ? (
         <EmployerPanelUnavailableNotice
           layout="inline"
           message="No se pudo cargar el informe de descuentos."
@@ -153,23 +143,19 @@ export function EmployerNominaDescuentosPanel() {
                   </thead>
                   <tbody>
                     {resumen.map((row) => {
-                      const isExpanded = expandedDoc === row.numero_documento;
-                      const cuotas =
-                        detalleByDoc.get(row.numero_documento) ?? [];
+                      const isExpanded = expandedDoc === row.documento;
                       return (
                         <EmployeeDeductionRows
-                          key={row.numero_documento}
-                          fullName={employeeFullName(row.nombre, row.apellido)}
-                          documento={row.numero_documento}
-                          cantidadAdelantos={row.cantidad_adelantos}
-                          cuotasMes={cuotas.length}
-                          totalDescontar={parseMoney(row.total_a_descontar_mes)}
+                          key={row.documento}
+                          fullName={row.fullName}
+                          documento={row.documento}
+                          cantidadAdelantos={row.cantidadAdelantos}
+                          cuotasMes={row.cuotasMes}
+                          totalDescontar={row.totalDescontar}
                           isExpanded={isExpanded}
-                          cuotas={cuotas}
+                          cuotas={row.cuotas}
                           onToggle={() =>
-                            setExpandedDoc(
-                              isExpanded ? null : row.numero_documento,
-                            )
+                            setExpandedDoc(isExpanded ? null : row.documento)
                           }
                         />
                       );
@@ -201,7 +187,7 @@ function EmployeeDeductionRows({
   cuotasMes: number;
   totalDescontar: number;
   isExpanded: boolean;
-  cuotas: ReferenciaNominaDetalleDTO[];
+  cuotas: EmployerNominaCuotaDetalle[];
   onToggle: () => void;
 }) {
   return (
