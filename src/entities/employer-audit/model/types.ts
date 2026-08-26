@@ -19,7 +19,8 @@ export type EmployerLoanInstallmentStatus =
   | "al_dia"
   | "pendiente"
   | "vencida"
-  | "pagada";
+  | "pagada"
+  | "completado";
 
 export interface EmployerLoanInstallmentRecord {
   id: string;
@@ -27,9 +28,15 @@ export interface EmployerLoanInstallmentRecord {
   totalLoanAmount: number;
   totalInstallments: number;
   paidInstallments: number;
+  /** Cantidad de cuotas que faltan por pagar. */
+  pendingInstallments: number;
   installmentValue: number;
   pendingBalance: number;
   currentMonthStatus: EmployerLoanInstallmentStatus;
+  /** Fecha en que se liberó la primera cuota (o null si aún no hay liberaciones). */
+  firstLiberationDate: string | null;
+  /** True si todas las cuotas del adelanto ya fueron saldadas. */
+  isFullyPaid: boolean;
 }
 
 export type EmployerMovementType = "adelanto" | "cuota";
@@ -78,12 +85,30 @@ export interface EmployerPayrollDeductionSummary {
   /** Valor a descontar por cuota(s) en el mes (principal del periodo). */
   loanInstallmentsTotal: number;
   grandTotal: number;
+  /** Monto de cuotas del mes ya liberadas/saldadas por Super Admin. */
+  paidAmount: number;
+  /** Monto de cuotas del mes pendientes por liquidar/descontar. */
+  pendingAmount: number;
+  /** True si todas las cuotas de este mes están saldadas. */
+  isSettled: boolean;
+  /** Etiqueta de estado para la tabla (ej. "Saldado", "Pendiente"). */
+  statusLabel: string;
 }
 
 export interface EmployerPayrollClosureSnapshot {
   monthKey: string;
   monthLabel: string;
+  /** Total general consolidado generado en el mes. */
   totalPayrollDeductions: number;
+  /** Total pendiente por descontar/reembolsar (restando lo saldado). */
+  totalPending: number;
+  /** Total liberado/saldado por el Super Admin. */
+  totalPaid: number;
+  /** Monto de reembolso pendiente al proveedor. */
   providerReimbursement: number;
+  /** Reembolso consolidado original del mes. */
+  providerReimbursementTotal: number;
+  /** True si toda la nómina del mes está a paz y salvo. */
+  isAllSettled: boolean;
   employeeSummaries: EmployerPayrollDeductionSummary[];
 }

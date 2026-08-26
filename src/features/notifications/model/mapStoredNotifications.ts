@@ -47,6 +47,11 @@ const NOTIFICATION_ICONS: Record<string, LucideIcon> = {
   employer_advance_rejected: XCircle,
   employer_support_message: MessageSquare,
   provider_week_debt: Wallet,
+  cuota_liberada: Wallet,
+  cuotas_liberadas: Wallet,
+  saldo_liberado: Wallet,
+  employer_cuota_liberada: Wallet,
+  employer_cuotas_liberadas: Wallet,
 };
 
 export function mapNotificacionDtoToApp(

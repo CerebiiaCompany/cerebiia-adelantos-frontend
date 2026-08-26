@@ -19,6 +19,7 @@ import {
 } from "@/shared/config/advanceFees";
 import {
   calculateAdvanceFee,
+  calcularEstadoSeguimiento,
   isRecoverableCompanyAdvance,
 } from "./calculations";
 import type {
@@ -74,6 +75,9 @@ function buildRegisteredAdvanceFromAmounts(input: {
   requestedAt: string;
   paymentEvidenceUrl?: string | null;
   rejectionReason?: string | null;
+  pagadoEn?: string | null;
+  decididoEn?: string | null;
+  cuotas?: RegisteredCompanyAdvance["cuotas"];
 }): RegisteredCompanyAdvance {
   const advancedAmount = Number.parseFloat(input.monto);
   const safeAmount = Number.isNaN(advancedAmount) ? 0 : advancedAmount;
@@ -116,10 +120,15 @@ function buildRegisteredAdvanceFromAmounts(input: {
     feePerCuotaSnapshot,
     netDisbursedAmount,
     status: mapEstadoToCompanyAdvanceStatus(input.estado),
+    estadoApi: input.estado,
+    isPaid: input.estado === "pagado",
     requestedAt: input.requestedAt,
     transferId: input.id.slice(0, 8).toUpperCase(),
     paymentEvidenceUrl: input.paymentEvidenceUrl?.trim() || null,
     rejectionReason: input.rejectionReason?.trim() || null,
+    pagadoEn: input.pagadoEn?.trim() || null,
+    decididoEn: input.decididoEn?.trim() || null,
+    cuotas: input.cuotas,
   };
 }
 
@@ -154,6 +163,9 @@ export function mapHistorialEmpresaToRegisteredCompanyAdvances(
       requestedAt: item.created_at,
       paymentEvidenceUrl: resolveSolicitudComprobanteUrl(item),
       rejectionReason: item.motivo_rechazo,
+      pagadoEn: item.pagado_en,
+      decididoEn: item.decidido_en,
+      cuotas: item.cuotas,
     });
   });
 }
@@ -232,6 +244,7 @@ export function mapToAdvanceAuditRecords(
 
 export function mapToLoanInstallmentRecords(
   advances: RegisteredCompanyAdvance[],
+  referenceDate?: Date,
 ): EmployerLoanInstallmentRecord[] {
   return sortAdvancesByDate(advances)
     .filter(
@@ -241,23 +254,36 @@ export function mapToLoanInstallmentRecords(
     )
     .map((advance) => {
       const totalToRecover = advance.advancedAmount;
-      const installmentValue = Math.round(
-        totalToRecover / advance.installments,
+      const totalInstallments = Math.min(
+        advance.installments,
+        MAX_ADVANCE_INSTALLMENTS,
       );
+
+      const tracking = calcularEstadoSeguimiento(
+        advance.cuotas,
+        totalToRecover,
+        totalInstallments,
+        advance.estadoApi || advance.status,
+        referenceDate,
+      );
+
+      const firstLiberationDate =
+        tracking.cuotasPagadas > 0
+          ? advance.pagadoEn || advance.decididoEn || advance.requestedAt
+          : null;
 
       return {
         id: advance.id,
         employeeName: advance.employeeName,
         totalLoanAmount: totalToRecover,
-        totalInstallments: Math.min(
-          advance.installments,
-          MAX_ADVANCE_INSTALLMENTS,
-        ),
-        paidInstallments: 0,
-        installmentValue,
-        pendingBalance: totalToRecover,
-        currentMonthStatus:
-          advance.status === "en_curso" ? "pendiente" : "al_dia",
+        totalInstallments: tracking.totalCuotas,
+        paidInstallments: tracking.cuotasPagadas,
+        pendingInstallments: tracking.pendingInstallments,
+        installmentValue: tracking.installmentValue,
+        pendingBalance: tracking.saldoPorDescontar,
+        currentMonthStatus: tracking.estadoCuotaMes,
+        firstLiberationDate,
+        isFullyPaid: tracking.isFullyPaid,
       };
     });
 }
@@ -418,6 +444,38 @@ export function listPayrollClosureEmployeeAdvances(
   );
 }
 
+function isAdvanceInstallmentPaidForMonth(
+  advance: RegisteredCompanyAdvance,
+  offset: number,
+): boolean {
+  if (Array.isArray(advance.cuotas) && advance.cuotas.length > 0) {
+    const cuota = advance.cuotas.find((c) => c.numero === offset + 1);
+    if (cuota) {
+      const cEstado = String(cuota.estado || "").toLowerCase().trim();
+      return (
+        cEstado === "pagado" ||
+        cEstado === "pagada" ||
+        cEstado === "liberado" ||
+        cEstado === "liberada" ||
+        Boolean(cuota.fecha_pago)
+      );
+    }
+  }
+
+  // Solo la cuota del periodo actual/solicitud (offset === 0) fue liberada por el Super Admin
+  // Las cuotas de meses posteriores (offset >= 1) quedan pendientes en sus respectivos meses
+  if (offset === 0) {
+    return Boolean(
+      advance.isPaid ||
+        advance.estadoApi === "pagado" ||
+        (advance.status === "procesado" &&
+          (advance as Record<string, unknown>).isPaid),
+    );
+  }
+
+  return false;
+}
+
 export function buildPayrollClosureSnapshot(
   advances: RegisteredCompanyAdvance[],
   referenceDate: Date = new Date(),
@@ -446,6 +504,8 @@ export function buildPayrollClosureSnapshot(
     const deduction = computeMonthlyDeduction(advance, offset);
     const isRequestMonth = offset === 0;
     const planTotal = Math.max(1, advance.installments);
+    const isPaid = isAdvanceInstallmentPaidForMonth(advance, offset);
+
     const current = summaryMap.get(advance.employeeId) ?? {
       employeeName: advance.employeeName,
       employeeDocument: advance.employeeDocument,
@@ -458,10 +518,18 @@ export function buildPayrollClosureSnapshot(
       feesTotal: 0,
       loanInstallmentsTotal: 0,
       grandTotal: 0,
+      paidAmount: 0,
+      pendingAmount: 0,
+      isSettled: false,
+      statusLabel: "Pendiente",
       installmentPlans: [],
       installmentValues: [],
       installmentProgress: [],
     };
+
+    const advanceMonthlyAmount = deduction.grandTotal;
+    const advancePaidAmount = isPaid ? advanceMonthlyAmount : 0;
+    const advancePendingAmount = isPaid ? 0 : advanceMonthlyAmount;
 
     summaryMap.set(advance.employeeId, {
       ...current,
@@ -474,6 +542,8 @@ export function buildPayrollClosureSnapshot(
       loanInstallmentsTotal:
         current.loanInstallmentsTotal + deduction.loanInstallmentsTotal,
       grandTotal: current.grandTotal + deduction.grandTotal,
+      paidAmount: current.paidAmount + advancePaidAmount,
+      pendingAmount: current.pendingAmount + advancePendingAmount,
       installmentPlans: [...current.installmentPlans, advance.installments],
       installmentValues: [
         ...current.installmentValues,
@@ -501,6 +571,16 @@ export function buildPayrollClosureSnapshot(
           ? uniqueValues[0]
           : null;
 
+      const isSettled =
+        summary.grandTotal > 0 && summary.pendingAmount === 0;
+      const isPartiallySettled =
+        summary.paidAmount > 0 && summary.pendingAmount > 0;
+      const statusLabel = isSettled
+        ? "Saldado"
+        : isPartiallySettled
+          ? "Parcial"
+          : "Pendiente";
+
       return {
         employeeName: summary.employeeName,
         employeeDocument: summary.employeeDocument,
@@ -515,6 +595,10 @@ export function buildPayrollClosureSnapshot(
         feesTotal: summary.feesTotal,
         loanInstallmentsTotal: summary.loanInstallmentsTotal,
         grandTotal: summary.grandTotal,
+        paidAmount: summary.paidAmount,
+        pendingAmount: summary.pendingAmount,
+        isSettled,
+        statusLabel,
       };
     })
     .sort((a, b) => a.employeeName.localeCompare(b.employeeName, "es"));
@@ -523,15 +607,29 @@ export function buildPayrollClosureSnapshot(
     (sum, item) => sum + item.grandTotal,
     0,
   );
-  // Reembolso = mismo principal del mes que se descuenta al empleado
-  // (monto completo si 1 cuota; solo la cuota del mes si es 2+).
-  const providerReimbursement = totalPayrollDeductions;
+  const totalPaid = employeeSummaries.reduce(
+    (sum, item) => sum + item.paidAmount,
+    0,
+  );
+  const totalPending = employeeSummaries.reduce(
+    (sum, item) => sum + item.pendingAmount,
+    0,
+  );
+
+  const providerReimbursementTotal = totalPayrollDeductions;
+  const providerReimbursement = totalPending;
+  const isAllSettled =
+    totalPayrollDeductions > 0 && totalPending === 0;
 
   return {
     monthKey,
     monthLabel: capitalizeMonth(getMonthLabel(referenceDate)),
     totalPayrollDeductions,
+    totalPaid,
+    totalPending,
     providerReimbursement,
+    providerReimbursementTotal,
+    isAllSettled,
     employeeSummaries,
   };
 }

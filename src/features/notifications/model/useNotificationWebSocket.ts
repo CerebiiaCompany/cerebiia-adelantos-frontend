@@ -30,6 +30,16 @@ function isJwtExpired(token: string): boolean {
   }
 }
 
+export type NotificationWebSocketEvent = {
+  type?: string;
+  reason?: string;
+  payload?: {
+    reason?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+};
+
 export function buildNotificationsWebSocketUrl(accessToken: string): string {
   const token = encodeURIComponent(accessToken);
 
@@ -48,7 +58,7 @@ export function buildNotificationsWebSocketUrl(accessToken: string): string {
 interface UseNotificationWebSocketOptions {
   enabled: boolean;
   accessToken: string | null | undefined;
-  onUpdated: () => void;
+  onUpdated: (eventData?: NotificationWebSocketEvent) => void;
 }
 
 export function useNotificationWebSocket({
@@ -142,14 +152,17 @@ export function useNotificationWebSocket({
         socket.onmessage = (event) => {
           if (disposed) return;
           try {
-            const data = JSON.parse(String(event.data)) as { type?: string };
-            // Actualizar ÚNICAMENTE si el evento es notifications.updated
+            const data = JSON.parse(String(event.data)) as NotificationWebSocketEvent;
+            // Actualizar si el evento es notifications.updated, cuota_liberada o similar
             if (
               data?.type === "notifications.updated" ||
               data?.type === "notification" ||
-              data?.type === "notificacion"
+              data?.type === "notificacion" ||
+              data?.type === "cuota_liberada" ||
+              data?.reason === "cuota_liberada" ||
+              data?.payload?.reason === "cuota_liberada"
             ) {
-              onUpdatedRef.current();
+              onUpdatedRef.current(data);
             }
           } catch {
             // Ignorar frames no estructurados

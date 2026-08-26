@@ -3,7 +3,7 @@ import { CalendarClock, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EmployerLoanInstallmentRecord } from "@/entities/employer-audit";
-import { formatCOP } from "@/shared/lib";
+import { formatCOP, formatDate } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 import { useEmployerLoanTracking } from "../../model/useEmployerAuditData";
 import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
@@ -24,10 +24,13 @@ function filterRecords(
 function getInstallmentStatus(
   status: EmployerLoanInstallmentRecord["currentMonthStatus"],
 ): { label: string; tone: "success" | "warning" | "danger" | "info" } {
+  if (status === "completado" || status === "pagada") {
+    return { label: "Completado", tone: "success" };
+  }
   if (status === "al_dia") return { label: "Al día", tone: "success" };
   if (status === "pendiente") return { label: "Pendiente", tone: "warning" };
   if (status === "vencida") return { label: "Vencida", tone: "danger" };
-  return { label: "Pagada", tone: "info" };
+  return { label: "Al día", tone: "success" };
 }
 
 function TableSkeleton() {
@@ -73,7 +76,7 @@ export function LoanInstallmentsTable() {
 
       {!isLoading && !isError ? (
         <div className="overflow-x-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[880px] text-sm">
+          <table className="w-full min-w-[960px] text-sm">
             <thead>
               <tr className="border-b border-border bg-secondary/50 text-left">
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
@@ -92,6 +95,9 @@ export function LoanInstallmentsTable() {
                   Saldo por descontar
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
+                  Fecha 1.ª liberación
+                </th>
+                <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Estado cuota del mes
                 </th>
               </tr>
@@ -99,7 +105,7 @@ export function LoanInstallmentsTable() {
             <tbody>
               {filteredRecords.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center">
+                  <td colSpan={7} className="px-4 py-10 text-center">
                     <div className="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
                       <CalendarClock className="h-8 w-8 opacity-60" />
                       <p className="text-sm">
@@ -142,12 +148,33 @@ export function LoanInstallmentsTable() {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
+                        {record.pendingInstallments > 0 ? (
+                          <div className="mt-1 text-[11px] text-muted-foreground">
+                            {record.pendingInstallments} cuota
+                            {record.pendingInstallments === 1 ? "" : "s"}{" "}
+                            restante
+                            {record.pendingInstallments === 1 ? "" : "s"}
+                          </div>
+                        ) : (
+                          <div className="mt-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                            100% saldado
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 tabular-nums text-foreground">
                         {formatCOP(record.installmentValue)}
                       </td>
                       <td className="px-4 py-3.5 tabular-nums font-medium text-foreground">
                         {formatCOP(record.pendingBalance)}
+                      </td>
+                      <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
+                        {record.firstLiberationDate ? (
+                          <span className="font-medium text-foreground">
+                            {formatDate(record.firstLiberationDate)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/70">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
                         <AuditStatusBadge

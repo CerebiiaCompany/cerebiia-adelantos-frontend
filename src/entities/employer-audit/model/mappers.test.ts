@@ -156,12 +156,27 @@ describe("employer audit mappers", () => {
     expect(records[0].installments).toBe(2);
   });
 
-  it("solo incluye adelantos con 2 o 3 cuotas en seguimiento", () => {
-    const loans = mapToLoanInstallmentRecords(sampleAdvances);
+  it("solo incluye adelantos con 2 o 3 cuotas en seguimiento y calcula cuotas pagadas/pendientes", () => {
+    const multiAdvances: RegisteredCompanyAdvance[] = [
+      {
+        ...sampleAdvances[0],
+        id: "adv-multi-track",
+        installments: 2,
+        advancedAmount: 200_000,
+        isPaid: true,
+        estadoApi: "pagado",
+        pagadoEn: "2026-08-15T10:00:00-05:00",
+      },
+    ];
+
+    const loans = mapToLoanInstallmentRecords(multiAdvances);
     expect(loans).toHaveLength(1);
-    expect(loans[0].totalInstallments).toBe(3);
-    expect(loans[0].totalLoanAmount).toBe(900_000);
-    expect(loans[0].installmentValue).toBe(300_000);
+    expect(loans[0].totalInstallments).toBe(2);
+    expect(loans[0].paidInstallments).toBe(1);
+    expect(loans[0].pendingInstallments).toBe(1);
+    expect(loans[0].installmentValue).toBe(100_000);
+    expect(loans[0].pendingBalance).toBe(100_000);
+    expect(loans[0].firstLiberationDate).toBe("2026-08-15T10:00:00-05:00");
   });
 
   it("excluye rechazados del seguimiento de cuotas", () => {
@@ -317,6 +332,92 @@ describe("employer audit mappers", () => {
     expect(closure.employeeSummaries[0].advancesCount).toBe(2);
     expect(closure.employeeSummaries[0].installments).toBeNull();
     expect(closure.employeeSummaries[0].installmentValue).toBeNull();
+  });
+
+  it("descuenta cuotas liberadas por Super Admin y marca paz y salvo", () => {
+    const paidAdvances: RegisteredCompanyAdvance[] = [
+      {
+        ...sampleAdvances[0],
+        id: "adv-paid-1",
+        employeeId: "emp-1",
+        employeeName: "Jose Andres Vargas Soto",
+        employeeDocument: "1090545465",
+        installments: 1,
+        advancedAmount: 300_000,
+        requestedAt: "2026-08-10T10:00:00-05:00",
+        isPaid: true,
+        estadoApi: "pagado",
+      },
+      {
+        ...sampleAdvances[0],
+        id: "adv-paid-2",
+        employeeId: "emp-2",
+        employeeName: "Melanny Yilyan Guate Restrepo",
+        employeeDocument: "1005026054",
+        installments: 1,
+        advancedAmount: 600_000,
+        requestedAt: "2026-08-10T10:00:00-05:00",
+        isPaid: true,
+        estadoApi: "pagado",
+      },
+    ];
+
+    const closure = buildPayrollClosureSnapshot(
+      paidAdvances,
+      new Date("2026-08-15T12:00:00-05:00"),
+    );
+
+    expect(closure.totalPayrollDeductions).toBe(900_000);
+    expect(closure.totalPaid).toBe(900_000);
+    expect(closure.totalPending).toBe(0);
+    expect(closure.providerReimbursement).toBe(0);
+    expect(closure.isAllSettled).toBe(true);
+    expect(closure.employeeSummaries[0].isSettled).toBe(true);
+    expect(closure.employeeSummaries[0].statusLabel).toBe("Saldado");
+    expect(closure.employeeSummaries[1].isSettled).toBe(true);
+    expect(closure.employeeSummaries[1].statusLabel).toBe("Saldado");
+  });
+
+  it("mantiene pendiente las cuotas de meses futuros en planes multi-cuota", () => {
+    const multiMonthAdvances: RegisteredCompanyAdvance[] = [
+      {
+        ...sampleAdvances[0],
+        id: "adv-multi-1",
+        employeeId: "emp-1",
+        employeeName: "Jose Andres Vargas Soto",
+        employeeDocument: "1090545465",
+        installments: 2,
+        advancedAmount: 200_000,
+        requestedAt: "2026-08-10T10:00:00-05:00",
+        isPaid: true,
+        estadoApi: "pagado",
+      },
+    ];
+
+    // Agosto (mes de solicitud / cuota 1 liberada)
+    const augustClosure = buildPayrollClosureSnapshot(
+      multiMonthAdvances,
+      new Date("2026-08-15T12:00:00-05:00"),
+    );
+    expect(augustClosure.totalPayrollDeductions).toBe(100_000);
+    expect(augustClosure.totalPaid).toBe(100_000);
+    expect(augustClosure.totalPending).toBe(0);
+    expect(augustClosure.providerReimbursement).toBe(0);
+    expect(augustClosure.isAllSettled).toBe(true);
+    expect(augustClosure.employeeSummaries[0].statusLabel).toBe("Saldado");
+
+    // Septiembre (mes siguiente / cuota 2 de 2 pendiente)
+    const septemberClosure = buildPayrollClosureSnapshot(
+      multiMonthAdvances,
+      new Date("2026-09-15T12:00:00-05:00"),
+    );
+    expect(septemberClosure.totalPayrollDeductions).toBe(100_000);
+    expect(septemberClosure.totalPaid).toBe(0);
+    expect(septemberClosure.totalPending).toBe(100_000);
+    expect(septemberClosure.providerReimbursement).toBe(100_000);
+    expect(septemberClosure.isAllSettled).toBe(false);
+    expect(septemberClosure.employeeSummaries[0].isSettled).toBe(false);
+    expect(septemberClosure.employeeSummaries[0].statusLabel).toBe("Pendiente");
   });
 
   it("lista adelantos del empleado para el detalle del mes", () => {

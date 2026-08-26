@@ -26,4 +26,12 @@ export type AdvanceHistoryRecord = {
   rejectionReason?: string | null;
   /** URL absoluta o relativa al comprobante de transferencia del super admin. */
   paymentEvidenceUrl?: string | null;
+  /** Monto total descontado por nómina de este adelanto. */
+  montoDescontado?: number;
+  /** Monto restante pendiente por descontar de nómina. */
+  montoPendiente?: number;
+  /** Número de cuotas ya pagadas / descontadas. */
+  cuotasPagadas?: number;
+  /** Número de cuotas aún pendientes por descontar. */
+  cuotasPendientes?: number;
 };

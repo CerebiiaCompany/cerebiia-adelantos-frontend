@@ -18,7 +18,13 @@ describe("resolveAdvanceLimitsFromNomina", () => {
   };
 
   it("usa monto_maximo y respeta el cupo total del 50% cuando no hay adelantos", () => {
-    const limits = resolveAdvanceLimitsFromNomina(baseNomina, 0);
+    const limits = resolveAdvanceLimitsFromNomina(
+      {
+        ...baseNomina,
+        saldo_disponible: "750000.00",
+      },
+      0,
+    );
 
     expect(limits.maxAdvanceLimit).toBe(750_000);
     expect(limits.availableAdvance).toBe(750_000);
@@ -26,20 +32,27 @@ describe("resolveAdvanceLimitsFromNomina", () => {
   });
 
   it("descuenta adelantos del mes sobre el tope del 50%", () => {
-    const limits = resolveAdvanceLimitsFromNomina(baseNomina, 200_000);
+    const limits = resolveAdvanceLimitsFromNomina(
+      {
+        ...baseNomina,
+        saldo_disponible: "450000.00",
+      },
+      200_000,
+    );
 
     expect(limits.maxAdvanceLimit).toBe(750_000);
     expect(limits.availableAdvance).toBe(450_000);
   });
 
-  it("no muestra saldo por encima del tope vigente", () => {
+  it("permite saldo liberado mayor si el backend lo retorna explícitamente", () => {
     const limits = resolveAdvanceLimitsFromNomina({
       ...baseNomina,
       monto_maximo_adelanto: "750000.00",
-      saldo_disponible: "900000.00",
+      saldo_disponible: "1090000.00",
     });
 
-    expect(limits.availableAdvance).toBe(750_000);
+    expect(limits.availableAdvance).toBe(1_090_000);
+    expect(limits.maxAdvanceLimit).toBe(1_090_000);
   });
 
   it("calcula saldo restante si el backend no envía saldo_disponible", () => {

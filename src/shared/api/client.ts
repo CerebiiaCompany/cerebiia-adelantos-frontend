@@ -60,11 +60,7 @@ async function refreshAccessToken(): Promise<boolean> {
 
   refreshPromise = (async () => {
     const session = authStorage.get();
-    if (
-      !session?.refreshToken ||
-      !BASE_URL ||
-      !isSystemUserSession(session)
-    ) {
+    if (!session?.refreshToken || !BASE_URL) {
       return false;
     }
 
@@ -78,7 +74,7 @@ async function refreshAccessToken(): Promise<boolean> {
       if (!res.ok) return false;
 
       const data = (await res.json()) as RefreshTokenResponse;
-      authStorage.updateTokens(data.access, data.refresh);
+      authStorage.updateTokens(data.access, data.refresh ?? session.refreshToken);
       return true;
     } catch {
       return false;
@@ -129,10 +125,7 @@ async function request<T>(
   }
 
   if (res.status === 401 && !hasRetried && !isNoRefreshOn401Path(path) && session) {
-    const canRefresh =
-      isSystemUserSession(session) && Boolean(session.refreshToken);
-
-    if (canRefresh) {
+    if (session.refreshToken) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return request<T>(path, init, true);

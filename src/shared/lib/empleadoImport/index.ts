@@ -40,6 +40,8 @@ export {
 } from "./mapEmpleadoImportRows";
 export {
   buildApiImportRowError,
+  formatDuplicateImportMessage,
   groupImportErrorsByKind,
+  isDuplicateDocumentError,
   sortImportErrorsByRow,
 } from "./importResultMessages";
