@@ -38,7 +38,12 @@ export function isDuplicateDocumentError(apiMessage: string): boolean {
   return (
     normalized.includes("ya existe") ||
     normalized.includes("already exists") ||
-    normalized.includes("duplicate")
+    normalized.includes("duplicate") ||
+    normalized.includes("ya se encuentra registrado") ||
+    normalized.includes("ya está registrado") ||
+    normalized.includes("registrado en otra empresa") ||
+    normalized.includes("activo en otra empresa") ||
+    normalized.includes("otra empresa")
   );
 }
 

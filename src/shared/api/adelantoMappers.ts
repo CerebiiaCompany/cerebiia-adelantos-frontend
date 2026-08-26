@@ -114,6 +114,102 @@ export function mapSolicitudToHistoryRecord(
 
   const id = String(solicitud.id ?? `adv-${requestedAt.getTime()}`);
 
+  const rawCuotas = (solicitud as Record<string, unknown>).cuotas;
+  let montoDescontado = 0;
+  let montoPendiente = 0;
+  let cuotasPagadas = 0;
+  let cuotasPendientes = installments;
+
+  if (Array.isArray(rawCuotas) && rawCuotas.length > 0) {
+    for (const c of rawCuotas as Array<Record<string, unknown>>) {
+      const cMonto =
+        Number(c.monto) || safeAmount / (rawCuotas.length || 1);
+      const cEstado = String(c.estado || "").toLowerCase().trim();
+      const isPaid =
+        cEstado === "pagado" ||
+        cEstado === "pagada" ||
+        cEstado === "liberado" ||
+        cEstado === "liberada" ||
+        cEstado === "descontado" ||
+        cEstado === "descontada" ||
+        Boolean(c.pagado) ||
+        Boolean(c.fecha_pago);
+
+      if (isPaid) {
+        montoDescontado += cMonto;
+        cuotasPagadas += 1;
+      } else {
+        montoPendiente += cMonto;
+      }
+    }
+    cuotasPendientes = Math.max(0, rawCuotas.length - cuotasPagadas);
+    montoDescontado = Math.round(montoDescontado);
+    montoPendiente = Math.round(montoPendiente);
+  } else {
+    const rawCuotasPagadas =
+      (solicitud as Record<string, unknown>).cuotas_pagadas ??
+      (solicitud as Record<string, unknown>).numero_cuotas_pagadas ??
+      (solicitud as Record<string, unknown>).cuotas_liberadas ??
+      (solicitud as Record<string, unknown>).cuotasPagadas;
+
+    const rawDescontado =
+      (solicitud as Record<string, unknown>).monto_descontado ??
+      (solicitud as Record<string, unknown>).total_descontado ??
+      (solicitud as Record<string, unknown>).monto_liberado ??
+      (solicitud as Record<string, unknown>).monto_pagado;
+
+    const rawPendiente =
+      (solicitud as Record<string, unknown>).monto_pendiente ??
+      (solicitud as Record<string, unknown>).total_pendiente ??
+      (solicitud as Record<string, unknown>).saldo_pendiente;
+
+    if (rawCuotasPagadas !== undefined && rawCuotasPagadas !== null) {
+      cuotasPagadas = Math.min(
+        installments,
+        Math.max(0, Number(rawCuotasPagadas) || 0),
+      );
+      cuotasPendientes = Math.max(0, installments - cuotasPagadas);
+      if (rawDescontado !== undefined) {
+        montoDescontado = Math.round(Number(rawDescontado) || 0);
+        montoPendiente =
+          rawPendiente !== undefined
+            ? Math.round(Number(rawPendiente) || 0)
+            : Math.max(0, safeAmount - montoDescontado);
+      } else {
+        montoDescontado = Math.round(
+          (safeAmount / installments) * cuotasPagadas,
+        );
+        montoPendiente = Math.max(0, safeAmount - montoDescontado);
+      }
+    } else if (rawDescontado !== undefined && rawDescontado !== null) {
+      montoDescontado = Math.round(Number(rawDescontado) || 0);
+      montoPendiente =
+        rawPendiente !== undefined
+          ? Math.round(Number(rawPendiente) || 0)
+          : Math.max(0, safeAmount - montoDescontado);
+      cuotasPagadas = Math.min(
+        installments,
+        Math.round((montoDescontado / safeAmount) * installments),
+      );
+      cuotasPendientes = Math.max(0, installments - cuotasPagadas);
+    } else if (rawEstado === "pagado") {
+      montoDescontado = safeAmount;
+      montoPendiente = 0;
+      cuotasPagadas = installments;
+      cuotasPendientes = 0;
+    } else if (rawEstado === "rechazado" || rawEstado === "no_aprobado") {
+      montoDescontado = 0;
+      montoPendiente = 0;
+      cuotasPagadas = 0;
+      cuotasPendientes = 0;
+    } else {
+      montoDescontado = 0;
+      montoPendiente = safeAmount;
+      cuotasPagadas = 0;
+      cuotasPendientes = installments;
+    }
+  }
+
   return {
     id,
     amount: safeAmount,
@@ -140,6 +236,10 @@ export function mapSolicitudToHistoryRecord(
     paymentEvidenceUrl: resolveSolicitudComprobanteUrl(
       solicitud as SolicitudAdelantoDTO,
     ),
+    montoDescontado,
+    montoPendiente,
+    cuotasPagadas,
+    cuotasPendientes,
   };
 }
 

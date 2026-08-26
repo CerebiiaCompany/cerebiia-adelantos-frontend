@@ -24,9 +24,15 @@ import {
 } from "@/shared/lib/soporteSeenStorage";
 import { formatRelative } from "@/shared/lib/dates";
 import { CheckCircle2, MessageSquare, Wallet, XCircle, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { EMPLEADO_ME_QUERY_KEY } from "@/features/advance/model/useEmpleadoMe";
+import { MI_SITUACION_FINANCIERA_QUERY_KEY } from "@/features/advance/model/useMiSituacionFinanciera";
 import type { AppNotification } from "./types";
 import { mapNotificacionDtosToApp } from "./mapStoredNotifications";
-import { useNotificationWebSocket } from "./useNotificationWebSocket";
+import {
+  useNotificationWebSocket,
+  type NotificationWebSocketEvent,
+} from "./useNotificationWebSocket";
 import { useNotificationSound } from "./useNotificationSound";
 
 export const NOTIFICACIONES_ME_QUERY_KEY = ["notificaciones", "me"] as const;
@@ -105,10 +111,74 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     Boolean(session?.accessToken) &&
     (appRole === "employee" || appRole === "employer" || isEmpleado);
 
-  const invalidate = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
-    void queryClient.invalidateQueries({ queryKey: REPORTES_DATOS_QUERY_KEY });
-  }, [queryClient]);
+  // Focus Revalidation: cuando el empleado regresa a la pestaña o ventana
+  useEffect(() => {
+    if (!enabled || (!isEmpleado && appRole !== "employee")) return;
+
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        void queryClient.invalidateQueries({ queryKey: EMPLEADO_ME_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: MI_SITUACION_FINANCIERA_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: SOLICITUDES_ADELANTO_QUERY_KEY });
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [enabled, isEmpleado, appRole, queryClient]);
+
+  const invalidate = useCallback(
+    (eventData?: NotificationWebSocketEvent) => {
+      void queryClient.invalidateQueries({ queryKey: NOTIFICACIONES_ME_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: REPORTES_DATOS_QUERY_KEY });
+
+      const reason =
+        eventData?.reason ??
+        eventData?.payload?.reason ??
+        (eventData?.type === "cuota_liberada" ? "cuota_liberada" : undefined);
+      const isCuotaLiberada =
+        reason === "cuota_liberada" || reason === "pago_liberado";
+
+      if (isEmpleado || appRole === "employee") {
+        // Revalidación en tiempo real del saldo disponible, situación financiera e historial de cuotas
+        void queryClient.invalidateQueries({ queryKey: EMPLEADO_ME_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: MI_SITUACION_FINANCIERA_QUERY_KEY });
+        void queryClient.invalidateQueries({ queryKey: SOLICITUDES_ADELANTO_QUERY_KEY });
+
+        if (isCuotaLiberada) {
+          const desc =
+            (typeof eventData?.payload?.message === "string" && eventData.payload.message) ||
+            (typeof eventData?.message === "string" && eventData.message) ||
+            "Se ha registrado el pago de tu cuota de nómina y tu saldo para solicitar adelantos ha aumentado.";
+
+          toast.success("¡Cupo disponible actualizado!", {
+            description: desc,
+            duration: 6000,
+          });
+        }
+      } else if (appRole === "employer") {
+        // Revalidación para la empresa: listado de empleados, cartera y retenciones
+        if (isCuotaLiberada) {
+          void queryClient.invalidateQueries({ queryKey: ["empleados"] });
+
+          const desc =
+            (typeof eventData?.payload?.message === "string" && eventData.payload.message) ||
+            (typeof eventData?.message === "string" && eventData.message) ||
+            "Se ha registrado la liberación de cuotas de nómina para tus empleados.";
+
+          toast.success("¡Liberación de cuotas procesada!", {
+            description: desc,
+            duration: 6000,
+          });
+        }
+      }
+    },
+    [queryClient, isEmpleado, appRole],
+  );
 
   const { isConnected: wsConnected } = useNotificationWebSocket({
     enabled,
