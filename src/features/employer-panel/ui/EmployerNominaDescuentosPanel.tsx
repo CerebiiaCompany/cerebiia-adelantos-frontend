@@ -153,41 +153,44 @@ export function EmployerNominaDescuentosPanel({
         />
       ) : (
         <>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="relative overflow-hidden rounded-xl border border-border/60 bg-muted/20 p-4 sm:px-4 sm:py-3">
+              <Receipt className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-16 w-16 sm:h-20 sm:w-20 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Total a descontar
               </p>
               <AnimatedCurrency
                 value={totalDescontar}
-                className="mt-1 font-display text-xl font-bold text-foreground"
+                className="mt-1 font-display text-lg sm:text-xl font-bold tracking-tight text-foreground"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {totalDescontar === 0
-                  ? "Al día — No hay cuotas pendientes"
-                  : `${cuotasPendientes} cuota${cuotasPendientes === 1 ? "" : "s"} pendiente${cuotasPendientes === 1 ? "" : "s"} por descontar`}
+                  ? "Al día — Todos los adelantos han sido descontados"
+                  : `${cuotasPendientes} cuota${cuotasPendientes === 1 ? "" : "s"} pendiente${cuotasPendientes === 1 ? "" : "s"}`}
               </p>
             </div>
-            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="relative overflow-hidden rounded-xl border border-border/60 bg-muted/20 p-4 sm:px-4 sm:py-3">
+              <Receipt className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-16 w-16 sm:h-20 sm:w-20 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Empleados con descuento
               </p>
-              <p className="mt-1 font-display text-xl font-bold text-foreground">
+              <p className="mt-1 font-display text-lg sm:text-xl font-bold tracking-tight text-foreground">
                 {empleadosConDescuento}
               </p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                de {resumen.length} empleado{resumen.length === 1 ? "" : "s"} con cuotas este mes
+              <p className="mt-1 text-xs text-muted-foreground">
+                de {resumen.length} empleado{resumen.length === 1 ? "" : "s"} en la nómina de este mes
               </p>
             </div>
-            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <div className="relative overflow-hidden rounded-xl border border-border/60 bg-muted/20 p-4 sm:px-4 sm:py-3">
+              <Receipt className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-16 w-16 sm:h-20 sm:w-20 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Cuotas del mes
               </p>
-              <p className="mt-1 font-display text-xl font-bold text-foreground">
+              <p className="mt-1 font-display text-lg sm:text-xl font-bold tracking-tight text-foreground">
                 {cuotasDelMes}
               </p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                {cuotasPendientes} pendiente{cuotasPendientes === 1 ? "" : "s"} · {cuotasDescontadas} descontada{cuotasDescontadas === 1 ? "" : "s"}
+              <p className="mt-1 text-xs text-muted-foreground">
+                {cuotasPendientes} pendientes · {cuotasDescontadas} descontadas
               </p>
             </div>
           </div>

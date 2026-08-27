@@ -10,9 +10,9 @@ export function AppLayout() {
   const location = useLocation();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-svh max-h-svh overflow-hidden">
       <AppSidebar />
-      <SidebarInset className="relative min-w-0 overflow-hidden bg-background">
+      <SidebarInset className="relative min-w-0 h-svh max-h-svh flex flex-col overflow-hidden bg-background">
         <AppAnimatedBackground />
         <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-primary/10 bg-shell/95 px-4 backdrop-blur-md">
           <SidebarTrigger />
@@ -22,8 +22,7 @@ export function AppLayout() {
           </div>
         </header>
         <div
-          key={location.pathname}
-          className="animate-app-page-enter relative z-10 flex-1 overflow-auto p-4 md:p-6"
+          className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 sm:p-6 md:p-10 w-full min-w-0"
         >
           <Outlet />
         </div>

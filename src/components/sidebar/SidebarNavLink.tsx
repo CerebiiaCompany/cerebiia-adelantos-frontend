@@ -18,7 +18,7 @@ export const SidebarNavLink = forwardRef<HTMLAnchorElement, SidebarNavLinkProps>
     { item, collapsed = false, badgeCount = 0, badgeLabel },
     ref,
   ) {
-    const { isMobile, setOpenMobile } = useSidebar();
+    const { isMobile, setOpenMobile, setOpen } = useSidebar();
     const isActive = Boolean(
       useMatch({ path: item.url, end: item.end ?? item.url === "/" }),
     );
@@ -29,9 +29,7 @@ export const SidebarNavLink = forwardRef<HTMLAnchorElement, SidebarNavLinkProps>
         to={item.url}
         end={item.end ?? item.url === "/"}
         onClick={() => {
-          if (isMobile) {
-            setOpenMobile(false);
-          }
+          setOpenMobile(false);
         }}
         className={cn(
           "app-sidebar-nav-link group relative flex items-center text-muted-foreground",

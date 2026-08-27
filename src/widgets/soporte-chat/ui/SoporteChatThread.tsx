@@ -224,30 +224,30 @@ export function SoporteChatThread({
                 </div>
               ) : null}
 
-              <div className="max-w-[85%] space-y-1.5">
+              <div className="max-w-[85%] sm:max-w-[78%] min-w-0 space-y-1.5 break-words">
                 <div
                   className={cn(
                     "flex items-center gap-2 px-1",
                     isFromEmpleado ? "justify-end" : "justify-start",
                   )}
                 >
-                  <p className="text-xs font-semibold text-foreground">
+                  <p className="text-xs font-semibold text-foreground truncate">
                     {senderName}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground shrink-0">
                     {isFromEmpleado ? "Empleado" : "Empresa"}
                   </p>
                 </div>
 
                 <div
                   className={cn(
-                    "rounded-2xl px-3.5 py-2.5 text-sm shadow-sm",
+                    "rounded-2xl px-3.5 py-2.5 text-sm shadow-sm break-words overflow-hidden",
                     isFromEmpleado
                       ? "rounded-tr-md bg-primary text-primary-foreground"
                       : "rounded-tl-md border border-border/60 bg-background text-foreground",
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{msg.mensaje}</p>
+                  <p className="whitespace-pre-wrap break-words">{msg.mensaje}</p>
                   {renderEvidencias(msg.evidencias, isFromEmpleado)}
                 </div>
 
