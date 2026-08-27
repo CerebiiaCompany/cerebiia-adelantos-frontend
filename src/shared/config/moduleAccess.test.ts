@@ -42,6 +42,7 @@ describe("moduleAccess", () => {
       "employer.seguimientoCuotas",
       "employer.historialMovimientos",
       "employer.retencionesCierres",
+      "employer.notificaciones",
       "employer.auditorias",
       "employer.soportes",
     ]);

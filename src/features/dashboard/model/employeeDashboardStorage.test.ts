@@ -21,14 +21,15 @@ describe("recordEmployeeAdvance", () => {
     });
   });
 
-  it("crea una notificación al registrar un adelanto", () => {
-    recordEmployeeAdvance("emp-42", 250000);
+  it("registra un adelanto en las métricas del empleado", () => {
+    const result = recordEmployeeAdvance("emp-42", 250000);
 
-    const notifications = JSON.parse(
-      localStorage.getItem("cerebiia:employee-notifications:emp-42") ?? "[]",
+    const saved = JSON.parse(
+      localStorage.getItem("cerebiia:employee-dashboard:emp-42") ?? "{}",
     );
 
-    expect(notifications).toHaveLength(1);
-    expect(notifications[0].title).toBe("Adelanto solicitado");
+    expect(result.totalAdvancedThisMonth).toBe(250000);
+    expect(saved.totalAdvancedThisMonth).toBe(250000);
+    expect(saved.activity).toHaveLength(1);
   });
 });

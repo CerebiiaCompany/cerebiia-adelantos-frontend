@@ -81,7 +81,7 @@ export default function Dashboard() {
   } = dashboard;
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="space-y-6">
       <PageHeader
         icon={greeting.icon}
         title={greeting.title}
@@ -105,7 +105,7 @@ export default function Dashboard() {
 
       {primeraCuotaGratisDisponible ? <FirstFreeAdvanceBanner /> : null}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Disponible para adelanto"
           value={
@@ -468,12 +468,19 @@ function StatCard({
   return (
     <div
       className={cn(
-        "glass-card group/stat-card p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+        "glass-card group/stat-card relative overflow-hidden rounded-xl p-5 md:p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
         accent && "glow-border",
       )}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">
+      <div
+        className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06] flex items-center justify-center [&_svg]:h-full [&_svg]:w-full [&_svg]:stroke-[1.25]"
+        aria-hidden
+      >
+        {icon}
+      </div>
+
+      <div className="relative mb-3 flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </span>
         {onIconClick ? (
@@ -481,17 +488,27 @@ function StatCard({
             type="button"
             onClick={onIconClick}
             aria-label={iconAriaLabel ?? "Abrir detalle"}
-            className={iconWrapperClass}
+            className={cn(
+              iconWrapperClass,
+              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5",
+            )}
           >
             {iconContent}
           </button>
         ) : (
-          <div className={iconWrapperClass}>{iconContent}</div>
+          <div
+            className={cn(
+              iconWrapperClass,
+              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5",
+            )}
+          >
+            {iconContent}
+          </div>
         )}
       </div>
       <div
         className={cn(
-          "font-display text-3xl font-bold",
+          "relative font-display text-2xl sm:text-3xl font-bold tracking-tight",
           accent ? "text-gradient" : "text-foreground",
           trend === "up" && "text-primary",
           valueClassName,
@@ -499,7 +516,7 @@ function StatCard({
       >
         {value}
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
+      <div className="relative mt-1 text-xs text-muted-foreground">{sub}</div>
     </div>
   );
 }

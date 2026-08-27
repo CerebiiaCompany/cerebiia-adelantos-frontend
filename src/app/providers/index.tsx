@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AuthProvider } from "@/features/auth";
 import { NotificationsProvider } from "@/features/notifications";
+import { useMobileKeyboardHandler } from "@/shared/hooks/useMobileKeyboardHandler";
 import type { ReactNode } from "react";
 
 function shouldRetryQuery(failureCount: number, error: unknown): boolean {
@@ -28,6 +29,8 @@ const queryClient = new QueryClient({
 });
 
 export function Providers({ children }: { children: ReactNode }) {
+  useMobileKeyboardHandler();
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

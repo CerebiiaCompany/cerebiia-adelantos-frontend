@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { useProfileView } from "@/features/auth";
 import { useReportesDatoIncorrectoEmpresa } from "@/features/employer-panel/model/useReportesDatoIncorrectoEmpresa";
 import { useResponderReporteDatoIncorrecto } from "@/features/employer-panel/model/useResponderReporteDatoIncorrecto";
@@ -136,45 +135,64 @@ export function ReportesDatosIncorrectosTable() {
             : "No hay resultados para tu búsqueda."}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border/60">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="border-b border-border/60 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="w-10 px-3 py-3" />
-                  <th className="px-3 py-3 font-medium">Fecha</th>
-                  <th className="px-3 py-3 font-medium">Empleado</th>
-                  <th className="px-3 py-3 font-medium">Datos reportados</th>
-                  <th className="px-3 py-3 font-medium">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((row) => {
-                  const isExpanded = expandedId === row.id;
-                  return (
-                    <ReportRow
-                      key={row.id}
-                      row={row}
-                      isExpanded={isExpanded}
-                      empresaNombreFallback={empresaFallback}
-                      onToggle={() =>
-                        setExpandedId(isExpanded ? null : row.id)
-                      }
-                    />
-                  );
-                })}
-              </tbody>
-            </table>
+        <>
+          {/* Vista Móvil: Tarjetas responsivas sin overflow y con chat adaptado */}
+          <div className="space-y-3 md:hidden">
+            {filtered.map((row) => {
+              const isExpanded = expandedId === row.id;
+              return (
+                <MobileReportCard
+                  key={row.id}
+                  row={row}
+                  isExpanded={isExpanded}
+                  empresaNombreFallback={empresaFallback}
+                  onToggle={() => setExpandedId(isExpanded ? null : row.id)}
+                />
+              );
+            })}
           </div>
-        </div>
+
+          {/* Vista Escritorio: Tabla de reportes con vista expandible */}
+          <div className="hidden overflow-hidden rounded-xl border border-border/60 md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead className="border-b border-border/60 bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="w-10 px-3 py-3" />
+                    <th className="px-3 py-3 font-medium">Fecha</th>
+                    <th className="px-3 py-3 font-medium">Empleado</th>
+                    <th className="px-3 py-3 font-medium">Datos reportados</th>
+                    <th className="px-3 py-3 font-medium">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((row) => {
+                    const isExpanded = expandedId === row.id;
+                    return (
+                      <DesktopReportRow
+                        key={row.id}
+                        row={row}
+                        isExpanded={isExpanded}
+                        empresaNombreFallback={empresaFallback}
+                        onToggle={() =>
+                          setExpandedId(isExpanded ? null : row.id)
+                        }
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
 
       {totalCount > pageSize ? (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground text-center sm:text-left">
             Página {page} de {totalPages} · {totalCount} reportes
           </p>
-          <div className="flex gap-2">
+          <div className="flex justify-center gap-2">
             <Button
               type="button"
               variant="outline"
@@ -200,7 +218,103 @@ export function ReportesDatosIncorrectosTable() {
   );
 }
 
-function ReportRow({
+/** Formulario de respuesta común para Empresa */
+function EmployerReplyForm({
+  rowId,
+  isResponding,
+  isFinalizing,
+  onResponder,
+  onFinalizar,
+}: {
+  rowId: string;
+  isResponding: boolean;
+  isFinalizing: boolean;
+  onResponder: (text: string) => void;
+  onFinalizar: (conclusion?: string) => void;
+}) {
+  const [respuesta, setRespuesta] = useState("");
+
+  const handleResponder = () => {
+    const text = respuesta.trim();
+    if (text.length < 3) {
+      toast.error("La respuesta debe tener al menos 3 caracteres.");
+      return;
+    }
+    onResponder(text);
+    setRespuesta("");
+  };
+
+  const handleFinalizar = () => {
+    onFinalizar(respuesta.trim() || undefined);
+    setRespuesta("");
+  };
+
+  return (
+    <div className="space-y-3 rounded-xl border border-border/60 bg-background/95 p-3.5 sm:p-4 shadow-sm w-full">
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <p className="text-xs font-semibold text-foreground">
+          Responder al empleado en este chat
+        </p>
+        <span className="text-[11px] text-muted-foreground">
+          Chat activo
+        </span>
+      </div>
+
+      <Textarea
+        value={respuesta}
+        onChange={(event) => setRespuesta(event.target.value)}
+        placeholder="Indica cómo van a corregir el dato, solicita detalles o confirma la solución..."
+        className="min-h-[85px] w-full resize-none text-sm rounded-lg"
+      />
+
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between pt-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full sm:w-auto border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400 justify-center"
+          disabled={isResponding || isFinalizing}
+          onClick={handleFinalizar}
+        >
+          {isFinalizing ? "Finalizando..." : "Marcar caso como finalizado"}
+        </Button>
+
+        <button
+          type="button"
+          disabled={
+            isResponding ||
+            isFinalizing ||
+            respuesta.trim().length < 3
+          }
+          onClick={handleResponder}
+          className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#6366f1] to-[#2563eb] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-200 hover:from-[#6d28d9] hover:via-[#4f46e5] hover:to-[#1d4ed8] hover:shadow-lg hover:shadow-indigo-500/35 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+        >
+          {isResponding ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Enviando...
+            </span>
+          ) : (
+            <>
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-4 w-4 shrink-0 -rotate-12 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+              <span>Enviar respuesta</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Tarjeta responsiva para Móvil en Panel Empresa */
+function MobileReportCard({
   row,
   isExpanded,
   empresaNombreFallback,
@@ -211,7 +325,6 @@ function ReportRow({
   empresaNombreFallback: string;
   onToggle: () => void;
 }) {
-  const [respuesta, setRespuesta] = useState("");
   const { mutate: responder, isPending: isResponding } =
     useResponderReporteDatoIncorrecto();
   const { mutate: finalizar, isPending: isFinalizing } =
@@ -222,18 +335,12 @@ function ReportRow({
     row.estado === "finalizado" ||
     Boolean(row.finalizado);
 
-  const handleResponder = () => {
-    const text = respuesta.trim();
-    if (text.length < 3) {
-      toast.error("La respuesta debe tener al menos 3 caracteres.");
-      return;
-    }
+  const handleResponder = (text: string) => {
     responder(
       { reporteId: row.id, respuesta: text },
       {
         onSuccess: () => {
           toast.success("Respuesta enviada al empleado.");
-          setRespuesta("");
         },
         onError: (error) => {
           const message =
@@ -246,16 +353,170 @@ function ReportRow({
     );
   };
 
-  const handleFinalizar = () => {
+  const handleFinalizar = (conclusion?: string) => {
     finalizar(
       {
         reporteId: row.id,
-        conclusion: respuesta.trim() || undefined,
+        conclusion,
       },
       {
         onSuccess: () => {
           toast.success("Chat de soporte marcado como finalizado.");
-          setRespuesta("");
+        },
+        onError: (error) => {
+          const message =
+            error instanceof ApiError
+              ? error.message
+              : "No pudimos finalizar la solicitud de soporte.";
+          toast.error(message);
+        },
+      },
+    );
+  };
+
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border border-border/70 bg-card p-3.5 shadow-sm transition-colors",
+        isExpanded && "border-primary/40 bg-muted/10",
+      )}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
+        className="flex cursor-pointer items-start justify-between gap-2"
+      >
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex rounded-md px-2 py-0.5 text-xs font-medium",
+                estadoTone(row.estado),
+              )}
+            >
+              {ESTADO_LABELS[row.estado] ?? row.estado}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {formatDateTime(row.created_at)}
+            </span>
+          </div>
+
+          <div className="font-semibold text-sm text-foreground truncate">
+            {row.empleado_nombre || "Empleado"}
+            {row.empleado_documento && (
+              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                (Doc. {row.empleado_documento})
+              </span>
+            )}
+          </div>
+
+          <p className="text-xs font-medium text-muted-foreground line-clamp-1">
+            <span className="font-normal">Reporta: </span>
+            {row.campos_reportados
+              .map((campo) => CAMPO_LABELS[campo] ?? campo)
+              .join(", ") || "—"}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background/80 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label={isExpanded ? "Ocultar chat" : "Ver chat"}
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+
+      {isExpanded && (
+        <div className="mt-3.5 space-y-3.5 border-t border-border/50 pt-3.5">
+          <SoporteChatThread
+            reporte={row}
+            empresaNombreFallback={empresaNombreFallback}
+          />
+
+          {!isFinalizado ? (
+            <EmployerReplyForm
+              rowId={row.id}
+              isResponding={isResponding}
+              isFinalizing={isFinalizing}
+              onResponder={handleResponder}
+              onFinalizar={handleFinalizar}
+            />
+          ) : (
+            <div className="rounded-xl border border-border/40 bg-background/50 p-3 text-center text-xs text-muted-foreground">
+              Caso finalizado. No requiere más respuestas.
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Fila para Escritorio en Panel Empresa */
+function DesktopReportRow({
+  row,
+  isExpanded,
+  empresaNombreFallback,
+  onToggle,
+}: {
+  row: ReporteDatoIncorrectoDTO;
+  isExpanded: boolean;
+  empresaNombreFallback: string;
+  onToggle: () => void;
+}) {
+  const { mutate: responder, isPending: isResponding } =
+    useResponderReporteDatoIncorrecto();
+  const { mutate: finalizar, isPending: isFinalizing } =
+    useFinalizarReporteDatoIncorrecto();
+
+  const isFinalizado =
+    row.estado === "resuelto" ||
+    row.estado === "finalizado" ||
+    Boolean(row.finalizado);
+
+  const handleResponder = (text: string) => {
+    responder(
+      { reporteId: row.id, respuesta: text },
+      {
+        onSuccess: () => {
+          toast.success("Respuesta enviada al empleado.");
+        },
+        onError: (error) => {
+          const message =
+            error instanceof ApiError
+              ? error.message
+              : "No pudimos enviar la respuesta.";
+          toast.error(message);
+        },
+      },
+    );
+  };
+
+  const handleFinalizar = (conclusion?: string) => {
+    finalizar(
+      {
+        reporteId: row.id,
+        conclusion,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Chat de soporte marcado como finalizado.");
         },
         onError: (error) => {
           const message =
@@ -326,66 +587,13 @@ function ReportRow({
             />
 
             {!isFinalizado ? (
-              <div className="space-y-3 rounded-xl border border-border/50 bg-background/90 p-3.5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-foreground">
-                    Responder al empleado en este chat
-                  </p>
-                  <span className="text-[11px] text-muted-foreground">
-                    El chat permanece activo hasta que lo finalices
-                  </span>
-                </div>
-
-                <Textarea
-                  value={respuesta}
-                  onChange={(event) => setRespuesta(event.target.value)}
-                  placeholder="Indica cómo van a corregir el dato, solicita detalles o confirma la solución..."
-                  className="min-h-[85px] resize-none text-sm"
-                />
-
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-400"
-                    disabled={isResponding || isFinalizing}
-                    onClick={handleFinalizar}
-                  >
-                    {isFinalizing ? "Finalizando..." : "Marcar caso como finalizado"}
-                  </Button>
-
-                  <button
-                    type="button"
-                    disabled={
-                      isResponding ||
-                      isFinalizing ||
-                      respuesta.trim().length < 3
-                    }
-                    onClick={handleResponder}
-                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7c3aed] via-[#6366f1] to-[#2563eb] px-5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-200 hover:from-[#6d28d9] hover:via-[#4f46e5] hover:to-[#1d4ed8] hover:shadow-lg hover:shadow-indigo-500/35 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-                  >
-                    {isResponding ? (
-                      <span className="inline-flex items-center gap-2">
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Enviando...
-                      </span>
-                    ) : (
-                      <>
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="h-4 w-4 shrink-0 -rotate-12 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                        </svg>
-                        <span>Enviar respuesta</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+              <EmployerReplyForm
+                rowId={row.id}
+                isResponding={isResponding}
+                isFinalizing={isFinalizing}
+                onResponder={handleResponder}
+                onFinalizar={handleFinalizar}
+              />
             ) : (
               <div className="rounded-xl border border-border/40 bg-background/50 p-3 text-center text-xs text-muted-foreground">
                 Caso finalizado. No requiere más respuestas.
