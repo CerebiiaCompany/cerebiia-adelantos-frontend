@@ -3,8 +3,11 @@ import {
   ArrowDownCircle,
   BookOpen,
   Calendar,
+  ChevronDown,
+  ChevronUp,
   RotateCcw,
   Search,
+  SlidersHorizontal,
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -161,6 +164,8 @@ export function MovementsLedgerTable() {
     }
   };
 
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+
   const emptyMessage =
     search.trim() || filtersActive
       ? "No hay movimientos que coincidan con tu búsqueda o filtros."
@@ -181,13 +186,38 @@ export function MovementsLedgerTable() {
                 disabled={isLoading}
               />
             </div>
-            <ExportReportButton
-              onClick={handleExport}
-              disabled={isLoading || filteredRecords.length === 0}
-            />
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              {/* Botón de Filtros en Móvil */}
+              <button
+                type="button"
+                onClick={() => setIsFiltersOpen((prev) => !prev)}
+                className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/80 px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm sm:hidden"
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
+                <span>Filtros</span>
+                {filtersActive && (
+                  <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
+                )}
+                {isFiltersOpen ? (
+                  <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+              </button>
+
+              <ExportReportButton
+                onClick={handleExport}
+                disabled={isLoading || filteredRecords.length === 0}
+              />
+            </div>
           </div>
 
-          <div className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            className={cn(
+              "grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2 lg:grid-cols-3",
+              isFiltersOpen ? "grid" : "hidden sm:grid",
+            )}
+          >
             <div className="space-y-2">
               <Label htmlFor="movement-filter-status">Estado</Label>
               <Select

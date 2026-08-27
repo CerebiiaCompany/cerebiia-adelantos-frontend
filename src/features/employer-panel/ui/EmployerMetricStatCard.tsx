@@ -58,18 +58,18 @@ export function EmployerMetricStatCard({
   return (
     <div
       className={cn(
-        "glass-card glow-border relative flex h-full flex-col overflow-hidden rounded-xl p-5",
+        "glass-card glow-border relative flex h-full flex-col overflow-hidden rounded-xl p-5 md:p-6",
         className,
       )}
     >
       <Icon
-        className="pointer-events-none absolute -bottom-3 -right-3 h-24 w-24 text-primary/[0.06]"
+        className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06]"
         strokeWidth={1.25}
         aria-hidden
       />
 
-      <div className="relative mb-3 flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <div className="relative mb-3 flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
           <Icon className="h-4 w-4 text-primary" strokeWidth={2.25} />
         </span>
@@ -77,15 +77,15 @@ export function EmployerMetricStatCard({
 
       <div className="relative">
         {isLoading ? (
-          <Skeleton className="h-9 w-16 rounded-lg" />
+          <Skeleton className="h-8 w-16 rounded-lg" />
         ) : hasError ? (
-          <p className="font-display text-3xl font-bold text-muted-foreground">
+          <p className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-muted-foreground">
             —
           </p>
         ) : (
           <AnimatedNumber
             value={value}
-            className="font-display text-3xl font-bold text-foreground"
+            className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
           />
         )}
         {hint && !isLoading && !hasError ? (

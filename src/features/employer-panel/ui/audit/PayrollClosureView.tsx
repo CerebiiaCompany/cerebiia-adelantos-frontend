@@ -213,9 +213,10 @@ export function PayrollClosureView() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-border/80 bg-background p-5 shadow-sm sm:p-6">
-          <div className="mb-4 flex items-start justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="relative overflow-hidden rounded-xl border border-border/80 bg-background p-5 shadow-sm sm:p-6">
+          <Calculator className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+          <div className="relative mb-4 flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Total pendiente a descontar en nómina
@@ -226,11 +227,11 @@ export function PayrollClosureView() {
                   : `Adelantos + comisiones + cuotas — ${snapshot.monthLabel}`}
               </p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/15 bg-primary/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10">
               <Calculator className="h-5 w-5 text-primary" strokeWidth={2.25} />
             </div>
           </div>
-          <div className="flex items-baseline gap-3">
+          <div className="relative flex items-baseline gap-3">
             <AnimatedCurrency
               value={snapshot.totalPending}
               className="font-display text-3xl font-bold text-gradient"
@@ -243,14 +244,15 @@ export function PayrollClosureView() {
             )}
           </div>
           {snapshot.totalPaid > 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="relative mt-2 text-xs text-muted-foreground">
               Total consolidado: {formatCOP(snapshot.totalPayrollDeductions)} · Saldado por liberación: {formatCOP(snapshot.totalPaid)}
             </p>
           )}
         </div>
 
-        <div className="rounded-xl border border-border/80 bg-background p-5 shadow-sm sm:p-6">
-          <div className="mb-4 flex items-start justify-between">
+        <div className="relative overflow-hidden rounded-xl border border-border/80 bg-background p-5 shadow-sm sm:p-6">
+          <ArrowRightLeft className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+          <div className="relative mb-4 flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
                 Monto de reembolso al proveedor
@@ -261,14 +263,14 @@ export function PayrollClosureView() {
                   : `Pendiente de pago al proveedor para liberar cuotas`}
               </p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[hsl(260_70%_50%)]/20 bg-[hsl(260_70%_50%)]/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border border-[hsl(260_70%_50%)]/20 bg-[hsl(260_70%_50%)]/10">
               <ArrowRightLeft
                 className="h-5 w-5 text-[hsl(260_70%_50%)]"
                 strokeWidth={2.25}
               />
             </div>
           </div>
-          <div className="flex items-baseline gap-3">
+          <div className="relative flex items-baseline gap-3">
             <AnimatedCurrency
               value={snapshot.providerReimbursement}
               className="font-display text-3xl font-bold text-gradient"
@@ -281,7 +283,7 @@ export function PayrollClosureView() {
             )}
           </div>
           {snapshot.totalPaid > 0 && (
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="relative mt-2 text-xs text-muted-foreground">
               Total reembolsado: {formatCOP(snapshot.totalPaid)}
             </p>
           )}

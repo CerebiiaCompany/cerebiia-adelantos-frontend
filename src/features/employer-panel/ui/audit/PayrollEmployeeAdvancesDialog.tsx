@@ -243,13 +243,14 @@ export function PayrollEmployeeAdvancesDialog({
           </DialogHeader>
 
           {/* 4 Cards Superiores de Resumen */}
-          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-4 shadow-sm">
-              <div className="flex items-center justify-between text-xs font-medium text-primary">
-                <span className="uppercase tracking-wider">Total a cobrar este mes</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-primary/[0.03] p-4 shadow-sm">
+              <Wallet className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-16 w-16 sm:h-20 sm:w-20 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+              <div className="relative flex items-center justify-between text-xs font-medium text-primary">
+                <span className="uppercase tracking-wider">Total a cobrar</span>
                 <Wallet className="h-4 w-4" />
               </div>
-              <div className="mt-2">
+              <div className="relative mt-2">
                 <AnimatedCurrency
                   value={totalCobrarEsteMes}
                   className="font-display text-2xl font-bold tracking-tight text-primary"
@@ -257,12 +258,13 @@ export function PayrollEmployeeAdvancesDialog({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-background/80 p-4 shadow-sm">
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+            <div className="relative overflow-hidden rounded-xl border border-border/80 bg-background/80 p-4 shadow-sm">
+              <Coins className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-16 w-16 sm:h-20 sm:w-20 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+              <div className="relative flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span className="uppercase tracking-wider">Total solicitado</span>
                 <Coins className="h-4 w-4 text-emerald-500" />
               </div>
-              <div className="mt-2">
+              <div className="relative mt-2">
                 <AnimatedCurrency
                   value={totalSolicitado}
                   className="font-display text-2xl font-bold tracking-tight text-foreground"
@@ -270,22 +272,24 @@ export function PayrollEmployeeAdvancesDialog({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-background/80 p-4 shadow-sm">
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+            <div className="relative overflow-hidden rounded-xl border border-border/80 bg-background/80 p-4 shadow-sm">
+              <Users className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-16 w-16 sm:h-20 sm:w-20 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+              <div className="relative flex items-center justify-between text-xs font-medium text-muted-foreground">
                 <span className="uppercase tracking-wider">Adelantos</span>
                 <Users className="h-4 w-4 text-blue-500" />
               </div>
-              <div className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">
+              <div className="relative mt-2 font-display text-2xl font-bold tracking-tight text-foreground">
                 {filteredRows.length}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border/80 bg-background/80 p-4 shadow-sm">
-              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-                <span className="uppercase tracking-wider">Cuotas en periodo</span>
+            <div className="relative overflow-hidden rounded-xl border border-border/80 bg-background/80 p-4 shadow-sm">
+              <Layers className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-16 w-16 sm:h-20 sm:w-20 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+              <div className="relative flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span className="uppercase tracking-wider">Cuotas periodo</span>
                 <Layers className="h-4 w-4 text-purple-500" />
               </div>
-              <div className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">
+              <div className="relative mt-2 font-display text-2xl font-bold tracking-tight text-foreground">
                 {filteredRows.reduce((sum, r) => sum + r.totalInstallments, 0)}
               </div>
             </div>

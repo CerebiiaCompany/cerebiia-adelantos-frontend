@@ -86,12 +86,20 @@ export function EmployerAdvanceAdoptionCard({
   const hasError = hasMetricasError || advancesQuery.isError;
 
   return (
-    <div className={cn("glass-card glow-border flex h-full flex-col rounded-xl p-5", className)}>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-muted-foreground">
+    <div className={cn("glass-card glow-border relative overflow-hidden flex h-full flex-col rounded-xl p-5 md:p-6", className)}>
+      <PieChartIcon
+        className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06]"
+        strokeWidth={1.25}
+        aria-hidden
+      />
+
+      <div className="relative mb-3 flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Empleados con adelanto
         </p>
-        <PieChartIcon className="h-4 w-4 text-primary" strokeWidth={2.25} />
+        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
+          <PieChartIcon className="h-4 w-4 text-primary" strokeWidth={2.25} />
+        </span>
       </div>
 
       {isLoading ? (

@@ -47,3 +47,5 @@ export {
   resolveEmpresaId,
   sortAdvancesByDate,
 } from "./model/mappers";
+export * from "./model/employerUnifiedAuditTypes";
+export * from "./model/deriveEmployerUnifiedAudit";

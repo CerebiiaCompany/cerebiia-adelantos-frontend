@@ -101,60 +101,63 @@ export function LoanInstallmentsTable() {
   return (
     <div className="space-y-6">
       {/* Cards informativas de saldo pendiente y totales por cuotas */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="glass-card glow-border rounded-xl p-4 sm:p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="glass-card glow-border relative overflow-hidden rounded-xl p-5">
+          <Receipt className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+          <div className="relative mb-3 flex items-center justify-between gap-2">
+            <p className="text-xs uppercase font-semibold tracking-wider text-muted-foreground">
               Total a descontar en cuotas
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
+            <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
               <Receipt className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2">
+          <div className="relative">
             <AnimatedCurrency
               value={totalSaldoPendiente}
-              className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+              className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
             />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="relative mt-1 text-xs text-muted-foreground">
             {totalSaldoPendiente === 0
-              ? "Paz y salvo — Todas las cuotas han sido saldadas"
+              ? "Paz y salvo — Todas las cuotas saldadas"
               : `${totalCuotasPendientes} cuota${totalCuotasPendientes === 1 ? "" : "s"} restante${totalCuotasPendientes === 1 ? "" : "s"} por descontar`}
           </p>
         </div>
 
-        <div className="glass-card glow-border rounded-xl p-4 sm:p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="glass-card glow-border relative overflow-hidden rounded-xl p-5">
+          <Wallet className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+          <div className="relative mb-3 flex items-center justify-between gap-2">
+            <p className="text-xs uppercase font-semibold tracking-wider text-muted-foreground">
               Total solicitado
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+            <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
               <Wallet className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2">
+          <div className="relative">
             <AnimatedCurrency
               value={totalSolicitado}
-              className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+              className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground"
             />
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="relative mt-1 text-xs text-muted-foreground">
             Monto principal total de los adelantos multi-cuota
           </p>
         </div>
 
-        <div className="glass-card glow-border rounded-xl p-4 sm:p-5 sm:col-span-2 lg:col-span-1">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="sm:col-span-2 lg:col-span-1 glass-card glow-border relative overflow-hidden rounded-xl p-5">
+          <CalendarClock className="pointer-events-none absolute -bottom-3 -right-2 sm:-bottom-4 sm:-right-3 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 text-primary/[0.04] dark:text-primary/[0.06]" strokeWidth={1.25} aria-hidden />
+          <div className="relative mb-3 flex items-center justify-between gap-2">
+            <p className="text-xs uppercase font-semibold tracking-wider text-muted-foreground">
               Planes auditados
             </p>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <CalendarClock className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <div className="relative flex items-baseline gap-2">
+            <span className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {filteredRecords.length}
             </span>
             <span className="text-xs font-medium text-muted-foreground">
@@ -162,7 +165,7 @@ export function LoanInstallmentsTable() {
               {filteredRecords.length === 1 ? "" : "s"}
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="relative mt-1 text-xs text-muted-foreground">
             {installmentsFilter === "all"
               ? "Planes de 2 y 3 cuotas"
               : `Planes de ${installmentsFilter} cuotas`}

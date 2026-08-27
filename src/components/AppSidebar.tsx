@@ -1,6 +1,6 @@
 import { PanelLeftClose } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuthAccess } from "@/features/auth";
 import { useUnreadAuditoriaCambiosCount } from "@/features/auditoria-cambios";
 import { useUnreadSoporteCount } from "@/features/soporte";
@@ -54,7 +54,7 @@ function AppSidebarContent({
   navItems,
   sectionLabel,
 }: Required<AppSidebarProps>) {
-  const { state, isMobile, setOpenMobile } = useSidebar();
+  const { state, isMobile, openMobile, setOpenMobile, setOpen } = useSidebar();
   const layout = useSidebarLayout();
   const { appRole } = useAuthAccess();
   const unreadSoporteCount = useUnreadSoporteCount();
@@ -64,6 +64,22 @@ function AppSidebarContent({
   const isDrawer = layout === "drawer";
   const collapsed = layout === "panel" && state === "collapsed";
   const location = useLocation();
+
+  // Auto-cierre del sidebar cuando el usuario hace scroll en el contenido
+  useEffect(() => {
+    if (!openMobile) return;
+
+    const handleScroll = () => {
+      setOpenMobile(false);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    document.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
+    };
+  }, [openMobile, setOpenMobile]);
 
   const visibleNavItems = useMemo(
     () =>

@@ -1,36 +1,25 @@
-import { useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  AuditoriaCambiosTable,
-  useAuditoriaCambiosEmpresa,
-} from "@/features/auditoria-cambios";
-
-const PAGE_SIZE = 20;
+import { useEmployerUnifiedAuditData } from "@/features/employer-panel/model/useEmployerUnifiedAuditData";
+import { EmployerUnifiedAuditTable } from "@/features/employer-panel/ui/audit/EmployerUnifiedAuditTable";
 
 export default function EmployerAuditoriasPage() {
-  const [page, setPage] = useState(1);
-  const query = useAuditoriaCambiosEmpresa({ page, page_size: PAGE_SIZE });
+  const { records, isLoading, isError, refetch } =
+    useEmployerUnifiedAuditData();
 
   return (
     <div className="mx-auto max-w-6xl animate-fade-in space-y-6">
       <PageHeader
         icon={ClipboardList}
         title="Auditorías"
-        description="Historial de cambios en los datos de tus empleados."
+        description="Historial de eventos, solicitudes de empleados, liberaciones de cuotas y cambios de configuración."
       />
-      <AuditoriaCambiosTable
-        records={query.data?.results ?? []}
-        isLoading={query.isLoading}
-        isError={query.isError}
-        onRetry={() => query.refetch()}
-        showEmployeeColumn
-        trackUnread
-        emptyMessage="Todavía no hay cambios de datos registrados para tu empresa."
-        page={page}
-        pageSize={PAGE_SIZE}
-        totalCount={query.data?.count ?? 0}
-        onPageChange={setPage}
+
+      <EmployerUnifiedAuditTable
+        records={records}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
       />
     </div>
   );
