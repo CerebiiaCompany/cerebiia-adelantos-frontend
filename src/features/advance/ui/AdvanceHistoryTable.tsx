@@ -90,6 +90,17 @@ function BankingCell({ record }: { record: AdvanceHistoryRecord }) {
 }
 
 function TransactionCostCell({ record }: { record: AdvanceHistoryRecord }) {
+  if (record.transactionFeeAmount === 0) {
+    return (
+      <div className="text-right">
+        <p className="font-semibold text-emerald-600">Gratis</p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">
+          Primer adelanto
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="text-right">
       <AnimatedCurrency
@@ -392,7 +403,7 @@ export function AdvanceHistoryTable({
                   Monto
                 </TableHead>
                 <TableHead className={cn(TABLE_HEAD_CLASS, "text-right")}>
-                  Valor a recibir
+                  Monto recibido
                 </TableHead>
                 <TableHead className={TABLE_HEAD_CLASS}>Cuotas</TableHead>
                 <TableHead className={TABLE_HEAD_CLASS}>Cuenta destino</TableHead>
@@ -429,11 +440,16 @@ export function AdvanceHistoryTable({
                     <AnimatedCurrency value={record.amount} duration={500} />
                   </TableCell>
                   <TableCell className={cn(TABLE_CELL_CLASS, "text-right")}>
-                    <AnimatedCurrency
-                      value={record.netAmount}
-                      className="font-display text-base font-bold tabular-nums text-primary"
-                      duration={500}
-                    />
+                    <div className="space-y-0.5">
+                      <AnimatedCurrency
+                        value={record.netAmount}
+                        className="font-display text-base font-bold tabular-nums text-primary"
+                        duration={500}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        Completo
+                      </p>
+                    </div>
                   </TableCell>
                   <TableCell
                     className={cn(
@@ -525,13 +541,16 @@ export function AdvanceHistoryTable({
               </div>
               <div className="text-right">
                 <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Valor a recibir
+                  Monto recibido
                 </p>
                 <AnimatedCurrency
                   value={record.netAmount}
                   className="mt-1 font-display text-lg font-bold text-primary"
                   duration={500}
                 />
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Completo
+                </p>
               </div>
             </div>
 
@@ -604,11 +623,20 @@ export function AdvanceHistoryTable({
               </div>
               <div className="text-right">
                 <p className="text-xs text-muted-foreground">Comisión</p>
-                <AnimatedCurrency
-                  value={record.transactionFeeAmount}
-                  className="font-semibold text-foreground"
-                  duration={450}
-                />
+                {record.transactionFeeAmount === 0 ? (
+                  <p className="font-semibold text-emerald-600">Gratis</p>
+                ) : (
+                  <AnimatedCurrency
+                    value={record.transactionFeeAmount}
+                    className="font-semibold text-foreground"
+                    duration={450}
+                  />
+                )}
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  {record.transactionFeeAmount === 0
+                    ? "Primer adelanto"
+                    : "Se descuenta por nómina"}
+                </p>
               </div>
               <div className="col-span-2 rounded-lg border border-primary/10 bg-background/60 px-3 py-2">
                 <p className="text-xs text-muted-foreground">Cuenta destino</p>

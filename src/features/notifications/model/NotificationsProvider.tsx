@@ -27,6 +27,8 @@ import { CheckCircle2, MessageSquare, Wallet, XCircle, Zap } from "lucide-react"
 import { toast } from "sonner";
 import { EMPLEADO_ME_QUERY_KEY } from "@/features/advance/model/useEmpleadoMe";
 import { MI_SITUACION_FINANCIERA_QUERY_KEY } from "@/features/advance/model/useMiSituacionFinanciera";
+import { EMPLOYER_AUDIT_QUERY_KEY } from "@/features/employer-panel/model/useEmployerAuditData";
+import { EMPRESA_CUENTA_COBRO_QUERY_KEY } from "@/features/employer-panel/model/useEmpresaCuentaCobro";
 import type { AppNotification } from "./types";
 import { mapNotificacionDtosToApp } from "./mapStoredNotifications";
 import {
@@ -142,6 +144,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         (eventData?.type === "cuota_liberada" ? "cuota_liberada" : undefined);
       const isCuotaLiberada =
         reason === "cuota_liberada" || reason === "pago_liberado";
+      const isCuentaCobroEmitida = reason === "cuenta_cobro_emitida";
 
       if (isEmpleado || appRole === "employee") {
         // Revalidación en tiempo real del saldo disponible, situación financiera e historial de cuotas
@@ -187,6 +190,19 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         }
       } else if (appRole === "employer") {
         // Revalidación para la empresa: listado de empleados, cartera y retenciones
+        if (isCuentaCobroEmitida) {
+          void queryClient.invalidateQueries({
+            queryKey: EMPRESA_CUENTA_COBRO_QUERY_KEY,
+          });
+          void queryClient.invalidateQueries({ queryKey: EMPLOYER_AUDIT_QUERY_KEY });
+
+          toast.success("Nueva cuenta de cobro disponible", {
+            description:
+              "Ya puedes descargarla desde Retenciones y cierres.",
+            duration: 7000,
+          });
+        }
+
         if (isCuotaLiberada) {
           void queryClient.invalidateQueries({ queryKey: ["empleados"] });
           void queryClient.invalidateQueries({ queryKey: ["employer", "audit"] });

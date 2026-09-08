@@ -50,7 +50,7 @@ export function buildAdvanceHistoryRecord(
   return {
     id,
     amount,
-    netAmount: Math.max(0, amount - transactionFeeAmount),
+    netAmount: amount,
     requestedAt,
     periodLabel: getPayrollPeriodLabel(requestedAt),
     status,

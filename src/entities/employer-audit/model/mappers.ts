@@ -109,7 +109,7 @@ function buildRegisteredAdvanceFromAmounts(input: {
   const netDisbursedAmount =
     !Number.isNaN(parsedNet) && parsedNet >= 0
       ? Math.round(parsedNet)
-      : safeAmount - feeAmount;
+      : safeAmount;
 
   return {
     id: input.id,
@@ -256,7 +256,7 @@ export function mapToLoanInstallmentRecords(
     .filter(
       (advance) =>
         isRecoverableCompanyAdvance(advance.status) &&
-        advance.installments > 1,
+        advance.installments >= 1,
     )
     .map((advance) => {
       const totalToRecover = advance.advancedAmount;
@@ -277,6 +277,10 @@ export function mapToLoanInstallmentRecords(
         tracking.cuotasPagadas > 0
           ? advance.pagadoEn || advance.decididoEn || advance.requestedAt
           : null;
+      const currentInstallmentCharge = resolveCurrentInstallmentCharge(
+        advance,
+        tracking,
+      );
 
       return {
         id: advance.id,
@@ -285,7 +289,9 @@ export function mapToLoanInstallmentRecords(
         totalInstallments: tracking.totalCuotas,
         paidInstallments: tracking.cuotasPagadas,
         pendingInstallments: tracking.pendingInstallments,
-        installmentValue: tracking.installmentValue,
+        installmentValue: currentInstallmentCharge.capital,
+        commissionValue: currentInstallmentCharge.fee,
+        totalDiscountValue: currentInstallmentCharge.total,
         pendingBalance: tracking.saldoPorDescontar,
         currentMonthStatus: tracking.estadoCuotaMes,
         firstLiberationDate,
@@ -309,6 +315,42 @@ export function mapToMovementRecords(
     paymentEvidenceUrl: advance.paymentEvidenceUrl ?? null,
     rejectionReason: advance.rejectionReason ?? null,
   }));
+}
+
+function resolveCurrentInstallmentCharge(
+  advance: RegisteredCompanyAdvance,
+  tracking: {
+    cuotasPagadas: number;
+    totalCuotas: number;
+    installmentValue: number;
+    isFullyPaid: boolean;
+  },
+): { capital: number; fee: number; total: number } {
+  if (tracking.isFullyPaid || tracking.totalCuotas <= 0) {
+    return { capital: 0, fee: 0, total: 0 };
+  }
+
+  const nextInstallmentIndex = Math.max(0, tracking.cuotasPagadas);
+  const cuotaObjetivo = Array.isArray(advance.cuotas)
+    ? advance.cuotas.find((cuota) => cuota.numero === nextInstallmentIndex + 1)
+    : undefined;
+
+  const capital = cuotaObjetivo
+    ? typeof cuotaObjetivo.monto === "number"
+      ? cuotaObjetivo.monto
+      : Number.parseFloat(String(cuotaObjetivo.monto)) || tracking.installmentValue
+    : tracking.installmentValue;
+  const fee = cuotaObjetivo
+    ? typeof cuotaObjetivo.tarifa_cuota === "number"
+      ? cuotaObjetivo.tarifa_cuota
+      : Number.parseFloat(String(cuotaObjetivo.tarifa_cuota ?? 0)) || 0
+    : feePerInstallmentAmount(advance, nextInstallmentIndex);
+
+  return {
+    capital: Math.round(capital),
+    fee: Math.max(0, Math.round(fee)),
+    total: Math.round(capital) + Math.max(0, Math.round(fee)),
+  };
 }
 
 function monthKeyDiff(fromKey: string, toKey: string): number {
@@ -351,7 +393,7 @@ function computeMonthlyDeduction(
   installmentOffset: number,
 ): {
   advancesTotal: number;
-  /** Comisión de la cuota del mes (informativa; no entra en totales). */
+  /** Comisión de la cuota del mes. */
   feesTotal: number;
   loanInstallmentsTotal: number;
   grandTotal: number;
@@ -364,8 +406,7 @@ function computeMonthlyDeduction(
       advancesTotal: advance.advancedAmount,
       feesTotal: feeThisMonth,
       loanInstallmentsTotal: advance.advancedAmount,
-      /** Principal del mes: lo que la empresa reembolsa al proveedor. */
-      grandTotal: advance.advancedAmount,
+      grandTotal: advance.advancedAmount + feeThisMonth,
       installmentValue: advance.advancedAmount,
     };
   }
@@ -378,8 +419,7 @@ function computeMonthlyDeduction(
     advancesTotal: 0,
     feesTotal: feeThisMonth,
     loanInstallmentsTotal: installmentValue,
-    /** Solo la cuota del mes, no el monto total del adelanto. */
-    grandTotal: installmentValue,
+    grandTotal: installmentValue + feeThisMonth,
     installmentValue,
   };
 }
@@ -532,7 +572,6 @@ export function buildPayrollClosureSnapshot(
       advancesCount: current.advancesCount + (isRequestMonth ? 1 : 0),
       principalTotal: current.principalTotal + advance.advancedAmount,
       advancesTotal: current.advancesTotal + deduction.advancesTotal,
-      // Comisión por cuota del mes: informativa en cada mes del plan (no suma a totales).
       feesTotal: current.feesTotal + deduction.feesTotal,
       loanInstallmentsTotal:
         current.loanInstallmentsTotal + deduction.loanInstallmentsTotal,
@@ -696,7 +735,12 @@ export function buildNominaDescuentosSnapshot(
               getDefaultFechaCorte(advance.requestedAt, c.numero - 1),
             estado_cuota: isCuotaPagada(c) ? "pagada" : "pendiente",
             monto_solicitud: String(advance.advancedAmount),
-            monto_a_descontar: cuotaMonto,
+            monto_a_descontar: String(
+              (Number.parseFloat(cuotaMonto) || 0) +
+                (typeof c.tarifa_cuota === "number"
+                  ? c.tarifa_cuota
+                  : Number.parseFloat(String(c.tarifa_cuota ?? 0)) || 0),
+            ),
           });
         }
       });
@@ -716,7 +760,9 @@ export function buildNominaDescuentosSnapshot(
           fecha_corte: getDefaultFechaCorte(advance.requestedAt, offset),
           estado_cuota: isPaid ? "pagada" : "pendiente",
           monto_solicitud: String(advance.advancedAmount),
-          monto_a_descontar: String(installmentValue),
+          monto_a_descontar: String(
+            installmentValue + feePerInstallmentAmount(advance, offset),
+          ),
         });
       }
     }

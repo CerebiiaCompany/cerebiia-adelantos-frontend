@@ -140,7 +140,7 @@ export function MovementsLedgerTable() {
           "Evidencia",
           "Motivo",
           "Empleado",
-          "Valor neto transferido",
+          "Valor transferido al empleado",
         ],
         rows: filteredRecords.map((record) => [
           record.transferId,
@@ -336,7 +336,7 @@ export function MovementsLedgerTable() {
                     Empleado
                   </th>
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
-                    Valor neto transferido
+                    Valor transferido al empleado
                   </th>
                 </tr>
               </thead>
@@ -437,7 +437,8 @@ export function MovementsLedgerTable() {
             {filteredRecords.length} de {data.length} transacción
             {data.length === 1 ? "" : "es"} mostrada
             {filteredRecords.length === 1 ? "" : "s"}. Libro contable de
-            auditoría financiera.
+            auditoría financiera del desembolso al empleado; la comisión se
+            concilia aparte por nómina.
           </p>
         ) : null}
       </div>

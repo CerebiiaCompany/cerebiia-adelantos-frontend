@@ -40,7 +40,12 @@ export interface EmployerLoanInstallmentRecord {
   paidInstallments: number;
   /** Cantidad de cuotas que faltan por pagar. */
   pendingInstallments: number;
+  /** Capital de la cuota actual o próxima cuota pendiente. */
   installmentValue: number;
+  /** Comisión de la cuota actual o próxima cuota pendiente. */
+  commissionValue: number;
+  /** Total a descontar en la cuota actual: capital + comisión. */
+  totalDiscountValue: number;
   pendingBalance: number;
   currentMonthStatus: EmployerLoanInstallmentStatus;
   /** Fecha en que se liberó la primera cuota (o null si aún no hay liberaciones). */
@@ -89,10 +94,9 @@ export interface EmployerPayrollDeductionSummary {
   advancesTotal: number;
   /**
    * Comisión correspondiente a la(s) cuota(s) del mes.
-   * Solo informativa: no se suma al total a descontar ni al reembolso.
    */
   feesTotal: number;
-  /** Valor a descontar por cuota(s) en el mes (principal del periodo). */
+  /** Valor de capital por cuota(s) en el mes. */
   loanInstallmentsTotal: number;
   grandTotal: number;
   /** Monto de cuotas del mes ya liberadas/saldadas por Super Admin. */

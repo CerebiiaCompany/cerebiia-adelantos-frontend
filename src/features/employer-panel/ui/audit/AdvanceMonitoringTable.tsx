@@ -253,6 +253,9 @@ export function AdvanceMonitoringTable() {
             item.record.status,
             item.totalInstallments,
             selectedPeriod !== "all",
+            item.record.feeAmount,
+            item.currentInstallmentNumber ?? 1,
+            item.record.cuotas,
           )
         );
       }, 0),
@@ -584,7 +587,7 @@ export function AdvanceMonitoringTable() {
                         <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
                           {formatCOP(record.feeAmount)}
                           <p className="mt-0.5 text-[11px] text-muted-foreground/80">
-                            Descontada al empleado
+                            Descuento adicional por nómina
                           </p>
                         </td>
                         <td className="px-4 py-3.5 tabular-nums font-semibold text-foreground">
@@ -592,7 +595,7 @@ export function AdvanceMonitoringTable() {
                           {selectedPeriod !== "all" && totalInstallments > 1 ? (
                             <p className="mt-0.5 text-[11px] font-normal text-muted-foreground">
                               Cuota {currentInstallmentNumber ?? 1} de{" "}
-                              {totalInstallments} (Total:{" "}
+                              {totalInstallments} (Capital:{" "}
                               {formatCOP(record.advancedAmount)})
                             </p>
                           ) : null}
@@ -651,9 +654,9 @@ export function AdvanceMonitoringTable() {
             {data.length === 1 ? "" : "s"} mostrado
             {filteredRecords.length === 1 ? "" : "s"}.{" "}
             {tarifaPorCuotaLabel
-              ? `La comisión fija de ${tarifaPorCuotaLabel} por cuota se descuenta al empleado en el desembolso`
-              : "La comisión configurada se descuenta al empleado en el desembolso"}
-            ; la empresa solo retiene el valor solicitado. Tope permitido:{" "}
+              ? `La comisión fija de ${tarifaPorCuotaLabel} por cuota se descuenta por nómina y se suma al valor retenido`
+              : "La comisión configurada se descuenta por nómina y se suma al valor retenido"}
+            . La empresa retiene capital + comisión y luego liquida ambos valores con Cerebiia. Tope permitido:{" "}
             {adelantoConfig
               ? `${adelantoConfig.porcentajeMaximoAdelanto}%`
               : "30%"}{" "}

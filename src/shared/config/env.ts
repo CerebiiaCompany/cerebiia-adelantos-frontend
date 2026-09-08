@@ -1,7 +1,9 @@
 // ⚠️ AGNOSTIC — import.meta.env is replaced at build time by Vite.
 
 export function resolveApiUrl(): string {
-  const raw = import.meta.env.VITE_API_URL as string | undefined;
+  const raw =
+    (import.meta.env.VITE_API_URL as string | undefined) ??
+    (import.meta.env.VITE_API_BASE_URL as string | undefined);
   const trimmed = raw?.trim();
 
   if (trimmed) {
