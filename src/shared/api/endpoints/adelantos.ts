@@ -3,6 +3,7 @@ import { http } from "../client";
 import { extractPaginatedResults } from "../empleadoList";
 import type { PaginatedResponse } from "../types/pagination";
 import type {
+  CuentaCobroEmpresaDTO,
   CrearSolicitudAdelantoRequest,
   EmpleadoMeDTO,
   HistorialSolicitudEmpresaDTO,
@@ -118,6 +119,12 @@ export const adelantosEndpoints = {
     if (!periodo) return http.get<ReferenciaNominaDTO>(base);
     const search = new URLSearchParams({ periodo });
     return http.get<ReferenciaNominaDTO>(`${base}?${search.toString()}`);
+  },
+  getCuentaCobroEmpresa: (periodo: string) => {
+    const search = new URLSearchParams({ periodo });
+    return http.get<CuentaCobroEmpresaDTO>(
+      `/adelantos/empresa/cuenta-cobro/?${search.toString()}`,
+    );
   },
 };
 

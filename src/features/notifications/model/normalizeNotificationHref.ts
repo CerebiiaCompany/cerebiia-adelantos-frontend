@@ -37,6 +37,7 @@ const KIND_CANONICAL_HREF: Record<string, string> = {
   employer_support_message: ROUTES.employer.soportes,
   employer_cuota_liberada: ROUTES.employer.retencionesCierres,
   employer_cuotas_liberadas: ROUTES.employer.retencionesCierres,
+  employer_billing_document: ROUTES.employer.retencionesCierres,
   provider_week_debt: ROUTES.employer.retencionesCierres,
 };
 

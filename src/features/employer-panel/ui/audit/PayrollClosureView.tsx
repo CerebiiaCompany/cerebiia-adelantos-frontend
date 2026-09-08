@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Calculator, CheckCircle2, Eye, Receipt } from "lucide-react";
+import { ArrowRightLeft, Calculator, CheckCircle2, Download, Eye, Receipt } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,12 @@ import {
   type RegisteredCompanyAdvance,
 } from "@/entities/employer-audit";
 import { formatCOP } from "@/shared/lib";
-import { downloadBrandedExcelReport } from "@/shared/lib/excelReport";
+import { downloadReferenciaNominaExcel } from "@/shared/lib/exportReferenciaNominaExcel";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useEmpresaCuentaCobro } from "../../model/useEmpresaCuentaCobro";
 import { useEmployerPayrollClosure } from "../../model/useEmployerAuditData";
+import { useEmpresaReferenciaNomina } from "../../model/useEmpresaReferenciaNomina";
 import { EmployerPanelUnavailableNotice } from "../EmployerPanelUnavailableNotice";
 import { ExportReportButton } from "./ExportReportButton";
 import { PayrollEmployeeAdvancesDialog } from "./PayrollEmployeeAdvancesDialog";
@@ -52,6 +54,8 @@ function TableSkeleton() {
 export function PayrollClosureView() {
   const { data: advances, isLoading, isError } = useEmployerPayrollClosure();
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
+  const referenciaNominaQuery = useEmpresaReferenciaNomina(selectedMonth);
+  const cuentaCobroQuery = useEmpresaCuentaCobro(selectedMonth);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [detailEmployee, setDetailEmployee] = useState<{
@@ -113,82 +117,26 @@ export function PayrollClosureView() {
   };
 
   const handleExport = async () => {
-    if (!snapshot.employeeSummaries.length) {
+    if (referenciaNominaQuery.isLoading) {
+      toast.info("Estamos preparando el Excel de descuentos de nómina.");
+      return;
+    }
+
+    if (!referenciaNominaQuery.data?.resumen.length) {
       toast.info("No hay datos de nómina para exportar.");
       return;
     }
 
     try {
-      await downloadBrandedExcelReport({
-        filename: `retenciones-nomina-${snapshot.monthKey}`,
-        sheetName: "Retenciones",
-        brandDocument: "reporte",
-        bannerDocument: "retenciones",
-        headers: [
-          "Empleado",
-          "Documento",
-          "Cantidad de adelantos",
-          "Monto adelantado",
-          "Comisión por cuota (informativa)",
-          "Cuota a pagar este mes",
-          "Valor a descontar por cuota",
-          "Total a descontar",
-          "Estado de pago",
-        ],
-        rows: snapshot.employeeSummaries.map((summary) => [
-          summary.employeeName,
-          summary.employeeDocument,
-          summary.advancesCount,
-          summary.principalTotal,
-          summary.feesTotal,
-          summary.installmentProgressLabel ?? "—",
-          summary.loanInstallmentsTotal,
-          summary.grandTotal,
-          summary.statusLabel,
-        ]),
-        currencyColumnIndexes: [3, 4, 6, 7],
-        columnWidths: [28, 16, 18, 18, 28, 20, 24, 18, 16],
-        footerRows: [
-          [
-            "Total acumulado nómina",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            snapshot.totalPayrollDeductions,
-            snapshot.isAllSettled ? "Paz y salvo" : "Pendiente",
-          ],
-          [
-            "Total pendiente de liquidar",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            snapshot.totalPending,
-            "",
-          ],
-          [
-            "Reembolso proveedor",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            snapshot.providerReimbursement,
-            snapshot.isAllSettled ? "Paz y salvo" : "Pendiente",
-          ],
-        ],
-      });
-      toast.success("Reporte Excel de nómina exportado correctamente.");
+      await downloadReferenciaNominaExcel(referenciaNominaQuery.data);
+      toast.success("Excel de descuentos de nómina exportado correctamente.");
     } catch {
       toast.error("No se pudo exportar el reporte Excel.");
     }
   };
+
+  const cuentaCobroUrl = cuentaCobroQuery.data?.documento_cobro_url?.trim() || "";
+  const canDownloadCuentaCobro = cuentaCobroUrl.length > 0;
 
   if (isLoading) {
     return (
@@ -224,7 +172,7 @@ export function PayrollClosureView() {
               <p className="mt-1 text-xs text-muted-foreground">
                 {snapshot.isAllSettled
                   ? `Cuotas liberadas y saldadas con Super Admin — ${snapshot.monthLabel}`
-                  : `Adelantos + comisiones + cuotas — ${snapshot.monthLabel}`}
+                  : `Capital + comisiones de nómina — ${snapshot.monthLabel}`}
               </p>
             </div>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/10">
@@ -243,10 +191,26 @@ export function PayrollClosureView() {
               </span>
             )}
           </div>
-          {snapshot.totalPaid > 0 && (
-            <p className="relative mt-2 text-xs text-muted-foreground">
-              Total consolidado: {formatCOP(snapshot.totalPayrollDeductions)} · Saldado por liberación: {formatCOP(snapshot.totalPaid)}
-            </p>
+          {(snapshot.totalPayrollDeductions > 0 || canDownloadCuentaCobro) && (
+            <div className="relative mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <p>
+                Total consolidado: {formatCOP(snapshot.totalPayrollDeductions)}
+                {snapshot.totalPaid > 0
+                  ? ` · Saldado por liberación: ${formatCOP(snapshot.totalPaid)}`
+                  : ""}
+              </p>
+              {canDownloadCuentaCobro ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-8 rounded-lg border-primary/20 px-3 text-primary hover:bg-primary/5"
+                  onClick={() => window.open(cuentaCobroUrl, "_blank", "noopener,noreferrer")}
+                >
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  Descargar cuenta de cobro
+                </Button>
+              ) : null}
+            </div>
           )}
         </div>
 
@@ -260,7 +224,7 @@ export function PayrollClosureView() {
               <p className="mt-1 text-xs text-muted-foreground">
                 {snapshot.isAllSettled
                   ? `Reembolso liquidado — La empresa está a paz y salvo con Cerebiia`
-                  : `Pendiente de pago al proveedor para liberar cuotas`}
+                  : `Pendiente de pago a Cerebiia por capital adelantado + comisión`}
               </p>
             </div>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl border border-[hsl(260_70%_50%)]/20 bg-[hsl(260_70%_50%)]/10">
@@ -395,15 +359,12 @@ export function PayrollClosureView() {
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Comisión por cuota
-                  <span className="mt-0.5 block text-[11px] font-normal normal-case tracking-normal text-muted-foreground/80">
-                    Informativa · no suma al total
-                  </span>
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Cuota a pagar este mes
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
-                  Valor a descontar por cuota
+                  Capital de cuota
                 </th>
                 <th className="px-4 py-3 font-semibold text-muted-foreground">
                   Total a descontar

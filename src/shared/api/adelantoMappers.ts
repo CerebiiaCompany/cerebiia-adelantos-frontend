@@ -92,7 +92,7 @@ export function mapSolicitudToHistoryRecord(
   const netAmount =
     Number.isFinite(parsedNet) && parsedNet >= 0
       ? Math.round(parsedNet)
-      : Math.max(0, safeAmount - transactionFeeAmount);
+      : safeAmount;
 
   const rawDate =
     solicitud.created_at ||

@@ -17,6 +17,7 @@ function mapSituacionToConfig(
 ): ParsedAdelantoConfiguracion {
   const tarifa = Number.parseFloat(situacion.tarifa_por_cuota);
   const porcentaje = Number.parseFloat(situacion.porcentaje_maximo);
+  const minimo = Number.parseFloat(String(situacion.monto_minimo ?? ""));
 
   return {
     porcentajeMaximoAdelanto: Number.isNaN(porcentaje) ? 30 : porcentaje,
@@ -25,7 +26,7 @@ function mapSituacionToConfig(
     plazoMaximoDias:
       situacion.plazo_maximo_dias > 0 ? situacion.plazo_maximo_dias : 90,
     tarifaFijaPorCuota: Number.isNaN(tarifa) ? 8_000 : Math.round(tarifa),
-    montoMinimoAdelanto: null,
+    montoMinimoAdelanto: Number.isNaN(minimo) ? null : Math.round(minimo),
     updatedAt: "",
   };
 }

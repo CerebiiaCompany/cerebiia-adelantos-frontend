@@ -48,6 +48,7 @@ export type {
   CrearSolicitudAdelantoRequest,
   CuotaAdelantoDTO,
   EmpleadoMeDTO,
+  CuentaCobroEmpresaDTO,
   EstadoSolicitud,
   HistorialSolicitudEmpresaDTO,
   HistorialSolicitudesEmpresaParams,

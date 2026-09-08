@@ -102,6 +102,7 @@ export interface MiSituacionFinancieraDTO {
   salario: string;
   saldo_disponible: string;
   monto_maximo_solicitable: string;
+  monto_minimo?: string;
   porcentaje_maximo: string;
   cuotas_maximas: number;
   tarifa_por_cuota: string;
@@ -208,4 +209,25 @@ export interface ReferenciaNominaDTO {
   resumen: ReferenciaNominaResumenDTO[];
   total_a_descontar: string;
   totales: ReferenciaNominaTotalesDTO;
+}
+
+export interface CuentaCobroEmpresaDTO {
+  id: string;
+  empresa_id: string;
+  periodo: string;
+  adelanto_ids: string[];
+  monto_pagado: string;
+  monto_comision: string;
+  monto_total_cobrar: string;
+  estado: string;
+  documento_cobro?: string | null;
+  documento_cobro_url?: string | null;
+  evidencia_pago?: string | null;
+  evidencia_pago_url?: string | null;
+  fecha_emision?: string | null;
+  fecha_evidencia?: string | null;
+  fecha_verificacion?: string | null;
+  nota_revision?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }

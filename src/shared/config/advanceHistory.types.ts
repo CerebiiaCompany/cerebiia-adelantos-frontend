@@ -7,7 +7,7 @@ import type { EstadoSolicitud } from "@/shared/api/types/adelanto";
 export type AdvanceHistoryRecord = {
   id: string;
   amount: number;
-  /** Monto neto que recibe el empleado (monto − comisión). */
+  /** Monto que recibe el empleado en su cuenta. */
   netAmount: number;
   requestedAt: Date;
   periodLabel: string;

@@ -44,13 +44,34 @@ export function calculateTotalWithholding(
   status?: CompanyAdvanceStatus,
   installments = 1,
   isMonthlyPeriod = false,
+  feeAmount = 0,
+  installmentNumber = 1,
+  cuotas?: CuotaLike[],
 ): number {
   if (status === "rechazado") return 0;
+  const safeAmount = Math.max(0, amount || 0);
   const safeInstallments = Math.max(1, installments || 1);
-  if (isMonthlyPeriod && safeInstallments > 1) {
-    return Math.round(amount / safeInstallments);
+  const cuotaObjetivo = Array.isArray(cuotas)
+    ? cuotas.find((cuota) => cuota.numero === installmentNumber)
+    : undefined;
+
+  if (cuotaObjetivo) {
+    const capital =
+      typeof cuotaObjetivo.monto === "number"
+        ? cuotaObjetivo.monto
+        : Number.parseFloat(String(cuotaObjetivo.monto)) ||
+          Math.round(safeAmount / safeInstallments);
+    const tarifa =
+      typeof cuotaObjetivo.tarifa_cuota === "number"
+        ? cuotaObjetivo.tarifa_cuota
+        : Number.parseFloat(String(cuotaObjetivo.tarifa_cuota ?? 0)) || 0;
+    return Math.round(capital + tarifa);
   }
-  return amount;
+
+  if (isMonthlyPeriod && safeInstallments > 1) {
+    return Math.round(safeAmount / safeInstallments) + Math.round(feeAmount / safeInstallments);
+  }
+  return safeAmount + Math.max(0, feeAmount);
 }
 
 export function calculateSalaryPercentage(

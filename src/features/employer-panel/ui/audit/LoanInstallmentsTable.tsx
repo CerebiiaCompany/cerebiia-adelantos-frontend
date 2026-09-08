@@ -84,7 +84,7 @@ export function LoanInstallmentsTable() {
 
   // Métricas calculadas en tiempo real para las cards informativas
   const totalSaldoPendiente = useMemo(
-    () => filteredRecords.reduce((sum, r) => sum + r.pendingBalance, 0),
+    () => filteredRecords.reduce((sum, r) => sum + r.totalDiscountValue, 0),
     [filteredRecords],
   );
 
@@ -121,7 +121,7 @@ export function LoanInstallmentsTable() {
           <p className="relative mt-1 text-xs text-muted-foreground">
             {totalSaldoPendiente === 0
               ? "Paz y salvo — Todas las cuotas saldadas"
-              : `${totalCuotasPendientes} cuota${totalCuotasPendientes === 1 ? "" : "s"} restante${totalCuotasPendientes === 1 ? "" : "s"} por descontar`}
+              : `${totalCuotasPendientes} cuota${totalCuotasPendientes === 1 ? "" : "s"} restante${totalCuotasPendientes === 1 ? "" : "s"} por descontar con comisión incluida`}
           </p>
         </div>
 
@@ -142,7 +142,7 @@ export function LoanInstallmentsTable() {
             />
           </div>
           <p className="relative mt-1 text-xs text-muted-foreground">
-            Monto principal total de los adelantos multi-cuota
+            Monto principal total de los adelantos registrados
           </p>
         </div>
 
@@ -167,7 +167,7 @@ export function LoanInstallmentsTable() {
           </div>
           <p className="relative mt-1 text-xs text-muted-foreground">
             {installmentsFilter === "all"
-              ? "Planes de 2 y 3 cuotas"
+              ? "Planes de 1 a 3 cuotas"
               : `Planes de ${installmentsFilter} cuotas`}
           </p>
         </div>
@@ -201,6 +201,7 @@ export function LoanInstallmentsTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las cuotas</SelectItem>
+                <SelectItem value="1">1 cuota</SelectItem>
                 <SelectItem value="2">2 cuotas</SelectItem>
                 <SelectItem value="3">3 cuotas</SelectItem>
               </SelectContent>
@@ -235,7 +236,10 @@ export function LoanInstallmentsTable() {
                     Valor de cada cuota
                   </th>
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
-                    Saldo por descontar
+                    Valor por comisión
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-muted-foreground">
+                    Total a descontar
                   </th>
                   <th className="px-4 py-3 font-semibold text-muted-foreground">
                     Fecha 1.ª liberación
@@ -248,13 +252,13 @@ export function LoanInstallmentsTable() {
               <tbody>
                 {filteredRecords.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center">
+                    <td colSpan={8} className="px-4 py-10 text-center">
                       <div className="mx-auto flex max-w-sm flex-col items-center gap-2 text-muted-foreground">
                         <CalendarClock className="h-8 w-8 opacity-60" />
                         <p className="text-sm">
                           {search.trim() || installmentsFilter !== "all"
                             ? "No hay adelantos en cuotas que coincidan con los filtros aplicados."
-                            : "No hay adelantos pagados en cuotas (2 o 3). Solo aparecen solicitudes con más de una cuota, hasta un máximo de 3."}
+                            : "No hay adelantos registrados para seguimiento. Aquí aparecerán solicitudes de 1 a 3 cuotas."}
                         </p>
                       </div>
                     </td>
@@ -307,8 +311,13 @@ export function LoanInstallmentsTable() {
                         <td className="px-4 py-3.5 tabular-nums text-foreground">
                           {formatCOP(record.installmentValue)}
                         </td>
+                        <td className="px-4 py-3.5 tabular-nums text-foreground">
+                          {record.commissionValue === 0
+                            ? "Gratis"
+                            : formatCOP(record.commissionValue)}
+                        </td>
                         <td className="px-4 py-3.5 tabular-nums font-semibold text-foreground">
-                          {formatCOP(record.pendingBalance)}
+                          {formatCOP(record.totalDiscountValue)}
                         </td>
                         <td className="px-4 py-3.5 tabular-nums text-muted-foreground">
                           {record.firstLiberationDate ? (
@@ -338,8 +347,8 @@ export function LoanInstallmentsTable() {
           <p className="mt-4 text-xs text-muted-foreground">
             {filteredRecords.length} de {data.length} préstamo
             {data.length === 1 ? "" : "s"} mostrado
-            {filteredRecords.length === 1 ? "" : "s"}. Máximo 3 cuotas por
-            adelanto.
+            {filteredRecords.length === 1 ? "" : "s"}. Se incluyen adelantos
+            desde 1 hasta 3 cuotas.
           </p>
         ) : null}
       </div>

@@ -25,6 +25,7 @@ function parseAmountDigits(raw: string): number {
 type AdvanceAmountSelectorProps = {
   amount: number;
   onAmountChange: (amount: number) => void;
+  minAmount: number;
   maxAmount: number;
   disabled?: boolean;
   className?: string;
@@ -33,6 +34,7 @@ type AdvanceAmountSelectorProps = {
 export function AdvanceAmountSelector({
   amount,
   onAmountChange,
+  minAmount,
   maxAmount,
   disabled = false,
   className,
@@ -51,6 +53,17 @@ export function AdvanceAmountSelector({
     () => buildAdvanceQuickAmounts(maxAmount),
     [maxAmount],
   );
+  const requestedAmount = isEditingAmount
+    ? parseAmountDigits(draftAmount)
+    : amount;
+  const amountValidationMessage =
+    requestedAmount > 0 && maxAmount <= 0
+      ? "No tienes saldo disponible para adelantar."
+      : requestedAmount > 0 && requestedAmount < minAmount
+        ? "No puedes adelantar valores menores al mínimo configurado."
+      : requestedAmount > maxAmount
+        ? "No tienes saldo suficiente para adelantar este monto."
+        : null;
 
   const progressPercent = maxAmount > 0 ? (amount / maxAmount) * 100 : 0;
 
@@ -109,12 +122,25 @@ export function AdvanceAmountSelector({
       )}
       aria-disabled={disabled || undefined}
     >
-      <label
-        htmlFor={amountInputId}
-        className="block text-center font-display text-base font-semibold text-foreground"
-      >
-        Monto del adelanto
-      </label>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
+        <div />
+        <label
+          htmlFor={amountInputId}
+          className="block text-center font-display text-base font-semibold text-foreground"
+        >
+          Monto del adelanto
+        </label>
+        <div className="justify-self-end text-right">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            Mínimo
+          </p>
+          <AnimatedCurrency
+            value={minAmount}
+            className="text-sm font-semibold text-foreground"
+            duration={COUNT_DURATION}
+          />
+        </div>
+      </div>
 
       <div className="w-full overflow-visible px-1 sm:px-2">
         <input
@@ -182,6 +208,15 @@ export function AdvanceAmountSelector({
             duration={COUNT_DURATION}
           />
         </div>
+        {amountValidationMessage ? (
+          <p
+            className="mt-2 text-center text-sm font-medium text-destructive"
+            role="alert"
+            aria-live="polite"
+          >
+            {amountValidationMessage}
+          </p>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

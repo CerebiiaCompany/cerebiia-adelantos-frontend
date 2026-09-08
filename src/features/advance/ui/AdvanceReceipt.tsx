@@ -153,13 +153,9 @@ export function AdvanceReceipt({
       primeraCuotaGratisDisponible,
     ],
   );
-  const netAmount = useMemo(
-    () => amount - transactionFee,
-    [amount, transactionFee],
-  );
   const amountWords = useMemo(
-    () => amountInWordsSpanish(netAmount),
-    [netAmount],
+    () => amountInWordsSpanish(amount),
+    [amount],
   );
   const periodLabel = useMemo(
     () => getPayrollPeriodLabel(issuedAt),
@@ -311,11 +307,11 @@ export function AdvanceReceipt({
                 </tr>
                 <tr className="bg-primary/[0.04]">
                   <td className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    Total a dispersar
+                    Total transferido al empleado
                   </td>
                   <td className="px-4 py-3 text-right">
                     <AnimatedCurrency
-                      value={netAmount}
+                      value={amount}
                       className="font-display text-xl font-bold text-primary tabular-nums"
                       duration={700}
                     />
@@ -323,6 +319,15 @@ export function AdvanceReceipt({
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div className="mb-5 rounded-md border border-primary/10 bg-primary/[0.04] px-4 py-3">
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              El empleado recibe el monto completo del adelanto. La comisión
+              {transactionFee === 0
+                ? " de esta solicitud no genera descuento por nómina."
+                : " se descuenta aparte por nómina a través de la empresa, junto con la cuota correspondiente."}
+            </p>
           </div>
 
           {/* Valor en letras */}

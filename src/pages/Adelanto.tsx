@@ -52,6 +52,8 @@ export default function Adelanto() {
 
   const tarifaFijaPorCuota =
     adelantoConfig?.tarifaFijaPorCuota ?? DEFAULT_TARIFA_FIJA_POR_CUOTA;
+  const minAdvanceAmount =
+    adelantoConfig?.montoMinimoAdelanto ?? ADVANCE_MIN_AMOUNT;
   const maxInstallments = adelantoConfig?.numeroMaximoCuotas ?? 3;
   const maxAmount = dashboard?.availableAdvance ?? 0;
   const feeOptions = { primeraCuotaGratis: primeraCuotaGratisDisponible };
@@ -61,7 +63,7 @@ export default function Adelanto() {
     amount,
     feeOptions,
   );
-  const total = amount - fee;
+  const total = amount;
 
   useEffect(() => {
     if (installments > maxInstallments) {
@@ -85,8 +87,8 @@ export default function Adelanto() {
     isAdvanceWindowOpen &&
     hasAcceptedTerms &&
     !solicitudActiva &&
-    maxAmount >= ADVANCE_MIN_AMOUNT &&
-    amount >= ADVANCE_MIN_AMOUNT &&
+    maxAmount >= minAdvanceAmount &&
+    amount >= minAdvanceAmount &&
     amount <= maxAmount;
   const daysUntilPayment = useMemo(() => getDaysUntilPayment(), []);
 
@@ -136,7 +138,7 @@ export default function Adelanto() {
         installments={installments}
         onInstallmentsChange={setInstallments}
         maxAmount={maxAmount}
-        minAmount={ADVANCE_MIN_AMOUNT}
+        minAmount={minAdvanceAmount}
         maxInstallments={maxInstallments}
         tarifaFijaPorCuota={tarifaFijaPorCuota}
         fee={fee}
@@ -200,6 +202,7 @@ export default function Adelanto() {
         fee={fee}
         installments={installments}
         installmentValue={installmentValue}
+        primeraCuotaGratis={primeraCuotaGratisDisponible}
         isSubmitting={isSubmitting}
         onReportIncorrectData={() => {
           setConfirmOpen(false);
