@@ -54,6 +54,7 @@ export function AdvanceSimulatorCard({
   requestedAt = new Date(),
 }: AdvanceSimulatorCardProps) {
   const hasAmount = !disabled && amount >= minAmount;
+  const hasMultipleInstallmentOptions = Math.max(1, maxInstallments) > 1;
   const installmentOptions = Array.from(
     { length: Math.max(1, maxInstallments) },
     (_, index) => index + 1,
@@ -81,6 +82,7 @@ export function AdvanceSimulatorCard({
         <AdvanceAmountSelector
           amount={amount}
           onAmountChange={onAmountChange}
+          minAmount={minAmount}
           maxAmount={maxAmount}
           disabled={disabled}
         />
@@ -95,12 +97,20 @@ export function AdvanceSimulatorCard({
           <div
             className={cn(
               "relative mx-auto max-w-sm px-2 transition-opacity duration-300",
+              !hasMultipleInstallmentOptions && "flex justify-center",
               !hasAmount && "pointer-events-none opacity-45",
             )}
           >
-            <AdvanceTimelineCenterLine filled={hasAmount} />
+            {hasMultipleInstallmentOptions ? (
+              <AdvanceTimelineCenterLine filled={hasAmount} />
+            ) : null}
 
-            <div className="relative flex justify-between">
+            <div
+              className={cn(
+                "relative flex",
+                hasMultipleInstallmentOptions ? "justify-between" : "justify-center",
+              )}
+            >
               {installmentOptions.map((option) => {
                 const selected = installments === option;
 
@@ -172,7 +182,7 @@ export function AdvanceSimulatorCard({
             <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-bold">
               <span className="flex items-center gap-2 text-foreground">
                 <Coins className="h-4 w-4 text-primary" strokeWidth={2.25} />
-                Recibirás
+                Recibirás completo
               </span>
               <AnimatedCurrency
                 value={total}
@@ -183,6 +193,11 @@ export function AdvanceSimulatorCard({
                 duration={COUNT_DURATION}
               />
             </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              La comisión no se descuenta del desembolso. Tu empresa la cobrará
+              por nómina
+              {fee > 0 ? " junto con la cuota correspondiente." : "."}
+            </p>
 
             {installments > 1 && (
               <div className="flex justify-between text-sm text-muted-foreground">

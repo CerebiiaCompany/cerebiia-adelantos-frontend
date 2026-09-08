@@ -138,7 +138,7 @@ export function EmployerNominaDescuentosPanel({
           </div>
           <p className="text-sm text-muted-foreground">
             Informe de descuentos de nómina según fecha de corte del mes seleccionado.
-            Expande cada empleado para ver el detalle de cuotas.
+            Incluye capital del adelanto más la comisión de la cuota correspondiente.
           </p>
         </div>
       </div>
@@ -166,7 +166,7 @@ export function EmployerNominaDescuentosPanel({
               <p className="mt-1 text-xs text-muted-foreground">
                 {totalDescontar === 0
                   ? "Al día — Todos los adelantos han sido descontados"
-                  : `${cuotasPendientes} cuota${cuotasPendientes === 1 ? "" : "s"} pendiente${cuotasPendientes === 1 ? "" : "s"}`}
+                  : `${cuotasPendientes} cuota${cuotasPendientes === 1 ? "" : "s"} pendiente${cuotasPendientes === 1 ? "" : "s"} con comisión incluida`}
               </p>
             </div>
             <div className="relative overflow-hidden rounded-xl border border-border/60 bg-muted/20 p-4 sm:px-4 sm:py-3">
@@ -335,7 +335,7 @@ function EmployeeDeductionRows({
                     <th className="px-3 py-2 font-medium">Estado</th>
                     <th className="px-3 py-2 font-medium">Adelanto</th>
                     <th className="px-3 py-2 font-medium text-right">
-                      Descuento
+                      Descuento total
                     </th>
                   </tr>
                 </thead>

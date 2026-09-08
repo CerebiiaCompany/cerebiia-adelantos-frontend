@@ -83,7 +83,9 @@ export default function MisAdelantos() {
         amount: Number.isNaN(monto) ? selectedRecord.amount : monto,
         transactionFeeAmount,
         netAmount: Number.isNaN(neto)
-          ? selectedRecord.netAmount
+          ? Number.isNaN(monto)
+            ? selectedRecord.netAmount
+            : Math.round(monto)
           : Math.round(neto),
         installments,
         tarifaFijaPorCuota,
@@ -95,7 +97,7 @@ export default function MisAdelantos() {
     return {
       amount: selectedRecord.amount,
       transactionFeeAmount: selectedRecord.transactionFeeAmount,
-      netAmount: selectedRecord.netAmount,
+      netAmount: selectedRecord.amount,
       installments,
       tarifaFijaPorCuota:
         installments > 0

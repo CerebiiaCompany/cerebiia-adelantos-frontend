@@ -44,6 +44,7 @@ export interface AdvanceConfirmDialogProps {
   fee: number;
   installments: number;
   installmentValue: number;
+  primeraCuotaGratis?: boolean;
   isSubmitting: boolean;
   onConfirm: () => void;
   onReportIncorrectData: () => void;
@@ -58,6 +59,7 @@ export function AdvanceConfirmDialog({
   fee,
   installments,
   installmentValue,
+  primeraCuotaGratis = false,
   isSubmitting,
   onConfirm,
   onReportIncorrectData,
@@ -125,7 +127,7 @@ export function AdvanceConfirmDialog({
                 />
               </div>
               <div className="rounded-xl border border-primary/20 bg-primary/[0.04] px-3 py-3 text-center">
-                <p className="mb-1 text-xs text-muted-foreground">A recibir</p>
+                <p className="mb-1 text-xs text-muted-foreground">A recibir completo</p>
                 <AnimatedCurrency
                   value={total}
                   className="font-display text-lg font-bold text-gradient"
@@ -135,7 +137,7 @@ export function AdvanceConfirmDialog({
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
-              Comisión{" "}
+              Comisión a descontar por tu empresa en nómina{" "}
               {fee === 0 ? (
                 <span className="font-medium text-emerald-600">Gratis</span>
               ) : (
@@ -146,6 +148,17 @@ export function AdvanceConfirmDialog({
                 />
               )}
             </p>
+            <div className="rounded-xl border border-primary/15 bg-primary/[0.04] px-4 py-3 text-xs text-muted-foreground shadow-sm motion-safe:animate-pulse-glow">
+              <div className="mb-1.5 flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                <span className="inline-flex h-2 w-2 rounded-full bg-primary/70" />
+                Aviso importante
+              </div>
+              <p className="text-justify leading-relaxed">
+                {primeraCuotaGratis && fee === 0
+                  ? "Recibirás el valor total solicitado en tu cuenta bancaria. Recuerda que se te descontará la comisión correspondiente dependiendo del costo vigente en ese momento; como este es tu primer adelanto, en esta solicitud no se descontará ninguna comisión."
+                  : "Recibirás el valor total solicitado en tu cuenta bancaria. La comisión se descontará aparte en nómina según la cantidad de cuotas configuradas."}
+              </p>
+            </div>
 
             <dl className="rounded-xl border border-border/60 px-4 py-3 text-sm">
               <div className="flex items-center justify-between gap-3">

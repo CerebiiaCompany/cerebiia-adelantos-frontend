@@ -59,6 +59,7 @@ export function deriveEmployerUnifiedAudit(params: {
   advances.forEach((adv) => {
     const montoNum = Number.parseFloat(adv.monto) || 0;
     const netoNum = Number.parseFloat(adv.monto_neto) || montoNum;
+    const tarifaTotalNum = Number.parseFloat(adv.tarifa_total || "0") || 0;
     const cuotasCount = adv.numero_cuotas_snapshot || 1;
     const evidenceUrl = resolveSolicitudComprobanteUrl(adv);
     const empName = adv.empleado_nombre || "Empleado";
@@ -146,7 +147,7 @@ export function deriveEmployerUnifiedAudit(params: {
         eventType: "solicitud_pagada",
         category: "adelantos",
         title: `Desembolso completado · ${empName}`,
-        description: `Se efectuó la transferencia de ${formatCOP(netoNum)} a la cuenta de ${empName}. Comprobante de pago disponible.`,
+        description: `Se efectuó la transferencia de ${formatCOP(netoNum)} a la cuenta de ${empName}. La comisión de ${formatCOP(tarifaTotalNum)} se descuenta por nómina a través de la empresa. Comprobante de pago disponible.`,
         employeeName: empName,
         employeeDocument: empDoc,
         actorNombre: "Cerebiia / Pagos",

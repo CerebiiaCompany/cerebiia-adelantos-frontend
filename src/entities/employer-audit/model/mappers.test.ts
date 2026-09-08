@@ -21,7 +21,7 @@ const sampleAdvances: RegisteredCompanyAdvance[] = [
     advancedAmount: 400_000,
     installments: 1,
     feeAmount: 8_000,
-    netDisbursedAmount: 392_000,
+    netDisbursedAmount: 400_000,
     status: "procesado",
     requestedAt: "2026-06-19T10:00:00-05:00",
     transferId: "TRF-1",
@@ -39,7 +39,7 @@ const sampleAdvances: RegisteredCompanyAdvance[] = [
     installments: 3,
     feeAmount: 16_000,
     feePerCuotaSnapshot: 8_000,
-    netDisbursedAmount: 884_000,
+    netDisbursedAmount: 900_000,
     status: "procesado",
     requestedAt: "2026-06-19T11:00:00-05:00",
     transferId: "TRF-2",
@@ -59,7 +59,7 @@ const melannyCase: RegisteredCompanyAdvance[] = [
     advancedAmount: 500_000,
     installments: 2,
     feeAmount: 16_000,
-    netDisbursedAmount: 484_000,
+    netDisbursedAmount: 500_000,
     status: "rechazado",
     requestedAt: "2026-07-14T10:00:00-05:00",
     transferId: "TRF-R",
@@ -76,7 +76,7 @@ const melannyCase: RegisteredCompanyAdvance[] = [
     advancedAmount: 100_000,
     installments: 1,
     feeAmount: 12_000,
-    netDisbursedAmount: 88_000,
+    netDisbursedAmount: 100_000,
     status: "procesado",
     requestedAt: "2026-07-14T13:00:00-05:00",
     transferId: "TRF-A",
@@ -157,8 +157,17 @@ describe("employer audit mappers", () => {
     expect(records[0].installments).toBe(2);
   });
 
-  it("solo incluye adelantos con 2 o 3 cuotas en seguimiento y calcula cuotas pagadas/pendientes", () => {
-    const multiAdvances: RegisteredCompanyAdvance[] = [
+  it("incluye adelantos desde 1 cuota en seguimiento y calcula cuotas pagadas/pendientes", () => {
+    const trackedAdvances: RegisteredCompanyAdvance[] = [
+      {
+        ...sampleAdvances[0],
+        id: "adv-single-track",
+        installments: 1,
+        advancedAmount: 400_000,
+        isPaid: true,
+        estadoApi: "pagado",
+        pagadoEn: "2026-08-12T10:00:00-05:00",
+      },
       {
         ...sampleAdvances[0],
         id: "adv-multi-track",
@@ -170,25 +179,41 @@ describe("employer audit mappers", () => {
       },
     ];
 
-    const loans = mapToLoanInstallmentRecords(multiAdvances);
-    expect(loans).toHaveLength(1);
-    expect(loans[0].totalInstallments).toBe(2);
-    expect(loans[0].paidInstallments).toBe(1);
-    expect(loans[0].pendingInstallments).toBe(1);
-    expect(loans[0].installmentValue).toBe(100_000);
-    expect(loans[0].pendingBalance).toBe(100_000);
-    expect(loans[0].firstLiberationDate).toBe("2026-08-15T10:00:00-05:00");
+    const loans = mapToLoanInstallmentRecords(trackedAdvances);
+    expect(loans).toHaveLength(2);
+
+    const multiLoan = loans.find((loan) => loan.id === "adv-multi-track");
+    expect(multiLoan).toBeDefined();
+    expect(multiLoan?.totalInstallments).toBe(2);
+    expect(multiLoan?.paidInstallments).toBe(1);
+    expect(multiLoan?.pendingInstallments).toBe(1);
+    expect(multiLoan?.installmentValue).toBe(100_000);
+    expect(multiLoan?.commissionValue).toBe(8_000);
+    expect(multiLoan?.totalDiscountValue).toBe(108_000);
+    expect(multiLoan?.pendingBalance).toBe(100_000);
+    expect(multiLoan?.firstLiberationDate).toBe("2026-08-15T10:00:00-05:00");
+
+    const singleLoan = loans.find((loan) => loan.id === "adv-single-track");
+    expect(singleLoan).toBeDefined();
+    expect(singleLoan?.totalInstallments).toBe(1);
+    expect(singleLoan?.paidInstallments).toBe(1);
+    expect(singleLoan?.pendingInstallments).toBe(0);
+    expect(singleLoan?.installmentValue).toBe(0);
+    expect(singleLoan?.commissionValue).toBe(0);
+    expect(singleLoan?.totalDiscountValue).toBe(0);
+    expect(singleLoan?.pendingBalance).toBe(0);
+    expect(singleLoan?.firstLiberationDate).toBe("2026-08-12T10:00:00-05:00");
   });
 
   it("excluye rechazados del seguimiento de cuotas", () => {
-    const loans = mapToLoanInstallmentRecords(melannyCase);
+    const loans = mapToLoanInstallmentRecords([melannyCase[0]]);
     expect(loans).toHaveLength(0);
   });
 
   it("genera movimientos desde adelantos reales", () => {
     const movements = mapToMovementRecords(sampleAdvances);
     expect(movements).toHaveLength(2);
-    expect(movements[0].netDisbursedAmount).toBe(884_000);
+    expect(movements[0].netDisbursedAmount).toBe(900_000);
     expect(movements[0].installments).toBe(3);
     expect(movements[0].status).toBeDefined();
     expect(movements[0].paymentEvidenceUrl).toBe(
@@ -204,9 +229,9 @@ describe("employer audit mappers", () => {
 
     expect(closure.monthKey).toBe("2026-06");
     expect(closure.employeeSummaries).toHaveLength(2);
-    // Ana 400k (1 cuota) + Luis 300k (cuota 1 de 900k/3)
-    expect(closure.totalPayrollDeductions).toBe(700_000);
-    expect(closure.providerReimbursement).toBe(700_000);
+    // Ana 400k + 8k comisión, Luis 300k + 0 comisión primer mes
+    expect(closure.totalPayrollDeductions).toBe(708_000);
+    expect(closure.providerReimbursement).toBe(708_000);
 
     const ana = closure.employeeSummaries.find(
       (item) => item.employeeDocument === "123",
@@ -227,10 +252,9 @@ describe("employer audit mappers", () => {
     expect(luis?.installmentProgressLabel).toBe("1 de 3 cuotas");
     expect(luis?.principalTotal).toBe(900_000);
     expect(luis?.loanInstallmentsTotal).toBe(300_000);
-    // Promo (fee 16k = 8k×2): 1ª cuota gratis → comisión informativa 0 en mes de solicitud
+    // Promo (fee 16k = 8k×2): 1ª cuota gratis → comisión 0 en mes de solicitud
     expect(luis?.feesTotal).toBe(0);
-    // La comisión no entra al consolidado ni al reembolso
-    expect(closure.totalPayrollDeductions).toBe(700_000);
+    expect(closure.totalPayrollDeductions).toBe(708_000);
   });
 
   it("reembolsa al proveedor solo la cuota del mes en planes multi-cuota", () => {
@@ -264,8 +288,8 @@ describe("employer audit mappers", () => {
       advance,
       new Date("2026-07-15T12:00:00-05:00"),
     );
-    expect(july.providerReimbursement).toBe(100_000);
-    expect(july.totalPayrollDeductions).toBe(100_000);
+    expect(july.providerReimbursement).toBe(108_000);
+    expect(july.totalPayrollDeductions).toBe(108_000);
     expect(july.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
     expect(july.employeeSummaries[0].installmentProgressLabel).toBe(
       "2 de 2 cuotas",
@@ -296,8 +320,9 @@ describe("employer audit mappers", () => {
     expect(closure.employeeSummaries[0].loanInstallmentsTotal).toBe(100_000);
     expect(closure.employeeSummaries[0].installmentProgressLabel).toBe(
       "1 de 1 cuota",
-    );    expect(closure.totalPayrollDeductions).toBe(100_000);
-    expect(closure.providerReimbursement).toBe(100_000);
+    );
+    expect(closure.totalPayrollDeductions).toBe(112_000);
+    expect(closure.providerReimbursement).toBe(112_000);
   });
 
   it("marca cuotas mixtas cuando un empleado tiene planes distintos", () => {
@@ -384,8 +409,8 @@ describe("employer audit mappers", () => {
       new Date("2026-08-15T12:00:00-05:00"),
     );
 
-    expect(closure.totalPayrollDeductions).toBe(900_000);
-    expect(closure.totalPaid).toBe(900_000);
+    expect(closure.totalPayrollDeductions).toBe(916_000);
+    expect(closure.totalPaid).toBe(916_000);
     expect(closure.totalPending).toBe(0);
     expect(closure.providerReimbursement).toBe(0);
     expect(closure.isAllSettled).toBe(true);
@@ -442,10 +467,10 @@ describe("employer audit mappers", () => {
       multiMonthAdvances,
       new Date("2026-09-15T12:00:00-05:00"),
     );
-    expect(septemberClosure.totalPayrollDeductions).toBe(100_000);
+    expect(septemberClosure.totalPayrollDeductions).toBe(108_000);
     expect(septemberClosure.totalPaid).toBe(0);
-    expect(septemberClosure.totalPending).toBe(100_000);
-    expect(septemberClosure.providerReimbursement).toBe(100_000);
+    expect(septemberClosure.totalPending).toBe(108_000);
+    expect(septemberClosure.providerReimbursement).toBe(108_000);
     expect(septemberClosure.isAllSettled).toBe(false);
     expect(septemberClosure.employeeSummaries[0].isSettled).toBe(false);
     expect(septemberClosure.employeeSummaries[0].statusLabel).toBe("Pendiente");
@@ -475,7 +500,7 @@ describe("employer audit mappers", () => {
         advancedAmount: 300_000,
         installments: 3,
         feeAmount: 24_000,
-        netDisbursedAmount: 276_000,
+        netDisbursedAmount: 300_000,
         status: "procesado",
         requestedAt: "2026-08-10T10:00:00-05:00",
         transferId: "TRF-D1",
@@ -518,7 +543,7 @@ describe("employer audit mappers", () => {
         advancedAmount: 200_000,
         installments: 1,
         feeAmount: 8_000,
-        netDisbursedAmount: 192_000,
+        netDisbursedAmount: 200_000,
         status: "procesado",
         requestedAt: "2026-08-15T10:00:00-05:00",
         transferId: "TRF-D2",
@@ -536,7 +561,7 @@ describe("employer audit mappers", () => {
         advancedAmount: 100_000,
         installments: 1,
         feeAmount: 8_000,
-        netDisbursedAmount: 92_000,
+        netDisbursedAmount: 100_000,
         status: "procesado",
         requestedAt: "2026-08-12T10:00:00-05:00",
         transferId: "TRF-J",
@@ -549,9 +574,9 @@ describe("employer audit mappers", () => {
     const snapshot = buildNominaDescuentosSnapshot(danielaAdvances, "2026-08");
 
     expect(snapshot.periodo).toBe("2026-08");
-    expect(snapshot.totalDescontar).toBe(300_000);
+    expect(snapshot.totalDescontar).toBe(316_000);
     expect(snapshot.totalDescontado).toBe(100_000);
-    expect(snapshot.totalGeneral).toBe(400_000);
+    expect(snapshot.totalGeneral).toBe(416_000);
     expect(snapshot.empleadosConDescuento).toBe(2);
     expect(snapshot.cuotasDelMes).toBe(3);
 
@@ -562,9 +587,9 @@ describe("employer audit mappers", () => {
     expect(daniela?.fullName).toBe("Daniela Gonzales");
     expect(daniela?.cantidadAdelantos).toBe(2);
     expect(daniela?.cuotasMes).toBe(2);
-    expect(daniela?.totalDescontar).toBe(200_000);
+    expect(daniela?.totalDescontar).toBe(208_000);
     expect(daniela?.totalDescontado).toBe(100_000);
-    expect(daniela?.totalGeneral).toBe(300_000);
+    expect(daniela?.totalGeneral).toBe(308_000);
     expect(daniela?.cuotas).toHaveLength(2);
     expect(daniela?.cuotas[0].cuota_numero).toBe(1);
     expect(daniela?.cuotas[0].total_cuotas).toBe(3);
@@ -575,7 +600,7 @@ describe("employer audit mappers", () => {
       (r) => r.documento === "1231231231",
     );
     expect(jesus).toBeDefined();
-    expect(jesus?.totalDescontar).toBe(100_000);
+    expect(jesus?.totalDescontar).toBe(108_000);
     expect(jesus?.cuotasMes).toBe(1);
   });
 });

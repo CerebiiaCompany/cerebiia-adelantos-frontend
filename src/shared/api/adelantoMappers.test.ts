@@ -21,13 +21,14 @@ describe("adelantoMappers", () => {
     expect(record.canCancel).toBe(false);
   });
 
-  it("usa monto_neto del backend para calcular la tarifa", () => {
+  it("mantiene el monto recibido completo y toma la tarifa desde tarifa_total", () => {
     const record = mapSolicitudToHistoryRecord({
       id: "550e8400-e29b-41d4-a716-446655440001",
       empleado_id: "emp-1",
       empresa_id: "empresa-1",
       monto: "400000.00",
-      monto_neto: "384000.00",
+      monto_neto: "400000.00",
+      tarifa_total: "16000.00",
       numero_cuotas_snapshot: 2,
       plazo_dias_snapshot: 90,
       estado: "aprobado",
@@ -35,7 +36,7 @@ describe("adelantoMappers", () => {
     });
 
     expect(record.transactionFeeAmount).toBe(16000);
-    expect(record.netAmount).toBe(384000);
+    expect(record.netAmount).toBe(400000);
     expect(record.canCancel).toBe(false);
   });
 

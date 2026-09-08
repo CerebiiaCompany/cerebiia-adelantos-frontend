@@ -90,7 +90,7 @@ export function EmployerSolicitudDetalleDialog({
                   value={Number.isNaN(monto) ? data.solicitud.monto : formatCOP(monto)}
                 />
                 <DetailItem
-                  label="Monto neto"
+                  label="Monto recibido por el empleado"
                   value={
                     Number.isNaN(neto)
                       ? data.solicitud.monto_neto ?? "—"
@@ -109,6 +109,11 @@ export function EmployerSolicitudDetalleDialog({
                       : "—"
                   }
                 />
+              </div>
+
+              <div className="rounded-xl border border-primary/10 bg-primary/[0.04] px-4 py-3 text-sm text-muted-foreground">
+                El empleado recibe el valor completo del adelanto. La comisión
+                correspondiente se descuenta aparte en nómina por la empresa.
               </div>
 
               {evidenceUrl ? (

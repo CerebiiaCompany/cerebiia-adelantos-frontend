@@ -57,7 +57,7 @@ export function enrichAdvanceHistoryRecords(
     const netAmount =
       Number.isFinite(parsedNet) && parsedNet >= 0
         ? parsedNet
-        : Math.max(0, amount - transactionFeeAmount);
+        : amount;
 
     const rawStatus =
       record.status ??

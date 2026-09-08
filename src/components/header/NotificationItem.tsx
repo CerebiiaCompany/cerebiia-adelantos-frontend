@@ -26,6 +26,7 @@ const KIND_ICON_COLORS: Record<string, string> = {
   employer_advance_approved: "text-emerald-600",
   employer_advance_rejected: "text-destructive",
   employer_support_message: "text-primary",
+  employer_billing_document: "text-primary",
   provider_week_debt: "text-warning",
 };
 
