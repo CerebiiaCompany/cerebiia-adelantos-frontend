@@ -6,6 +6,7 @@ import type {
   EmployeeDashboardSnapshot,
 } from "./types";
 import {
+  calculateAccruedSalaryMonth,
   calculateCumulativeAccumulatedIncome,
   calculateDailySalaryIncome,
   calculateIncomeForCalendarMonth,
@@ -98,8 +99,13 @@ export function buildEmployeeDashboardSnapshot(
 ): EmployeeDashboardSnapshot {
   const limit = maxAdvanceLimit ?? calculateMaxAdvanceLimit(salary);
   const availableAdvance = Math.max(0, limit - metrics.totalAdvancedThisMonth);
-  const walletBalance = calculateWalletBalance(
+  const { diasLaborados, salarioDevengado } = calculateAccruedSalaryMonth(
     salary,
+    incomeStartDate,
+    referenceDate,
+  );
+  const walletBalance = calculateWalletBalance(
+    salarioDevengado,
     metrics.totalAdvancedThisMonth,
   );
   const accumulatedIncome = calculateCumulativeAccumulatedIncome(
@@ -117,6 +123,8 @@ export function buildEmployeeDashboardSnapshot(
     accumulatedIncome,
     incomeToday,
     totalAdvancedThisMonth: metrics.totalAdvancedThisMonth,
+    diasLaboradosMes: diasLaborados,
+    accruedSalaryMonth: salarioDevengado,
     walletBalance,
     chartData: buildDashboardChartData(
       metrics.monthlyAdvances,

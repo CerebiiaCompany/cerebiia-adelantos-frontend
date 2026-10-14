@@ -10,6 +10,29 @@ import type {
 import { formatCOP } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 
+
+function sanitizeAuditDisplayValue(val: unknown): string {
+  if (val === null || val === undefined) return "No configurado";
+  const str = String(val).trim();
+  if (
+    !str ||
+    str.toLowerCase().includes("undefined") ||
+    str.toLowerCase().includes("nan") ||
+    str.toLowerCase() === "null"
+  ) {
+    return "No configurado";
+  }
+  return str;
+}
+
+function sanitizeAuditDescription(desc?: string | null): string {
+  if (!desc) return "—";
+  return desc
+    .replace(/\bundefined%?\b/gi, "No configurado")
+    .replace(/\$\s*NaN\b/gi, "No configurado")
+    .replace(/\bNaN\b/gi, "No configurado");
+}
+
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";

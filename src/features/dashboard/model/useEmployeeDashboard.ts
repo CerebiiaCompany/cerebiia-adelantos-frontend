@@ -12,6 +12,7 @@ import {
 } from "@/entities/employee-dashboard";
 import { useSolicitudesAdelanto } from "@/features/advance/model/useSolicitudesAdelanto";
 import { useEmpleadoMe } from "@/features/advance/model/useEmpleadoMe";
+import { useMiSituacionFinanciera } from "@/features/advance/model/useMiSituacionFinanciera";
 import { isEmpleadoSession } from "@/shared/api";
 import { env } from "@/shared/config/env";
 import {
@@ -34,6 +35,7 @@ export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
     isLoading: isNominaLoading,
     isSuccess: hasNomina,
   } = useEmpleadoMe();
+  const { data: situacionFinanciera } = useMiSituacionFinanciera();
 
   useEffect(() => subscribeEmployeeDashboard(() => setVersion((v) => v + 1)), []);
 
@@ -45,12 +47,27 @@ export function useEmployeeDashboard(): EmployeeDashboardSnapshot | null {
       empleadoMe?.salario ?? session.empleado.salario,
     );
 
+    const historyMetrics = hasApiHistory && apiHistory
+      ? deriveAdvanceMetricsFromHistory(apiHistory)
+      : createEmptyDashboardMetrics();
+
+    // UX-03: Unificar la fuente de verdad del total adelantado del mes con el endpoint de resumen (/adelantos/mi-situacion-financiera/)
+    const backendTotalMonth = situacionFinanciera?.total_adelantado_mes != null
+      ? Number(situacionFinanciera.total_adelantado_mes)
+      : (situacionFinanciera?.resumen?.total_adelantado_mes != null
+        ? Number(situacionFinanciera.resumen.total_adelantado_mes)
+        : (situacionFinanciera?.resumen?.monto_total_solicitado_mes != null
+          ? Number(situacionFinanciera.resumen.monto_total_solicitado_mes)
+          : null));
+
+    const totalAdvancedThisMonth = backendTotalMonth != null && !Number.isNaN(backendTotalMonth)
+      ? backendTotalMonth
+      : (env.apiUrl ? historyMetrics.totalAdvancedThisMonth : localMetrics.totalAdvancedThisMonth);
+
     const metrics = env.apiUrl
       ? {
-          ...createEmptyDashboardMetrics(),
-          ...(hasApiHistory && apiHistory
-            ? deriveAdvanceMetricsFromHistory(apiHistory)
-            : {}),
+          ...historyMetrics,
+          totalAdvancedThisMonth,
         }
       : localMetrics;
 

@@ -25,7 +25,9 @@ describe("employee dashboard calculations", () => {
     expect(snapshot.accumulatedIncome).toBe(11_956_129);
     expect(snapshot.incomeToday).toBe(80_000);
     expect(snapshot.totalAdvancedThisMonth).toBe(0);
-    expect(snapshot.walletBalance).toBe(2_400_000);
+    expect(snapshot.walletBalance).toBe(1_040_000);
+    expect(snapshot.diasLaboradosMes).toBe(13);
+    expect(snapshot.accruedSalaryMonth).toBe(1_040_000);
     expect(snapshot.recentActivity).toHaveLength(0);
     expect(snapshot.chartData.every((point) => point.adelantos === 0)).toBe(true);
     expect(snapshot.chartData.at(-1)?.ingresos).toBe(1_040_000);
@@ -42,7 +44,8 @@ describe("employee dashboard calculations", () => {
     );
 
     expect(snapshot.accumulatedIncome).toBe(0);
-    expect(snapshot.walletBalance).toBe(2_400_000);
+    expect(snapshot.walletBalance).toBe(1_040_000);
+    expect(snapshot.diasLaboradosMes).toBe(13);
     expect(snapshot.chartData.every((point) => point.ingresos === 0)).toBe(true);
   });
 
@@ -73,7 +76,7 @@ describe("employee dashboard calculations", () => {
 
     expect(snapshot.totalAdvancedThisMonth).toBe(500_000);
     expect(snapshot.availableAdvance).toBe(220_000);
-    expect(snapshot.walletBalance).toBe(1_900_000);
+    expect(snapshot.walletBalance).toBe(540_000); // 1.040.000 devengado - 500.000 adelantado
     expect(snapshot.recentActivity).toHaveLength(1);
     expect(snapshot.chartData.some((point) => point.adelantos === 500_000)).toBe(
       true,

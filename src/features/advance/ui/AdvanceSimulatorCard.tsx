@@ -10,7 +10,7 @@ import {
   formatDate,
   formatIsoDateLocal,
 } from "@/shared/lib";
-import { AdvanceAmountSelector } from "./AdvanceAmountSelector";
+import { AdvanceAmountSelector, formatAdvanceAmount } from "./AdvanceAmountSelector";
 import {
   AdvanceTimelineCenterLine,
   AdvanceTimelineShell,
@@ -170,11 +170,20 @@ export function AdvanceSimulatorCard({
               </span>
             </div>
 
+            {!hasAmount ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                <p className="font-medium">
+                  {amount > 0 && amount < minAmount
+                    ? `El monto mínimo para solicitar un adelanto es de ${formatAdvanceAmount(minAmount)}.`
+                    : "Selecciona un monto válido para ver la simulación de tu adelanto."}
+                </p>
+              </div>
+            ) : (
+              <>
             <SummaryRow label="Monto solicitado" value={amount} />
             <SummaryRow
-              label={feeLabel}
+              label={`${feeLabel} (cobro en nómina)`}
               value={fee}
-              negative
               gratis={primeraCuotaGratis && fee === 0}
             />
             <SummaryRow label="Cuotas" value={installments} isCount />
@@ -182,7 +191,7 @@ export function AdvanceSimulatorCard({
             <div className="flex items-center justify-between border-t border-border pt-3 text-sm font-bold">
               <span className="flex items-center gap-2 text-foreground">
                 <Coins className="h-4 w-4 text-primary" strokeWidth={2.25} />
-                Recibirás completo
+                Recibirás completo (Desembolso)
               </span>
               <AnimatedCurrency
                 value={total}
@@ -190,6 +199,16 @@ export function AdvanceSimulatorCard({
                   "text-primary transition-transform duration-300",
                   hasAmount && "advance-amount-pop",
                 )}
+                duration={COUNT_DURATION}
+              />
+            </div>
+            <div className="flex items-center justify-between border-t border-dashed border-border/80 pt-2 text-xs">
+              <span className="text-muted-foreground font-medium">
+                Total a descontar en nómina
+              </span>
+              <AnimatedCurrency
+                value={amount + fee}
+                className="font-semibold text-foreground"
                 duration={COUNT_DURATION}
               />
             </div>
@@ -233,6 +252,8 @@ export function AdvanceSimulatorCard({
                 ))}
               </div>
             ) : null}
+              </>
+            )}
           </div>
         </section>
       </div>

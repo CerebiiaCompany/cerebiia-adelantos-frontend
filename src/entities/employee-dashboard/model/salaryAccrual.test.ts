@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateAccruedSalaryMonth,
   calculateCumulativeAccumulatedIncome,
   calculateDailySalaryIncome,
   calculateIncomeForCalendarMonth,
@@ -9,6 +10,19 @@ describe("salaryAccrual", () => {
   const salary = 1_500_000;
   const hireDate = "2026-01-15";
 
+  it("calcula salario devengado y días laborados del mes actual base 30", () => {
+    const reference = new Date("2026-06-13T10:00:00");
+    const res = calculateAccruedSalaryMonth(1_500_000, hireDate, reference);
+    expect(res.diasLaborados).toBe(13);
+    expect(res.salarioDevengado).toBe(650_000); // 50.000 * 13
+  });
+
+  it("calcula salario devengado para ingreso en el mes actual", () => {
+    const reference = new Date("2026-06-13T10:00:00");
+    const res = calculateAccruedSalaryMonth(1_500_000, "2026-06-05", reference);
+    expect(res.diasLaborados).toBe(9); // 5 al 13 inclusive
+    expect(res.salarioDevengado).toBe(450_000); // 50.000 * 9
+  });
   it("acumula ingresos desde la fecha de ingreso sin reiniciar cada mes", () => {
     const reference = new Date("2026-06-13T10:00:00");
 

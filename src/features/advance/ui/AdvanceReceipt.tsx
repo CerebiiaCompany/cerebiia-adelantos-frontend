@@ -17,6 +17,7 @@ import {
   resolveEmpleadoCompanyName,
 } from "@/features/advance/utils/empleadoBankingDisplay";
 import { amountInWordsSpanish } from "@/shared/utils/amountInWords";
+import { formatCOP } from "@/shared/lib/currency";
 import {
   buildAdvanceReceiptFolio,
   getPayrollPeriodLabel,
@@ -153,6 +154,14 @@ export function AdvanceReceipt({
       primeraCuotaGratisDisponible,
     ],
   );
+  const totalToRepay = useMemo(
+    () => amount + transactionFee,
+    [amount, transactionFee],
+  );
+  const totalToRepayWords = useMemo(
+    () => amountInWordsSpanish(totalToRepay),
+    [totalToRepay],
+  );
   const amountWords = useMemo(
     () => amountInWordsSpanish(amount),
     [amount],
@@ -264,13 +273,13 @@ export function AdvanceReceipt({
             </PartyBlock>
           </div>
 
-          {/* Tabla de conceptos */}
+          {/* Tabla de conceptos y liquidación (Resuelve hallazgo QA RB-05) */}
           <div className="mb-5 overflow-hidden rounded-md border border-border">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-secondary/60">
+                <tr className="border-b border-border bg-secondary/70">
                   <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Concepto
+                    1. Liquidación del Desembolso
                   </th>
                   <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     Valor
@@ -279,35 +288,35 @@ export function AdvanceReceipt({
               </thead>
               <tbody>
                 <tr className="border-b border-dashed border-border/80">
-                  <td className="px-4 py-3.5 align-top leading-snug text-foreground">
-                    {concept}
+                  <td className="px-4 py-3 align-top leading-snug text-foreground">
+                    <p className="font-semibold text-foreground">{concept}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Monto solicitado del adelanto
+                    </p>
                   </td>
-                  <td className="px-4 py-3.5 text-right align-top font-semibold tabular-nums text-foreground">
+                  <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-foreground">
                     <AnimatedCurrency value={amount} duration={600} />
                   </td>
                 </tr>
                 <tr className="border-b border-dashed border-border/80">
-                  <td className="px-4 py-3 align-top leading-snug text-muted-foreground">
-                    {transactionFeeConcept}
+                  <td className="px-4 py-2.5 align-top leading-snug text-muted-foreground">
+                    <p className="text-xs font-medium">Deducciones previas al desembolso</p>
+                    <p className="text-[11px] text-muted-foreground/80">
+                      Sin retención inicial; la comisión no se deduce de la transferencia
+                    </p>
                   </td>
-                  <td className="px-4 py-3 text-right align-top font-semibold tabular-nums text-[hsl(260_70%_50%)]">
-                    {transactionFee === 0 ? (
-                      <span className="text-emerald-600">Gratis</span>
-                    ) : (
-                      <>
-                        −
-                        <AnimatedCurrency
-                          value={transactionFee}
-                          className="inline"
-                          duration={600}
-                        />
-                      </>
-                    )}
+                  <td className="px-4 py-2.5 text-right align-top font-medium text-xs text-muted-foreground tabular-nums">
+                    $0
                   </td>
                 </tr>
-                <tr className="bg-primary/[0.04]">
-                  <td className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                    Total transferido al empleado
+                <tr className="border-b-2 border-border bg-primary/[0.04]">
+                  <td className="px-4 py-3 text-left">
+                    <p className="text-xs font-bold uppercase tracking-wide text-primary">
+                      Total transferido al empleado (Neto desembolsado)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Abono 100% en cuenta bancaria del beneficiario
+                    </p>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <AnimatedCurrency
@@ -317,27 +326,97 @@ export function AdvanceReceipt({
                     />
                   </td>
                 </tr>
+
+                {/* Sección 2: Plan de cobro por nómina */}
+                <tr className="border-b border-border bg-secondary/70">
+                  <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    2. Plan de Cobro por Nómina (Total a Devolver)
+                  </th>
+                  <th className="px-4 py-2.5 text-right text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Valor a Descontar
+                  </th>
+                </tr>
+                <tr className="border-b border-dashed border-border/80">
+                  <td className="px-4 py-2.5 align-top leading-snug text-foreground">
+                    <p className="text-xs font-medium">Capital del adelanto a devolver</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Amortización de capital financiado
+                    </p>
+                  </td>
+                  <td className="px-4 py-2.5 text-right align-top font-medium text-xs tabular-nums text-foreground">
+                    <AnimatedCurrency value={amount} duration={600} />
+                  </td>
+                </tr>
+                <tr className="border-b border-dashed border-border/80">
+                  <td className="px-4 py-2.5 align-top leading-snug text-foreground">
+                    <p className="text-xs font-medium">{transactionFeeConcept}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Forma de cobro: Deducible en nómina junto con la cuota (no reduce la transferencia)
+                    </p>
+                  </td>
+                  <td className="px-4 py-2.5 text-right align-top font-medium text-xs tabular-nums text-[hsl(260_70%_50%)]">
+                    {transactionFee === 0 ? (
+                      <span className="font-semibold text-emerald-600">Gratis</span>
+                    ) : (
+                      <AnimatedCurrency
+                        value={transactionFee}
+                        className="inline font-semibold"
+                        duration={600}
+                      />
+                    )}
+                  </td>
+                </tr>
+                <tr className="bg-secondary/80">
+                  <td className="px-4 py-3 text-left">
+                    <p className="text-xs font-bold uppercase tracking-wide text-foreground">
+                      Total a devolver por nómina
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {installments === 1
+                        ? "Cobro en 1 cuota deducible en tu próximo pago de nómina"
+                        : `Diferido en ${installments} cuotas de nómina (~${formatCOP(Math.round(totalToRepay / installments))} por cuota)`}
+                    </p>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <AnimatedCurrency
+                      value={totalToRepay}
+                      className="font-display text-lg font-bold text-foreground tabular-nums"
+                      duration={700}
+                    />
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
 
-          <div className="mb-5 rounded-md border border-primary/10 bg-primary/[0.04] px-4 py-3">
+          <div className="mb-5 rounded-md border border-primary/15 bg-primary/[0.03] px-4 py-3">
             <p className="text-xs leading-relaxed text-muted-foreground">
-              El empleado recibe el monto completo del adelanto. La comisión
+              <span className="font-semibold text-foreground">Aclaración de cobro y dispersión: </span>
+              El empleado recibe el monto completo solicitado ({formatCOP(amount)}) directamente en su cuenta bancaria sin deducciones iniciales.
               {transactionFee === 0
-                ? " de esta solicitud no genera descuento por nómina."
-                : " se descuenta aparte por nómina a través de la empresa, junto con la cuota correspondiente."}
+                ? " Esta solicitud no genera cobro de comisión por concepto de promoción de primera cuota gratis; el total a devolver en nómina corresponde únicamente al capital del adelanto."
+                : ` La comisión del servicio (${formatCOP(transactionFee)}) no se deduce de la transferencia bancaria inicial; se recauda de forma diferida mediante descuento de nómina a través de la empresa junto con el capital acordado.`}
             </p>
           </div>
 
           {/* Valor en letras */}
-          <div className="mb-5 rounded-md border border-border bg-muted/30 px-4 py-3">
-            <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Valor en letras
-            </p>
-            <p className="text-sm leading-relaxed capitalize italic text-foreground">
-              {amountWords}
-            </p>
+          <div className="mb-5 grid gap-2 sm:grid-cols-2">
+            <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Neto desembolsado en letras
+              </p>
+              <p className="text-xs leading-relaxed capitalize italic font-medium text-foreground">
+                {amountWords}
+              </p>
+            </div>
+            <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Total a devolver en nómina
+              </p>
+              <p className="text-xs leading-relaxed capitalize italic font-medium text-foreground">
+                {totalToRepayWords}
+              </p>
+            </div>
           </div>
 
           {/* Datos de pago */}

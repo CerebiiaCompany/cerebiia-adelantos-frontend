@@ -1,6 +1,7 @@
 import type { AuditoriaCambioEmpleadoDTO } from "@/shared/api/types/empleado";
 import type { SolicitudAdelantoDTO, CuotaAdelantoDTO } from "@/shared/api/types/adelanto";
 import type { AdelantoConfiguracionDTO } from "@/shared/api/types/configuracion";
+import type { ParsedAdelantoConfiguracion } from "@/shared/api/configuracionMappers";
 import { formatCOP } from "@/shared/lib";
 import { resolveSolicitudComprobanteUrl } from "@/shared/lib/comprobantePago";
 import type {
@@ -12,10 +13,87 @@ export interface EnrichedSolicitudWithCuotas extends SolicitudAdelantoDTO {
   cuotas?: CuotaAdelantoDTO[];
 }
 
+export type AnyAdelantoConfigInput =
+  | AdelantoConfiguracionDTO
+  | ParsedAdelantoConfiguracion
+  | Record<string, unknown>;
+
+export interface NormalizedAuditConfig {
+  porcentajeMaximoAdelanto: number | null;
+  numeroMaximoCuotas: number | null;
+  plazoMaximoDias: number | null;
+  tarifaFijaPorCuota: number | null;
+  montoMinimoAdelanto: number | null;
+  scope: "global" | "empresa" | "empleado";
+  updatedAt?: string | null;
+}
+
+export function normalizeAuditConfig(
+  raw: AnyAdelantoConfigInput | null | undefined,
+): NormalizedAuditConfig | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const parseNumber = (val: unknown): number | null => {
+    if (val === null || val === undefined || val === "") return null;
+    if (typeof val === "number") return Number.isFinite(val) ? val : null;
+    const str = String(val).replace(/[^0-9.-]/g, "").trim();
+    if (!str) return null;
+    const n = Number.parseFloat(str);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const rec = raw as Record<string, unknown>;
+
+  const porcentaje = parseNumber(
+    rec.porcentajeMaximoAdelanto ?? rec.porcentaje_maximo_adelanto,
+  );
+  const cuotas = parseNumber(
+    rec.numeroMaximoCuotas ?? rec.numero_maximo_cuotas,
+  );
+  const plazo = parseNumber(
+    rec.plazoMaximoDias ?? rec.plazo_maximo_dias,
+  );
+  const tarifa = parseNumber(
+    rec.tarifaFijaPorCuota ?? rec.tarifa_fija_por_cuota,
+  );
+  const minimo = parseNumber(
+    rec.montoMinimoAdelanto ?? rec.monto_minimo ?? rec.monto_minimo_adelanto,
+  );
+
+  let scope: "global" | "empresa" | "empleado" = "global";
+  const origen = String(rec.origen || rec.scope || "").toLowerCase();
+  if (origen === "empresa") scope = "empresa";
+  else if (origen === "empleado") scope = "empleado";
+  else if (origen === "personalizada") scope = "empresa";
+
+  const updatedAt =
+    typeof rec.updatedAt === "string"
+      ? rec.updatedAt
+      : typeof rec.updated_at === "string"
+        ? rec.updated_at
+        : null;
+
+  return {
+    porcentajeMaximoAdelanto: porcentaje,
+    numeroMaximoCuotas: cuotas != null && cuotas > 0 ? Math.round(cuotas) : null,
+    plazoMaximoDias: plazo != null && plazo > 0 ? Math.round(plazo) : null,
+    tarifaFijaPorCuota: tarifa != null ? Math.round(tarifa) : null,
+    montoMinimoAdelanto: minimo != null ? Math.round(minimo) : null,
+    scope,
+    updatedAt,
+  };
+}
+
+/**
+ * Deriva la auditoría unificada del empleado.
+ * Hallazgo QA UX-04: El empleado debe visualizar EXCLUSIVAMENTE sus propias acciones:
+ * solicitudes, cambios de perfil e inicios de sesión, en un lenguaje claro y amigable,
+ * excluyendo configuraciones internas del Super Admin reservadas para el BackOffice.
+ */
 export function deriveEmployeeUnifiedAudit(params: {
   profileAuditRecords: AuditoriaCambioEmpleadoDTO[];
   solicitudes: EnrichedSolicitudWithCuotas[];
-  config?: AdelantoConfiguracionDTO | null;
+  config?: AnyAdelantoConfigInput | null;
   availableAdvance?: number;
   maxAdvanceLimit?: number;
 }): {
@@ -25,39 +103,63 @@ export function deriveEmployeeUnifiedAudit(params: {
   const {
     profileAuditRecords = [],
     solicitudes = [],
-    config = null,
     availableAdvance = 0,
     maxAdvanceLimit = 0,
   } = params;
 
   const events: EmployeeUnifiedAuditRecord[] = [];
 
-  // 1. Mapear auditoría de cambios de perfil y datos
+  // 1. Mapear auditoría de cambios de perfil, datos bancarios e inicios de sesión
   profileAuditRecords.forEach((item) => {
     const changesCount = item.cambios?.length || 0;
-    const actor = item.actor_nombre || "Empleado";
+    const actor = item.actor_nombre || "Tú";
     const actorTipo = item.actor_tipo || "empleado";
+    const accionStr = String(item.accion || "").toLowerCase();
 
-    events.push({
-      id: `profile-${item.id}`,
-      timestamp: item.created_at,
-      eventType: "cambio_perfil",
-      category: "perfil",
-      title: "Actualización de información personal/bancaria",
-      description: `Se registraron modificaciones en ${changesCount} campo${changesCount === 1 ? "" : "s"} del perfil.`,
-      actorNombre: actor,
-      actorTipo,
-      statusBadge: {
-        label: "Modificación",
-        tone: "purple",
-      },
-      profileChanges: item.cambios,
-    });
+    const isLogin =
+      accionStr.includes("login") ||
+      accionStr.includes("inicio_sesion") ||
+      accionStr.includes("autenticacion");
+
+    if (isLogin) {
+      events.push({
+        id: `session-${item.id}`,
+        timestamp: item.created_at,
+        eventType: "inicio_sesion",
+        category: "perfil",
+        title: "Inicio de sesión seguro",
+        description: "Acceso exitoso registrado en tu cuenta de empleado.",
+        actorNombre: actor,
+        actorTipo,
+        statusBadge: {
+          label: "Sesión activa",
+          tone: "info",
+        },
+      });
+    } else {
+      events.push({
+        id: `profile-${item.id}`,
+        timestamp: item.created_at,
+        eventType: "cambio_perfil",
+        category: "perfil",
+        title: "Actualización de información personal o bancaria",
+        description: changesCount > 0
+          ? `Se actualizaron ${changesCount} dato${changesCount === 1 ? "" : "s"} de tu perfil.`
+          : "Actualizaste la información de tu cuenta.",
+        actorNombre: actor,
+        actorTipo,
+        statusBadge: {
+          label: "Modificación",
+          tone: "purple",
+        },
+        profileChanges: item.cambios,
+      });
+    }
   });
 
   let cuotasLiberadasCount = 0;
 
-  // 2. Mapear ciclo de vida de cada solicitud de adelanto
+  // 2. Mapear ciclo de vida de cada solicitud de adelanto del empleado
   solicitudes.forEach((solicitud) => {
     const montoNum = Number.parseFloat(solicitud.monto) || 0;
     const netoNum =
@@ -72,9 +174,9 @@ export function deriveEmployeeUnifiedAudit(params: {
       timestamp: solicitud.created_at,
       eventType: "solicitud_creada",
       category: "solicitudes",
-      title: `Solicitud de adelanto enviada · ${formatCOP(montoNum)}`,
-      description: `Creaste una solicitud de adelanto por ${formatCOP(montoNum)} a diferir en ${cuotasCount} cuota${cuotasCount === 1 ? "" : "s"}. Estado inicial: En revisión.`,
-      actorNombre: "Empleado",
+      title: `Solicitud enviada · ${formatCOP(montoNum)}`,
+      description: `Enviaste una solicitud de adelanto por ${formatCOP(montoNum)} a diferir en ${cuotasCount} cuota${cuotasCount === 1 ? "" : "s"}. Estado: En revisión.`,
+      actorNombre: "Tú",
       actorTipo: "empleado",
       statusBadge: {
         label: "En revisión",
@@ -100,12 +202,12 @@ export function deriveEmployeeUnifiedAudit(params: {
           timestamp: decisionTimestamp,
           eventType: "solicitud_rechazada",
           category: "solicitudes",
-          title: `Solicitud de adelanto rechazada · ${formatCOP(montoNum)}`,
-          description: `La solicitud por ${formatCOP(montoNum)} no fue aprobada. Motivo: ${solicitud.motivo_rechazo || "No cumple con las condiciones requeridas."}`,
-          actorNombre: "Administración / Super Admin",
-          actorTipo: "sistema",
+          title: `Solicitud no aprobada · ${formatCOP(montoNum)}`,
+          description: `Tu solicitud no fue aprobada. Motivo: ${solicitud.motivo_rechazo || "No cumple con las condiciones o cupo disponible de tu empresa."}`,
+          actorNombre: "Revisión de adelantos",
+          actorTipo: "empresa",
           statusBadge: {
-            label: "Rechazado",
+            label: "No aprobado",
             tone: "danger",
           },
           solicitudId: solicitud.id,
@@ -118,10 +220,10 @@ export function deriveEmployeeUnifiedAudit(params: {
           timestamp: decisionTimestamp,
           eventType: "solicitud_aprobada",
           category: "solicitudes",
-          title: `Solicitud de adelanto aprobada · ${formatCOP(montoNum)}`,
-          description: `Tu solicitud por ${formatCOP(montoNum)} fue verificada y aprobada para desembolso.`,
-          actorNombre: "Administración / Super Admin",
-          actorTipo: "sistema",
+          title: `Solicitud aprobada · ${formatCOP(montoNum)}`,
+          description: `Tu solicitud de adelanto por ${formatCOP(montoNum)} fue aprobada y se prepara para transferencia bancaria.`,
+          actorNombre: "Aprobación de adelantos",
+          actorTipo: "empresa",
           statusBadge: {
             label: "Aprobado",
             tone: "success",
@@ -144,12 +246,12 @@ export function deriveEmployeeUnifiedAudit(params: {
         timestamp: pagadoTimestamp,
         eventType: "solicitud_pagada",
         category: "solicitudes",
-        title: `Desembolso completado · ${formatCOP(netoNum)}`,
-        description: `Se efectuó la transferencia de ${formatCOP(netoNum)} a tu cuenta bancaria. Comprobante y evidencia de pago disponibles.`,
-        actorNombre: "Cerebiia / Pagos",
+        title: `Transferencia completada · ${formatCOP(netoNum)}`,
+        description: `Se transfirieron exitosamente ${formatCOP(netoNum)} a tu cuenta bancaria. Comprobante de pago disponible.`,
+        actorNombre: "Cerebiia Pagos",
         actorTipo: "sistema",
         statusBadge: {
-          label: "Pagado",
+          label: "Transferido",
           tone: "success",
         },
         solicitudId: solicitud.id,
@@ -160,7 +262,7 @@ export function deriveEmployeeUnifiedAudit(params: {
       });
     }
 
-    // Evento 4: Liberación de cuotas individuales por Super Admin
+    // Evento 4: Liquidación de cuotas individuales y liberación de cupo
     if (Array.isArray(solicitud.cuotas)) {
       solicitud.cuotas.forEach((cuota) => {
         const cEstado = String(cuota.estado || "").toLowerCase().trim();
@@ -186,12 +288,12 @@ export function deriveEmployeeUnifiedAudit(params: {
             timestamp: cuotaTimestamp,
             eventType: "cuota_liberada",
             category: "cupo",
-            title: `Cuota #${cuota.numero} de ${cuotasCount} liberada por Super Admin`,
-            description: `Se liquidó la cuota #${cuota.numero} por ${formatCOP(cuotaMontoNum)}. Tu saldo disponible aumentó de ${formatCOP(cupoAnterior)} a ${formatCOP(cupoNuevo)} (+${formatCOP(cuotaMontoNum)}).`,
-            actorNombre: "Super Admin",
-            actorTipo: "sistema",
+            title: `Cuota #${cuota.numero} de ${cuotasCount} liquidada · Cupo liberado`,
+            description: `Se liquidó la cuota #${cuota.numero} por ${formatCOP(cuotaMontoNum)}. Tu saldo disponible para adelantos aumentó a ${formatCOP(cupoNuevo)} (+${formatCOP(cuotaMontoNum)}).`,
+            actorNombre: "Nómina",
+            actorTipo: "empresa",
             statusBadge: {
-              label: "Cupo restaurado",
+              label: "Cupo liberado",
               tone: "info",
             },
             solicitudId: solicitud.id,
@@ -206,32 +308,8 @@ export function deriveEmployeeUnifiedAudit(params: {
     }
   });
 
-  // 3. Mapear configuración del Super Admin (reglas vigentes para adelantos)
-  if (config) {
-    events.push({
-      id: "employee-config-rules-active",
-      timestamp: new Date().toISOString(),
-      eventType: "cambio_configuracion",
-      category: "configuracion",
-      title: "Reglas de adelanto vigentes (Super Admin)",
-      description: `Parámetros activos de tu empresa: Tope ${config.porcentajeMaximoAdelanto}% del salario, máx. ${config.numeroMaximoCuotas} cuota(s), tarifa fija ${formatCOP(config.tarifaFijaPorCuota)} por cuota, plazo máx. ${config.plazoMaximoDias} días.`,
-      actorNombre: "Super Admin",
-      actorTipo: "sistema",
-      statusBadge: {
-        label: "Configuración",
-        tone: "info",
-      },
-      configDetails: {
-        scope: "global",
-        parameters: [
-          { parameter: "Porcentaje máximo de adelanto", value: `${config.porcentajeMaximoAdelanto}% del salario` },
-          { parameter: "Número máximo de cuotas", value: config.numeroMaximoCuotas },
-          { parameter: "Tarifa fija por cuota", value: formatCOP(config.tarifaFijaPorCuota) },
-          { parameter: "Plazo máximo", value: `${config.plazoMaximoDias} días` },
-        ],
-      },
-    });
-  }
+  // UX-04: Los eventos de configuración del sistema (Super Admin) NO se agregan a la auditoría del empleado.
+  // Pertenecen exclusivamente al BackOffice del administrador.
 
   // Ordenar todos los eventos cronológicamente (más recientes primero)
   const sortedRecords = events.sort((a, b) => {

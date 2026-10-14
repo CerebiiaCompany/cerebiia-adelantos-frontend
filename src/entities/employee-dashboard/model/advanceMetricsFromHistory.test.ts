@@ -38,6 +38,11 @@ describe("deriveAdvanceMetricsFromHistory", () => {
           status: "aprobado",
         }),
         makeRecord({
+          amount: 150_000,
+          requestedAt: new Date("2026-06-08T12:00:00"),
+          status: "pagado",
+        }),
+        makeRecord({
           amount: 999_000,
           requestedAt: new Date("2026-06-01T12:00:00"),
           status: "no_aprobado",
@@ -50,10 +55,10 @@ describe("deriveAdvanceMetricsFromHistory", () => {
       now,
     );
 
-    expect(metrics.totalAdvancedThisMonth).toBe(600_000);
-    expect(metrics.monthlyAdvances["2026-06"]).toBe(600_000);
+    expect(metrics.totalAdvancedThisMonth).toBe(750_000);
+    expect(metrics.monthlyAdvances["2026-06"]).toBe(750_000);
     expect(metrics.monthlyAdvances["2026-05"]).toBe(100_000);
-    expect(metrics.activity).toHaveLength(3);
+    expect(metrics.activity).toHaveLength(4);
   });
 });
 

@@ -4,7 +4,6 @@ export type EmployeeAuditCategory =
   | "todos"
   | "solicitudes"
   | "cupo"
-  | "configuracion"
   | "perfil";
 
 export type EmployeeAuditEventType =
@@ -15,13 +14,13 @@ export type EmployeeAuditEventType =
   | "solicitud_pagada"
   | "cuota_liberada"
   | "cambio_perfil"
-  | "cambio_configuracion";
+  | "inicio_sesion";
 
 export interface EmployeeUnifiedAuditRecord {
   id: string;
   timestamp: string;
-  eventType: EmployerAuditEventType | EmployeeAuditEventType;
-  category: "solicitudes" | "cupo" | "configuracion" | "perfil";
+  eventType: EmployeeAuditEventType | string;
+  category: "solicitudes" | "cupo" | "perfil";
   title: string;
   description: string;
   actorNombre: string;
@@ -30,7 +29,7 @@ export interface EmployeeUnifiedAuditRecord {
     label: string;
     tone: "success" | "warning" | "danger" | "info" | "purple" | "neutral";
   };
-  /** Metadatos adicionales para adelantos / cupo / evidencias / perfil / configuración */
+  /** Metadatos adicionales para adelantos / cupo / evidencias / perfil */
   solicitudId?: string;
   amount?: number;
   netAmount?: number;
@@ -41,14 +40,6 @@ export interface EmployeeUnifiedAuditRecord {
   evidenceUrl?: string | null;
   rejectionReason?: string | null;
   profileChanges?: AuditoriaCambioItemDTO[];
-  configDetails?: {
-    scope: "global" | "empresa" | "empleado";
-    scopeTargetName?: string;
-    parameters: Array<{
-      parameter: string;
-      value: string | number;
-    }>;
-  };
 }
 
 export interface EmployeeAuditSummaryMetrics {

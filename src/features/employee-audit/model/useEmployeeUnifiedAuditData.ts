@@ -3,8 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuditoriaCambiosMe } from "@/features/auditoria-cambios";
 import { useEmployeeDashboard } from "@/features/dashboard/model/useEmployeeDashboard";
 import { adelantosEndpoints } from "@/shared/api/endpoints/adelantos";
-import { configuracionEndpoints } from "@/shared/api/endpoints/configuracion";
-import type { AdelantoConfiguracionDTO } from "@/shared/api/types/configuracion";
 import {
   deriveEmployeeUnifiedAudit,
   type EnrichedSolicitudWithCuotas,
@@ -21,12 +19,6 @@ export function useEmployeeUnifiedAuditData(): {
 } {
   const profileQuery = useAuditoriaCambiosMe({ page: 1, page_size: 100 });
   const dashboard = useEmployeeDashboard();
-
-  const configQuery = useQuery<AdelantoConfiguracionDTO>({
-    queryKey: ["employee-adelantos-config"],
-    queryFn: () => configuracionEndpoints.getAdelantos(),
-    staleTime: 60_000,
-  });
 
   const solicitudesQuery = useQuery<EnrichedSolicitudWithCuotas[]>({
     queryKey: ["employee-solicitudes-audit-enriched"],
@@ -55,22 +47,19 @@ export function useEmployeeUnifiedAuditData(): {
     staleTime: 30_000,
   });
 
-  const isLoading =
-    profileQuery.isLoading || solicitudesQuery.isLoading || configQuery.isLoading;
+  const isLoading = profileQuery.isLoading || solicitudesQuery.isLoading;
   const isError = profileQuery.isError && solicitudesQuery.isError;
 
   const { records, metrics } = useMemo(() => {
     return deriveEmployeeUnifiedAudit({
       profileAuditRecords: profileQuery.data?.results ?? [],
       solicitudes: solicitudesQuery.data ?? [],
-      config: configQuery.data ?? null,
       availableAdvance: dashboard?.availableAdvance ?? 0,
       maxAdvanceLimit: dashboard?.maxAdvanceLimit ?? 0,
     });
   }, [
     profileQuery.data?.results,
     solicitudesQuery.data,
-    configQuery.data,
     dashboard?.availableAdvance,
     dashboard?.maxAdvanceLimit,
   ]);
@@ -79,7 +68,6 @@ export function useEmployeeUnifiedAuditData(): {
     await Promise.all([
       profileQuery.refetch(),
       solicitudesQuery.refetch(),
-      configQuery.refetch(),
     ]);
   };
 

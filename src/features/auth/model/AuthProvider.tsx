@@ -136,16 +136,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
-  // 1. Detección de actividad del usuario (mouse, teclado, touch, scroll, clicks)
+  // 1. Detección de actividad del usuario (mouse, teclado, touch, scroll, clicks) con sincronización entre pestañas
   useEffect(() => {
     if (!session) return;
 
     let lastThrottled = Date.now();
+    try {
+      localStorage.setItem("cerebiia_last_activity", String(Date.now()));
+    } catch {}
+
     const registerUserActivity = () => {
       const now = Date.now();
       if (now - lastThrottled > 2000) {
         lastThrottled = now;
         lastActivityTimeRef.current = now;
+        try {
+          localStorage.setItem("cerebiia_last_activity", String(now));
+        } catch {}
       }
     };
 
@@ -166,20 +173,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [session]);
 
-  // 2. Verificación periódica de inactividad de 15 minutos
+  // 2. Verificación periódica e inmediata al volver a la pestaña de inactividad de 15 minutos (SEG-03)
   useEffect(() => {
     if (!session) return;
 
     const checkInactivity = () => {
-      const elapsed = Date.now() - lastActivityTimeRef.current;
+      let lastTime = lastActivityTimeRef.current;
+      try {
+        const stored = localStorage.getItem("cerebiia_last_activity");
+        if (stored) {
+          const parsed = Number(stored);
+          if (Number.isFinite(parsed)) lastTime = Math.max(lastTime, parsed);
+        }
+      } catch {}
+
+      const elapsed = Date.now() - lastTime;
       if (elapsed >= INACTIVITY_TIMEOUT_MS) {
         toast.error("Tu sesión ha expirado por 15 minutos de inactividad.");
         logout();
       }
     };
 
+    const handleFocusOrVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkInactivity();
+      }
+    };
+
+    window.addEventListener("focus", handleFocusOrVisibility);
+    document.addEventListener("visibilitychange", handleFocusOrVisibility);
+
     const interval = window.setInterval(checkInactivity, 15_000);
-    return () => window.clearInterval(interval);
+    return () => {
+      window.removeEventListener("focus", handleFocusOrVisibility);
+      document.removeEventListener("visibilitychange", handleFocusOrVisibility);
+      window.clearInterval(interval);
+    };
   }, [session, logout]);
 
   // 3. Bootstrap inicial de la sesión

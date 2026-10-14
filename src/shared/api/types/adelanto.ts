@@ -94,6 +94,8 @@ export interface MiSituacionFinancieraResumenDTO {
   conteo_por_estado: Partial<Record<EstadoSolicitud, number>>;
   monto_total_solicitado: string;
   monto_total_aprobado: string;
+  monto_total_solicitado_mes?: string;
+  total_adelantado_mes?: string | number;
   ultima_solicitud: SolicitudAdelantoDTO | null;
   solicitud_activa: boolean;
 }
@@ -109,6 +111,8 @@ export interface MiSituacionFinancieraDTO {
   plazo_maximo_dias: number;
   /** True si el próximo adelanto aplica promo de primera cuota gratis. */
   primera_cuota_gratis_disponible?: boolean;
+  /** Total de adelantos comprometidos o solicitados en el mes en curso. */
+  total_adelantado_mes?: string | number;
   resumen: MiSituacionFinancieraResumenDTO;
   tendencia_mensual: TendenciaMensualDTO[];
 }

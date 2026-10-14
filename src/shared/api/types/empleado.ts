@@ -163,7 +163,8 @@ export type CampoReporteDatoIncorrecto =
   | "nombre"
   | "banco"
   | "tipo_cuenta"
-  | "numero_cuenta";
+  | "numero_cuenta"
+  | "ninguno";
 
 export type EstadoReporteDatoIncorrecto =
   | "pendiente"

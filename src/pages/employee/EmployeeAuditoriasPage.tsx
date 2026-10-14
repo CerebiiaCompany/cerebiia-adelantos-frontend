@@ -14,7 +14,7 @@ export default function EmployeeAuditoriasPage() {
       <PageHeader
         icon={ClipboardList}
         title="Auditorías"
-        description="Historial de cambios y registro de actividad de tu cuenta."
+        description="Historial de tus solicitudes de adelanto, movimientos de cupo y cambios en tu perfil."
       />
 
       <EmployeeUnifiedAuditTable
