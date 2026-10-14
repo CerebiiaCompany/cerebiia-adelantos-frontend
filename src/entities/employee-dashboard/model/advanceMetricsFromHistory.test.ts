@@ -58,7 +58,18 @@ describe("deriveAdvanceMetricsFromHistory", () => {
     expect(metrics.totalAdvancedThisMonth).toBe(750_000);
     expect(metrics.monthlyAdvances["2026-06"]).toBe(750_000);
     expect(metrics.monthlyAdvances["2026-05"]).toBe(100_000);
-    expect(metrics.activity).toHaveLength(4);
+    expect(metrics.activity).toHaveLength(5);
+
+    const rejected = metrics.activity.find((a) => a.amount === -999_000);
+    expect(rejected).toBeDefined();
+    expect(rejected?.status).toBe("rechazado");
+    expect(rejected?.statusLabel).toBe("Rechazado");
+
+    const solicitado = metrics.activity.find((a) => a.amount === -400_000);
+    expect(solicitado?.status).toBe("solicitado");
+
+    const aprobado = metrics.activity.find((a) => a.amount === -200_000);
+    expect(aprobado?.status).toBe("aprobado");
   });
 });
 

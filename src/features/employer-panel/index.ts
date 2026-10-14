@@ -37,3 +37,8 @@ export { ReportesDatosIncorrectosTable } from "./ui/ReportesDatosIncorrectosTabl
 export { useReportesDatoIncorrectoEmpresa } from "./model/useReportesDatoIncorrectoEmpresa";
 export { useResponderReporteDatoIncorrecto } from "./model/useResponderReporteDatoIncorrecto";
 export { useFinalizarReporteDatoIncorrecto } from "./model/useFinalizarReporteDatoIncorrecto";
+export {
+  useEmpresaPoliticaConfig,
+  useUpdateEmpresaPoliticaConfig,
+} from "./model/useEmpresaPoliticaConfig";
+export { ConfigurarAntiguedadDialog } from "./ui/ConfigurarAntiguedadDialog";

@@ -50,3 +50,13 @@ export interface UpdateExcelBrandingRequest {
   colors: ExcelBrandColorsDTO;
   apply_to: "nomina" | "liquidacion" | "todos";
 }
+
+export interface EmpresaConfiguracionDTO {
+  empresa_id: string;
+  empresa_nombre: string;
+  antiguedad_minima_dias: number;
+}
+
+export interface UpdateEmpresaConfiguracionRequest {
+  antiguedad_minima_dias: number;
+}

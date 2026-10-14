@@ -2,10 +2,12 @@
 
 import { http } from "../client";
 import type {
+  EmpresaConfiguracionDTO,
   EmpresaEstadoDTO,
   EmpresaListItemDTO,
   EmpresasListParams,
   ExcelBrandingDTO,
+  UpdateEmpresaConfiguracionRequest,
   UpdateExcelBrandingRequest,
 } from "../types/empresa";
 
@@ -42,4 +44,10 @@ export const empresasEndpoints = {
   },
   deleteExcelLogo: () =>
     http.del<ExcelBrandingDTO>("/empresas/me/excel-branding/logo/"),
+
+  /** Configuración y políticas de la empresa (antigüedad mínima, etc.). */
+  getConfiguracion: () =>
+    http.get<EmpresaConfiguracionDTO>("/empresas/me/configuracion/"),
+  updateConfiguracion: (body: UpdateEmpresaConfiguracionRequest) =>
+    http.put<EmpresaConfiguracionDTO>("/empresas/me/configuracion/", body),
 };

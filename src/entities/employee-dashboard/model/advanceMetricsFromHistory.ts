@@ -73,12 +73,38 @@ export function buildMonthlyAdvancesFromHistory(
   return monthlyAdvances;
 }
 
+export function resolveActivityStatus(
+  record: AdvanceHistoryRecord,
+): { status: "solicitado" | "aprobado" | "rechazado"; statusLabel: string } {
+  const rawEstado = String(record.estadoApi || "").toLowerCase().trim();
+  const rawStatus = String(record.status || "").toLowerCase().trim();
+
+  if (
+    rawEstado === "rechazado" ||
+    rawStatus === "no_aprobado" ||
+    rawStatus === "rechazado" ||
+    rawStatus === "cancelado"
+  ) {
+    return { status: "rechazado", statusLabel: "Rechazado" };
+  }
+
+  if (
+    rawEstado === "aprobado" ||
+    rawEstado === "pagado" ||
+    rawStatus === "aprobado"
+  ) {
+    return { status: "aprobado", statusLabel: "Aprobado" };
+  }
+
+  return { status: "solicitado", statusLabel: "Solicitado" };
+}
+
 export function buildActivityFromAdvanceHistory(
   records: AdvanceHistoryRecord[],
   limit = 10,
 ): DashboardActivityItem[] {
   return [...(records || [])]
-    .filter((record) => record && countsTowardAdvanceLimit(record.status))
+    .filter((record) => Boolean(record && record.requestedAt))
     .sort(
       (a, b) =>
         toSafeDate(b.requestedAt).getTime() -
@@ -87,12 +113,17 @@ export function buildActivityFromAdvanceHistory(
     .slice(0, limit)
     .map((record) => {
       const safeDate = toSafeDate(record.requestedAt);
+      const { status, statusLabel } = resolveActivityStatus(record);
       return {
+        id: record.id,
         type: "adelanto",
         amount: -(Number(record.amount) || 0),
         date: formatAdvanceActivityDate(safeDate),
         desc: "Adelanto de nómina",
         createdAt: safeDate.toISOString(),
+        status,
+        statusLabel,
+        rejectionReason: record.rejectionReason,
       };
     });
 }

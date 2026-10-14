@@ -15,6 +15,7 @@ import {
 } from "@/shared/utils/empleadoDisplayLabels";
 import { cn } from "@/lib/utils";
 import { useEmpleadosList } from "../model/useEmpleadosList";
+import { ConfigurarAntiguedadDialog } from "./ConfigurarAntiguedadDialog";
 import { DeactivateEmpleadoButton } from "./DeactivateEmpleadoButton";
 import { EditEmpleadoDialog } from "./EditEmpleadoDialog";
 import { EmployerPanelUnavailableNotice } from "./EmployerPanelUnavailableNotice";
@@ -107,15 +108,18 @@ export function EmpleadosTable() {
 
   return (
     <div className="glass-card glow-border rounded-xl p-4 sm:p-5">
-      <div className="relative mb-5 max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nombre, documento, email o celular..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          className="h-11 rounded-xl border-border/80 bg-background/80 pl-10"
-          disabled={isLoading}
-        />
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nombre, documento, email o celular..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="h-11 rounded-xl border-border/80 bg-background/80 pl-10"
+            disabled={isLoading}
+          />
+        </div>
+        <ConfigurarAntiguedadDialog />
       </div>
 
       {isLoading ? <TableSkeleton /> : null}
