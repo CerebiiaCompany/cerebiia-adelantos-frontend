@@ -73,6 +73,8 @@ export default function Dashboard() {
     maxAdvanceLimit,
     advancePercentage,
     isNominaLoading,
+    accruedSalaryMonth,
+    diasLaboradosMes,
     accumulatedIncome,
     incomeToday,
     totalAdvancedThisMonth,
@@ -132,9 +134,12 @@ export default function Dashboard() {
                   duration={700}
                 />
                 {advancePercentage ? (
-                  <span className="text-muted-foreground">
+                  <span
+                    className="text-muted-foreground"
+                    title={`Calculado como el ${advancePercentage}% del ingreso de salario acumulado según los días laborados este mes, no sobre el sueldo total mensual.`}
+                  >
                     {" "}
-                    ({advancePercentage}% del salario)
+                    ({advancePercentage}% del salario laborado)
                   </span>
                 ) : null}
               </>
@@ -145,26 +150,22 @@ export default function Dashboard() {
           accent
         />
         <StatCard
-          label="Ingresos acumulados"
+          label="Ingreso de salario Acumulado"
           value={
             <AnimatedCurrency
-              value={accumulatedIncome}
+              value={accruedSalaryMonth}
               className="font-display text-3xl font-bold text-foreground"
             />
           }
           sub={
-            incomeToday > 0 ? (
+            diasLaboradosMes > 0 ? (
               <>
-                Desde tu ingreso · +
-                <AnimatedCurrency
-                  value={incomeToday}
-                  className="inline font-medium text-primary"
-                  duration={700}
-                />{" "}
-                hoy
+                {diasLaboradosMes}{" "}
+                {diasLaboradosMes === 1 ? "día laborado" : "días laborados"}{" "}
+                este mes
               </>
             ) : (
-              "Sin ingresos registrados"
+              "0 días laborados este mes"
             )
           }
           icon={<TrendingUp className="h-5 w-5" strokeWidth={2.25} />}

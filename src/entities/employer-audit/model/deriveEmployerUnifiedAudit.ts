@@ -206,14 +206,70 @@ export function deriveEmployerUnifiedAudit(params: {
   });
 
   // 3. Mapear configuración del Super Admin (Global o Personalizada para la empresa)
-  if (config) {
+  const parseNum = (v: unknown): number | null => {
+    if (v === null || v === undefined || v === "") return null;
+    if (typeof v === "number") return Number.isFinite(v) ? v : null;
+    const str = String(v).replace(/[^0-9.-]/g, "").trim();
+    if (!str) return null;
+    const n = Number.parseFloat(str);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const rawConfig = config as Record<string, unknown> | null;
+  const cfgPct = rawConfig ? parseNum(rawConfig.porcentajeMaximoAdelanto ?? rawConfig.porcentaje_maximo_adelanto) : null;
+  const cfgCuotas = rawConfig ? parseNum(rawConfig.numeroMaximoCuotas ?? rawConfig.numero_maximo_cuotas) : null;
+  const cfgTarifa = rawConfig ? parseNum(rawConfig.tarifaFijaPorCuota ?? rawConfig.tarifa_fija_por_cuota) : null;
+  const cfgPlazo = rawConfig ? parseNum(rawConfig.plazoMaximoDias ?? rawConfig.plazo_maximo_dias) : null;
+  const cfgMinimo = rawConfig ? parseNum(rawConfig.montoMinimoAdelanto ?? rawConfig.monto_minimo ?? rawConfig.monto_minimo_adelanto) : null;
+
+  if (rawConfig) {
+    const parts: string[] = [];
+    parts.push(cfgPct != null ? `Tope ${cfgPct}% del salario` : "Tope: No configurado");
+    parts.push(cfgCuotas != null ? `máx. ${cfgCuotas} cuota(s)` : "cuotas: No configurado");
+    parts.push(cfgTarifa != null ? `tarifa fija ${formatCOP(Math.round(cfgTarifa))} por cuota` : "tarifa fija: No configurado");
+    parts.push(cfgPlazo != null ? `plazo máx. ${cfgPlazo} días` : "plazo: No configurado");
+
+    const description = `Configuración activa: ${parts.join(", ")}.`;
+
+    const parameters: Array<{ parameter: string; value: string | number }> = [
+      {
+        parameter: "Porcentaje máximo de adelanto",
+        value: cfgPct != null ? `${cfgPct}% del salario` : "No configurado",
+      },
+      {
+        parameter: "Número máximo de cuotas",
+        value: cfgCuotas != null ? cfgCuotas : "No configurado",
+      },
+      {
+        parameter: "Tarifa fija por cuota",
+        value: cfgTarifa != null ? formatCOP(Math.round(cfgTarifa)) : "No configurado",
+      },
+      {
+        parameter: "Plazo máximo",
+        value: cfgPlazo != null ? `${cfgPlazo} días` : "No configurado",
+      },
+    ];
+
+    if (cfgMinimo != null) {
+      parameters.push({
+        parameter: "Monto mínimo de adelanto",
+        value: formatCOP(Math.round(cfgMinimo)),
+      });
+    }
+
+    const scopeStr = String(rawConfig.scope || rawConfig.origen || "global").toLowerCase();
+    const resolvedScope: "global" | "personalizada" =
+      scopeStr === "empresa" || scopeStr === "empleado" || scopeStr === "personalizada"
+        ? "personalizada"
+        : "global";
+
     events.push({
       id: "config-rules-active",
-      timestamp: new Date().toISOString(),
+      timestamp: (rawConfig.updatedAt as string) || (rawConfig.updated_at as string) || new Date().toISOString(),
       eventType: "cambio_configuracion",
       category: "configuracion",
       title: "Reglas de adelanto vigentes (Super Admin)",
-      description: `Configuración activa: Tope ${config.porcentajeMaximoAdelanto}% del salario, máx. ${config.numeroMaximoCuotas} cuota(s), tarifa fija ${formatCOP(config.tarifaFijaPorCuota)} por cuota, plazo máx. ${config.plazoMaximoDias} días.`,
+      description,
       actorNombre: "Super Admin",
       actorTipo: "sistema",
       statusBadge: {
@@ -221,17 +277,11 @@ export function deriveEmployerUnifiedAudit(params: {
         tone: "info",
       },
       configDetails: {
-        scope: "global",
-        parameters: [
-          { parameter: "Porcentaje máximo de adelanto", value: `${config.porcentajeMaximoAdelanto}% del salario` },
-          { parameter: "Número máximo de cuotas", value: config.numeroMaximoCuotas },
-          { parameter: "Tarifa fija por cuota", value: formatCOP(config.tarifaFijaPorCuota) },
-          { parameter: "Plazo máximo", value: `${config.plazoMaximoDias} días` },
-        ],
+        scope: resolvedScope,
+        parameters,
       },
     });
   }
-
   // Orden cronológico (más recientes primero)
   const sortedRecords = events.sort((a, b) => {
     const timeA = new Date(a.timestamp).getTime();

@@ -44,28 +44,38 @@ export function AdvanceAmountSelector({
   const [isEditingAmount, setIsEditingAmount] = useState(false);
   const [draftAmount, setDraftAmount] = useState("");
 
+  const effectiveMin = minAmount > 0 && maxAmount >= minAmount ? minAmount : 0;
+
   const amountStep = useMemo(
-    () => resolveAdvanceAmountStep(maxAmount),
-    [maxAmount],
+    () => resolveAdvanceAmountStep(maxAmount, minAmount),
+    [maxAmount, minAmount],
   );
 
   const quickAmounts = useMemo(
-    () => buildAdvanceQuickAmounts(maxAmount),
-    [maxAmount],
+    () => buildAdvanceQuickAmounts(maxAmount, minAmount),
+    [maxAmount, minAmount],
   );
+
   const requestedAmount = isEditingAmount
     ? parseAmountDigits(draftAmount)
     : amount;
-  const amountValidationMessage =
-    requestedAmount > 0 && maxAmount <= 0
-      ? "No tienes saldo disponible para adelantar."
-      : requestedAmount > 0 && requestedAmount < minAmount
-        ? "No puedes adelantar valores menores al mínimo configurado."
-      : requestedAmount > maxAmount
-        ? "No tienes saldo suficiente para adelantar este monto."
-        : null;
 
-  const progressPercent = maxAmount > 0 ? (amount / maxAmount) * 100 : 0;
+  const amountValidationMessage =
+    maxAmount > 0 && effectiveMin > 0 && maxAmount < effectiveMin
+      ? `Tu saldo disponible (${formatAdvanceAmount(maxAmount)}) no alcanza el monto mínimo (${formatAdvanceAmount(effectiveMin)}).`
+      : requestedAmount > 0 && maxAmount <= 0
+        ? "No tienes saldo disponible para adelantar."
+        : requestedAmount > 0 && requestedAmount < minAmount
+          ? "No puedes adelantar valores menores al mínimo configurado."
+        : requestedAmount > maxAmount
+          ? "No tienes saldo suficiente para adelantar este monto."
+          : null;
+
+  const sliderSpan = maxAmount - effectiveMin;
+  const progressPercent =
+    amount >= effectiveMin && sliderSpan > 0
+      ? Math.max(0, Math.min(100, ((amount - effectiveMin) / sliderSpan) * 100))
+      : 0;
 
   useEffect(() => {
     if (!isEditingAmount) {
@@ -75,23 +85,23 @@ export function AdvanceAmountSelector({
 
   const commitAmount = useCallback(
     (nextValue: number) => {
-      onAmountChange(snapAdvanceAmount(nextValue, maxAmount));
+      onAmountChange(snapAdvanceAmount(nextValue, maxAmount, effectiveMin));
     },
-    [maxAmount, onAmountChange],
+    [effectiveMin, maxAmount, onAmountChange],
   );
 
   const handleSliderChange = useCallback(
     (value: number[]) => {
-      commitAmount(value[0] ?? 0);
+      commitAmount(value[0] ?? effectiveMin);
     },
-    [commitAmount],
+    [commitAmount, effectiveMin],
   );
 
   const handleQuickSelect = useCallback(
     (preset: number) => {
-      onAmountChange(snapAdvanceAmount(preset, maxAmount));
+      onAmountChange(snapAdvanceAmount(preset, maxAmount, effectiveMin));
     },
-    [maxAmount, onAmountChange],
+    [effectiveMin, maxAmount, onAmountChange],
   );
 
   const handleAmountFocus = useCallback(() => {
@@ -102,16 +112,35 @@ export function AdvanceAmountSelector({
   const handleAmountChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const raw = event.target.value;
+      const parsed = parseAmountDigits(raw);
       setDraftAmount(raw.replace(/\D/g, ""));
-      commitAmount(parseAmountDigits(raw));
+      if (parsed === 0 || (effectiveMin > 0 && parsed >= effectiveMin && parsed <= maxAmount)) {
+        commitAmount(parsed);
+      } else {
+        onAmountChange(parsed);
+      }
     },
-    [commitAmount],
+    [commitAmount, effectiveMin, maxAmount, onAmountChange],
   );
 
   const handleAmountBlur = useCallback(() => {
     setIsEditingAmount(false);
-    commitAmount(amount);
-  }, [amount, commitAmount]);
+    const parsed = parseAmountDigits(draftAmount);
+    if (parsed <= 0) {
+      commitAmount(0);
+    } else if (effectiveMin > 0 && parsed < effectiveMin) {
+      commitAmount(effectiveMin);
+    } else if (parsed > maxAmount) {
+      commitAmount(maxAmount);
+    } else {
+      commitAmount(parsed);
+    }
+  }, [commitAmount, draftAmount, effectiveMin, maxAmount]);
+
+  const isSliderDisabled = disabled || (effectiveMin > 0 && maxAmount < effectiveMin);
+  const sliderValue = amount > 0
+    ? Math.max(effectiveMin, Math.min(amount, maxAmount))
+    : effectiveMin;
 
   return (
     <section
@@ -190,18 +219,22 @@ export function AdvanceAmountSelector({
           />
           <Slider
             id={sliderInputId}
-            value={[amount]}
+            value={[sliderValue]}
             onValueChange={handleSliderChange}
-            min={0}
-            max={maxAmount}
+            min={effectiveMin}
+            max={Math.max(effectiveMin, maxAmount)}
             step={amountStep}
-            disabled={disabled}
+            disabled={isSliderDisabled}
             aria-label="Seleccionar monto del adelanto"
             className="advance-flow-slider relative z-10 cursor-pointer"
           />
         </div>
         <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-          <span>$0</span>
+          <AnimatedCurrency
+            value={effectiveMin}
+            className="inline"
+            duration={COUNT_DURATION}
+          />
           <AnimatedCurrency
             value={maxAmount}
             className="inline"
@@ -219,30 +252,32 @@ export function AdvanceAmountSelector({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {quickAmounts.map((preset) => {
-          const isActive = amount === preset;
+      {quickAmounts.length > 0 ? (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {quickAmounts.map((preset) => {
+            const isActive = amount === preset;
 
-          return (
-            <button
-              key={preset}
-              type="button"
-              disabled={disabled}
-              onClick={() => handleQuickSelect(preset)}
-              aria-pressed={isActive}
-              className={cn(
-                "rounded-xl border px-2 py-2.5 text-xs font-medium transition-all duration-200 sm:px-3 sm:text-sm",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
-                isActive
-                  ? "border-primary bg-gradient-primary text-primary-foreground shadow-sm shadow-primary/20 hover:brightness-105 active:scale-[0.98]"
-                  : "border-border/80 bg-white text-foreground hover:border-primary/35 hover:bg-primary/5 hover:shadow-sm active:scale-[0.98] active:bg-primary/10",
-              )}
-            >
-              {formatAdvanceAmount(preset)}
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <button
+                key={preset}
+                type="button"
+                disabled={disabled}
+                onClick={() => handleQuickSelect(preset)}
+                aria-pressed={isActive}
+                className={cn(
+                  "rounded-xl border px-2 py-2.5 text-xs font-medium transition-all duration-200 sm:px-3 sm:text-sm",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
+                  isActive
+                    ? "border-primary bg-gradient-primary text-primary-foreground shadow-sm shadow-primary/20 hover:brightness-105 active:scale-[0.98]"
+                    : "border-border/80 bg-white text-foreground hover:border-primary/35 hover:bg-primary/5 hover:shadow-sm active:scale-[0.98] active:bg-primary/10",
+                )}
+              >
+                {formatAdvanceAmount(preset)}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </section>
   );
 }

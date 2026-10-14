@@ -171,6 +171,10 @@ export default function Adelanto() {
           "Debes aceptar términos y tratamiento de datos"
         ) : solicitudActiva ? (
           "Tienes una solicitud en curso"
+        ) : maxAmount < minAdvanceAmount ? (
+          "Saldo disponible menor al mínimo"
+        ) : amount > 0 && amount < minAdvanceAmount ? (
+          "Monto menor al mínimo"
         ) : canRequest ? (
           <>
             Solicitar{" "}

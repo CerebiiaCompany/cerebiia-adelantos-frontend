@@ -60,6 +60,10 @@ export interface EmployeeDashboardSnapshot {
   accumulatedIncome: number;
   incomeToday: number;
   totalAdvancedThisMonth: number;
+  /** Días laborados devengados en el mes en curso (base 30 días). */
+  diasLaboradosMes?: number;
+  /** Salario devengado acumulado en el mes en curso según días laborados. */
+  accruedSalaryMonth?: number;
   walletBalance: number;
   chartData: DashboardChartPoint[];
   recentActivity: DashboardActivityItem[];

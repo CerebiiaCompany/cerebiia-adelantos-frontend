@@ -20,6 +20,7 @@ const CAMPO_LABELS: Record<string, string> = {
   banco: "Banco",
   tipo_cuenta: "Tipo de cuenta",
   numero_cuenta: "Cuenta bancaria",
+  ninguno: "Ninguno",
 };
 
 const ESTADO_LABELS: Record<string, string> = {

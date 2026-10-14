@@ -3,7 +3,7 @@ import { deriveEmployeeUnifiedAudit } from "./deriveEmployeeUnifiedAudit";
 import type { AuditoriaCambioEmpleadoDTO } from "@/shared/api/types/empleado";
 import type { SolicitudAdelantoDTO } from "@/shared/api/types/adelanto";
 
-describe("deriveEmployeeUnifiedAudit", () => {
+describe("deriveEmployeeUnifiedAudit (UX-04: Segmentación de auditoría de empleado)", () => {
   const mockProfileChanges: AuditoriaCambioEmpleadoDTO[] = [
     {
       id: "audit-1",
@@ -22,6 +22,17 @@ describe("deriveEmployeeUnifiedAudit", () => {
           valor_nuevo: "3009998877",
         },
       ],
+    },
+    {
+      id: "audit-2",
+      created_at: "2026-08-20T08:00:00Z",
+      accion: "login",
+      actor_tipo: "empleado",
+      actor_nombre: "Carlos Mendoza",
+      empleado_id: "emp-1",
+      empleado_nombre: "Carlos Mendoza",
+      empleado_documento: "1010203040",
+      cambios: [],
     },
   ];
 
@@ -54,7 +65,7 @@ describe("deriveEmployeeUnifiedAudit", () => {
     },
   ];
 
-  it("consolida eventos de perfil, solicitudes, aprobaciones, rechazos y pagos", () => {
+  it("consolida eventos personales: perfil, inicios de sesión, solicitudes, aprobaciones, rechazos y transferencias", () => {
     const result = deriveEmployeeUnifiedAudit({
       profileAuditRecords: mockProfileChanges,
       solicitudes: mockSolicitudes,
@@ -62,9 +73,10 @@ describe("deriveEmployeeUnifiedAudit", () => {
       maxAdvanceLimit: 800_000,
     });
 
-    expect(result.metrics.totalEvents).toBe(6);
+    // 2 eventos de perfil/sesion + 4 eventos de solicitudes (creación, aprobada, pagada de sol-1; creación, rechazada de sol-2)
+    expect(result.metrics.totalEvents).toBe(7);
     expect(result.metrics.totalSolicitudesTracked).toBe(2);
-    expect(result.metrics.totalProfileChanges).toBe(1);
+    expect(result.metrics.totalProfileChanges).toBe(2);
     expect(result.metrics.availableAdvance).toBe(500_000);
 
     // Eventos ordenados descendentemente por fecha
@@ -72,7 +84,12 @@ describe("deriveEmployeeUnifiedAudit", () => {
       new Date(result.records[1].timestamp).getTime(),
     );
 
-    // Verificar que el evento de rechazo incluye el motivo
+    // Verificar inicio de sesión
+    const sesion = result.records.find((r) => r.eventType === "inicio_sesion");
+    expect(sesion).toBeDefined();
+    expect(sesion?.title).toBe("Inicio de sesión seguro");
+
+    // Verificar que el evento de rechazo incluye el motivo en lenguaje claro
     const rechazo = result.records.find((r) => r.eventType === "solicitud_rechazada");
     expect(rechazo).toBeDefined();
     expect(rechazo?.rejectionReason).toBe("Tope salarial superado");
@@ -83,7 +100,7 @@ describe("deriveEmployeeUnifiedAudit", () => {
     expect(pago?.evidenceUrl).toBe("https://storage.example.com/receipt-1.pdf");
   });
 
-  it("registra evento de liberación de cuota cuando super admin libera una cuota", () => {
+  it("registra evento de liquidación de cuota y liberación de cupo", () => {
     const multiCuotaSolicitud = [
       {
         ...mockSolicitudes[0],
@@ -128,7 +145,7 @@ describe("deriveEmployeeUnifiedAudit", () => {
     expect(result.metrics.totalCuotasLiberadas).toBe(1);
   });
 
-  it("registra evento de configuración vigente del Super Admin", () => {
+  it("excluye eventos técnicos de configuración del Super Admin (hallazgo UX-04)", () => {
     const result = deriveEmployeeUnifiedAudit({
       profileAuditRecords: [],
       solicitudes: [],
@@ -140,11 +157,11 @@ describe("deriveEmployeeUnifiedAudit", () => {
       },
     });
 
+    // La auditoría del empleado NO debe contener eventos técnicos de configuración de la plataforma
     const configEvent = result.records.find(
       (r) => r.eventType === "cambio_configuracion",
     );
-    expect(configEvent).toBeDefined();
-    expect(configEvent?.category).toBe("configuracion");
-    expect(configEvent?.configDetails?.parameters.length).toBe(4);
+    expect(configEvent).toBeUndefined();
+    expect(result.records).toHaveLength(0);
   });
 });

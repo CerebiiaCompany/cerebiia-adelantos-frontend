@@ -39,6 +39,38 @@ export function parseIncomeStartDate(
   return startOfDay(parsed);
 }
 
+/**
+ * Salario devengado acumulado en el mes en curso según días laborados (estándar laboral base 30 días).
+ * Si no se especifica fecha de ingreso, se asume inicio de mes (días transcurridos hasta la fecha de referencia).
+ */
+export function calculateAccruedSalaryMonth(
+  salary: number,
+  incomeStartDate?: string | Date | null,
+  referenceDate: Date = new Date(),
+): { diasLaborados: number; salarioDevengado: number } {
+  if (salary <= 0) {
+    return { diasLaborados: 0, salarioDevengado: 0 };
+  }
+
+  const reference = startOfDay(referenceDate);
+  const year = reference.getFullYear();
+  const month = reference.getMonth();
+  const inicioMes = startOfDay(new Date(year, month, 1));
+
+  const hireDate = parseIncomeStartDate(incomeStartDate);
+  if (hireDate && hireDate > reference) {
+    return { diasLaborados: 0, salarioDevengado: 0 };
+  }
+
+  const inicioLaborado = hireDate && hireDate > inicioMes ? hireDate : inicioMes;
+  const dias = countInclusiveDays(inicioLaborado, reference);
+  const diasLaborados = Math.max(0, Math.min(dias, 30));
+  const salarioDiario = salary / 30;
+  const salarioDevengado = Math.round(salarioDiario * diasLaborados);
+
+  return { diasLaborados, salarioDevengado };
+}
+
 export function calculateDailySalaryIncome(
   salary: number,
   referenceDate: Date = new Date(),

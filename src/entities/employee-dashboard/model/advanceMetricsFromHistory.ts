@@ -28,8 +28,7 @@ export function countsTowardAdvanceLimit(
     Boolean(status) &&
     status !== "no_aprobado" &&
     status !== "rechazado" &&
-    status !== "cancelado" &&
-    status !== "pagado"
+    status !== "cancelado"
   );
 }
 

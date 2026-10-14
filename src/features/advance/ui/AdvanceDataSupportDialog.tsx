@@ -27,6 +27,7 @@ const FIELD_OPTIONS: Array<{
   { id: "banco", label: "Banco" },
   { id: "tipo_cuenta", label: "Tipo de cuenta" },
   { id: "numero_cuenta", label: "Cuenta bancaria" },
+  { id: "ninguno", label: "Ninguno" },
 ];
 
 const MAX_FILES = 5;
@@ -38,12 +39,16 @@ export interface AdvanceDataSupportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmitted?: () => void;
+  title?: string;
+  description?: string;
 }
 
 export function AdvanceDataSupportDialog({
   open,
   onOpenChange,
   onSubmitted,
+  title = "Enviar mensaje a soporte",
+  description = "Indica qué dato está incorrecto y describe el problema. Tu empresa recibirá el reporte para coordinar la corrección.",
 }: AdvanceDataSupportDialogProps) {
   const [selectedFields, setSelectedFields] = useState<
     CampoReporteDatoIncorrecto[]
@@ -69,9 +74,15 @@ export function AdvanceDataSupportDialog({
   };
 
   const toggleField = (field: CampoReporteDatoIncorrecto, checked: boolean) => {
-    setSelectedFields((prev) =>
-      checked ? [...prev, field] : prev.filter((item) => item !== field),
-    );
+    setSelectedFields((prev) => {
+      if (!checked) {
+        return prev.filter((item) => item !== field);
+      }
+      if (field === "ninguno") {
+        return ["ninguno"];
+      }
+      return [...prev.filter((item) => item !== "ninguno"), field];
+    });
   };
 
   const addFiles = (list: FileList | null) => {
@@ -131,11 +142,10 @@ export function AdvanceDataSupportDialog({
       <DialogContent className="max-h-[92vh] max-w-lg overflow-y-auto border-primary/15 bg-shell p-0 shadow-lg sm:rounded-2xl">
         <DialogHeader className="border-b border-primary/10 px-6 py-4 text-left">
           <DialogTitle className="font-display text-lg">
-            Enviar mensaje a soporte
+            {title}
           </DialogTitle>
           <DialogDescription>
-            Indica qué dato está incorrecto y describe el problema. Tu empresa
-            recibirá el reporte para coordinar la corrección.
+            {description}
           </DialogDescription>
         </DialogHeader>
 
@@ -176,7 +186,7 @@ export function AdvanceDataSupportDialog({
               id="soporte-mensaje"
               value={mensaje}
               onChange={(event) => setMensaje(event.target.value)}
-              placeholder="Explica qué está mal y cuál debería ser el dato correcto..."
+              placeholder="Agrega una explicación breve del problema o inconveniente que estás presentando..."
               className="min-h-[100px] resize-none"
             />
           </div>

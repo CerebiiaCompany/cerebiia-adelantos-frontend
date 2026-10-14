@@ -10,6 +10,29 @@ import type {
 import { formatCOP } from "@/shared/lib";
 import { cn } from "@/lib/utils";
 
+
+function sanitizeAuditDisplayValue(val: unknown): string {
+  if (val === null || val === undefined) return "No configurado";
+  const str = String(val).trim();
+  if (
+    !str ||
+    str.toLowerCase().includes("undefined") ||
+    str.toLowerCase().includes("nan") ||
+    str.toLowerCase() === "null"
+  ) {
+    return "No configurado";
+  }
+  return str;
+}
+
+function sanitizeAuditDescription(desc?: string | null): string {
+  if (!desc) return "—";
+  return desc
+    .replace(/\bundefined%?\b/gi, "No configurado")
+    .replace(/\$\s*NaN\b/gi, "No configurado")
+    .replace(/\bNaN\b/gi, "No configurado");
+}
+
 function formatDateTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "—";
@@ -240,18 +263,6 @@ export function EmployeeUnifiedAuditTable({
           </button>
           <button
             type="button"
-            onClick={() => setCategory("configuracion")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 font-medium transition-all",
-              category === "configuracion"
-                ? "bg-background font-semibold text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Configuración ({records.filter((r) => r.category === "configuracion").length})
-          </button>
-          <button
-            type="button"
             onClick={() => setCategory("perfil")}
             className={cn(
               "rounded-lg px-3 py-1.5 font-medium transition-all",
@@ -260,7 +271,7 @@ export function EmployeeUnifiedAuditTable({
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            Datos personales ({records.filter((r) => r.category === "perfil").length})
+            Perfil y accesos ({records.filter((r) => r.category === "perfil").length})
           </button>
         </div>
       </div>

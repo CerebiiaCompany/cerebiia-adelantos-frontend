@@ -28,6 +28,7 @@ export {
   type EmployeeAdvanceLimits,
 } from "./model/advanceLimits";
 export {
+  calculateAccruedSalaryMonth,
   calculateCumulativeAccumulatedIncome,
   calculateDailySalaryIncome,
   calculateIncomeForCalendarMonth,

@@ -47,13 +47,22 @@ export default function WalletPage() {
   if (!dashboard) return null;
 
   const balance = dashboard.walletBalance;
-  const hasAdvances = dashboard.totalAdvancedThisMonth > 0;
+  const diasLaborados = dashboard.diasLaboradosMes ?? 0;
+  const salarioDevengado = dashboard.accruedSalaryMonth ?? 0;
+  const totalAdelantado = dashboard.totalAdvancedThisMonth;
+  const hasAdvances = totalAdelantado > 0;
+
   const movements: Array<{
     type: "in" | "out";
     desc: string;
     amount: number;
     date: string;
-  }> = [];
+  }> = (dashboard.recentActivity || []).map((item) => ({
+    type: item.type === "ingreso" ? "in" : "out",
+    desc: item.desc,
+    amount: item.amount,
+    date: item.date,
+  }));
 
   return (
     <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
@@ -66,32 +75,74 @@ export default function WalletPage() {
       <div className="glass-card glow-border relative overflow-hidden p-6">
         <div className="absolute right-0 top-0 h-40 w-40 -translate-y-1/2 translate-x-1/2 rounded-full bg-primary/5" />
         <div className="relative">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Saldo disponible</span>
-            <button
-              type="button"
-              onClick={() => setShowBalance(!showBalance)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {showBalance ? (
-                <Eye className="h-4 w-4" />
-              ) : (
-                <EyeOff className="h-4 w-4" />
-              )}
-            </button>
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Saldo disponible</span>
+              <button
+                type="button"
+                onClick={() => setShowBalance(!showBalance)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {showBalance ? (
+                  <Eye className="h-4 w-4" />
+                ) : (
+                  <EyeOff className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              {diasLaborados} {diasLaborados === 1 ? "día laborado" : "días laborados"}
+            </span>
           </div>
-          <p className="mb-4 font-display text-4xl font-bold text-gradient">
+
+          <p className="mb-3 font-display text-4xl font-bold text-gradient">
             {showBalance ? (
               <AnimatedCurrency value={balance} duration={900} />
             ) : (
               "••••••"
             )}
           </p>
+
           <p className="text-xs text-muted-foreground">
             {hasAdvances
-              ? "Salario mensual menos adelantos registrados este mes"
-              : "Salario mensual sin adelantos descontados"}
+              ? `Ingreso acumulado según días laborados (${diasLaborados} días) menos adelantos solicitados este mes`
+              : `Ingreso acumulado según días laborados este mes (${diasLaborados} de 30 días base)`}
           </p>
+
+          <div className="mt-5 space-y-2 border-t border-border/60 pt-4 text-xs">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Salario mensual base</span>
+              <span className="font-medium text-foreground">
+                {showBalance ? <AnimatedCurrency value={dashboard.salary} /> : "••••••"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Ingreso acumulado devengado ({diasLaborados} días)</span>
+              <span className="font-semibold text-primary">
+                {showBalance ? (
+                  <>
+                    +<AnimatedCurrency value={salarioDevengado} />
+                  </>
+                ) : (
+                  "••••••"
+                )}
+              </span>
+            </div>
+            {hasAdvances && (
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span>Adelantos solicitados este mes</span>
+                <span className="font-semibold text-destructive">
+                  {showBalance ? (
+                    <>
+                      -<AnimatedCurrency value={totalAdelantado} />
+                    </>
+                  ) : (
+                    "••••••"
+                  )}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -139,7 +190,7 @@ export default function WalletPage() {
           <div className="space-y-1">
             {movements.map((m, i) => (
               <div
-                key={m.desc + m.date}
+                key={m.desc + m.date + i}
                 className="group/wallet-movement flex items-center gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-secondary/30 last:border-0"
               >
                 <span

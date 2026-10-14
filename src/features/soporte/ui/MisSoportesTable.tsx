@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Paperclip, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, MessageSquareWarning, Paperclip, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ const CAMPO_LABELS: Record<string, string> = {
   banco: "Banco",
   tipo_cuenta: "Tipo de cuenta",
   numero_cuenta: "Cuenta bancaria",
+  ninguno: "Ninguno",
 };
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -69,7 +70,11 @@ function TableSkeleton() {
   );
 }
 
-export function MisSoportesTable() {
+export interface MisSoportesTableProps {
+  onCreateReporte?: () => void;
+}
+
+export function MisSoportesTable({ onCreateReporte }: MisSoportesTableProps = {}) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -141,21 +146,53 @@ export function MisSoportesTable() {
 
   return (
     <div className="space-y-4">
-      <div className="relative max-w-sm">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por mensaje o dato..."
-          className="pl-9"
-        />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Buscar por mensaje o dato..."
+            className="pl-9"
+          />
+        </div>
+        {onCreateReporte && (
+          <Button
+            type="button"
+            onClick={onCreateReporte}
+            className="self-stretch sm:self-auto gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-xs sm:text-sm h-10 px-4 shadow-xs"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Crear mensaje de soporte</span>
+          </Button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground">
-          {records.length === 0
-            ? "Aún no has enviado solicitudes de soporte."
-            : "No hay resultados para tu búsqueda."}
+        <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary">
+            <MessageSquareWarning className="h-6 w-6" />
+          </div>
+          <p className="font-display text-base font-semibold text-foreground">
+            {records.length === 0
+              ? "Aún no has enviado solicitudes de soporte"
+              : "No hay resultados para tu búsqueda"}
+          </p>
+          <p className="mx-auto mt-1 max-w-md text-xs sm:text-sm text-muted-foreground">
+            {records.length === 0
+              ? "Si tus datos personales, de documento o bancarios tienen algún error, puedes reportarlo a tu empresa para coordinar la corrección."
+              : "Intenta con otro término de búsqueda como nombre, dato o estado."}
+          </p>
+          {records.length === 0 && onCreateReporte && (
+            <Button
+              type="button"
+              onClick={onCreateReporte}
+              className="mt-4 gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+            >
+              <Plus className="h-4 w-4" />
+              Crear mensaje de soporte
+            </Button>
+          )}
         </div>
       ) : (
         <>
