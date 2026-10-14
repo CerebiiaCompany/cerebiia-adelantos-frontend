@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import type { MonthlyAdvanceChartPoint } from "@/features/advance/utils/aggregateAdvanceHistoryByMonth";
+import { formatChartAxisMoney } from "@/shared/lib/currency";
 
 const CHART_COLORS = {
   primary: "hsl(220, 90%, 55%)",
@@ -110,7 +111,9 @@ export function AdvanceMonthlyChart({
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `$${(value / 1_000_000).toFixed(1)}M`}
+              domain={[0, "auto"]}
+              allowDecimals={false}
+              tickFormatter={formatChartAxisMoney}
             />
             <Tooltip
               cursor={false}

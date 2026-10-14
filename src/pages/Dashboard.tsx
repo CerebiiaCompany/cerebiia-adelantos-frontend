@@ -35,6 +35,7 @@ import {
   AnimatedCurrency,
   AnimatedNumber,
 } from "@/components/ui/animated-number";
+import { formatChartAxisMoney } from "@/shared/lib/currency";
 
 const CHART_COLORS = {
   ingresos: "hsl(220, 90%, 55%)",
@@ -263,7 +264,9 @@ export default function Dashboard() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`}
+                  domain={[0, "auto"]}
+                  allowDecimals={false}
+                  tickFormatter={formatChartAxisMoney}
                 />
                 <Tooltip
                   contentStyle={{
