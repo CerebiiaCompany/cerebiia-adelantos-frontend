@@ -7,12 +7,18 @@ import type {
 
 export type DashboardActivityType = "adelanto" | "ingreso";
 
+export type DashboardActivityStatus = "solicitado" | "aprobado" | "rechazado";
+
 export interface DashboardActivityItem {
+  id?: string;
   type: DashboardActivityType;
   amount: number;
   date: string;
   desc: string;
   createdAt: string;
+  status?: DashboardActivityStatus;
+  statusLabel?: string;
+  rejectionReason?: string | null;
 }
 
 export interface DashboardChartPoint {

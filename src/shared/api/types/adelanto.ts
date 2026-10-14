@@ -113,6 +113,12 @@ export interface MiSituacionFinancieraDTO {
   primera_cuota_gratis_disponible?: boolean;
   /** Total de adelantos comprometidos o solicitados en el mes en curso. */
   total_adelantado_mes?: string | number;
+  /** True si el empleado cumple con la antigüedad mínima requerida por la empresa para solicitar adelantos. */
+  cumple_antiguedad_minima?: boolean;
+  antiguedad_minima_dias?: number;
+  dias_antiguedad_actual?: number;
+  dias_faltantes_antiguedad?: number;
+  mensaje_antiguedad?: string;
   resumen: MiSituacionFinancieraResumenDTO;
   tendencia_mensual: TendenciaMensualDTO[];
 }

@@ -101,3 +101,32 @@ export function formatSalaryInput(value: string): string {
 
   return formattedInteger;
 }
+
+/**
+ * Formatea valores de dinero para los ejes de gráficas (p. ej. Recharts YAxis)
+ * de forma compacta y legible, evitando repeticiones de marcas como "$0.1M".
+ *
+ * - Cero: "$0"
+ * - >= 1_000_000: en millones, p. ej. "$1M", "$1.5M", "$1.25M", "$2M"
+ * - >= 1_000: en miles, p. ej. "$50K", "$100K", "$750K"
+ * - < 1_000: enteros directos, p. ej. "$500"
+ */
+export function formatChartAxisMoney(value: number): string {
+  if (value === 0) return "$0";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+
+  if (abs >= 1_000_000) {
+    const millions = abs / 1_000_000;
+    const formatted = parseFloat(millions.toFixed(2)).toString();
+    return `${sign}$${formatted}M`;
+  }
+
+  if (abs >= 1_000) {
+    const thousands = abs / 1_000;
+    const formatted = parseFloat(thousands.toFixed(1)).toString();
+    return `${sign}$${formatted}K`;
+  }
+
+  return `${sign}$${Math.round(abs)}`;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Zap } from "lucide-react";
+import { Clock, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -45,8 +46,14 @@ export default function Adelanto() {
   const dashboard = useEmployeeDashboard();
   const profile = useProfileView();
   const { data: empleadoMe } = useEmpleadoMe();
-  const { data: adelantoConfig, solicitudActiva, primeraCuotaGratisDisponible } =
-    useAdelantoConfig();
+  const {
+    data: adelantoConfig,
+    solicitudActiva,
+    primeraCuotaGratisDisponible,
+    cumpleAntiguedadMinima,
+    antiguedadMinimaDias,
+    mensajeAntiguedad,
+  } = useAdelantoConfig();
   const { mutate: createSolicitud, isPending: isSubmitting } =
     useCreateSolicitudAdelanto();
 
@@ -85,6 +92,7 @@ export default function Adelanto() {
     empleadoMe?.acepto_tratamiento_datos_y_terminos !== false;
   const canRequest =
     isAdvanceWindowOpen &&
+    cumpleAntiguedadMinima &&
     hasAcceptedTerms &&
     !solicitudActiva &&
     maxAmount >= minAdvanceAmount &&
@@ -132,6 +140,18 @@ export default function Adelanto() {
         />
       ) : null}
 
+      {!cumpleAntiguedadMinima ? (
+        <Alert className="border-amber-500/40 bg-amber-500/10 text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+          <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertTitle className="font-semibold text-amber-900 dark:text-amber-200">
+            Requisito de antigüedad mínima
+          </AlertTitle>
+          <AlertDescription className="text-amber-800 dark:text-amber-300">
+            {`Aún no cumples con el tiempo mínimo en la empresa para solicitar adelantos. Requisito: ${antiguedadMinimaDias} días.`}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <AdvanceSimulatorCard
         amount={amount}
         onAmountChange={setAmount}
@@ -145,13 +165,14 @@ export default function Adelanto() {
         total={total}
         installmentValue={installmentValue}
         primeraCuotaGratis={primeraCuotaGratisDisponible}
-        disabled={!isAdvanceWindowOpen}
+        disabled={!isAdvanceWindowOpen || !cumpleAntiguedadMinima}
       />
 
       <div
         className={cn(
           "transition-opacity duration-300",
-          !isAdvanceWindowOpen && "pointer-events-none opacity-50",
+          (!isAdvanceWindowOpen || !cumpleAntiguedadMinima) &&
+            "pointer-events-none opacity-50",
         )}
       >
         <AdvanceFeaturesTimeline />
@@ -167,6 +188,8 @@ export default function Adelanto() {
       >
         {!isAdvanceWindowOpen ? (
           "No puedes adelantar hoy"
+        ) : !cumpleAntiguedadMinima ? (
+          "Antigüedad mínima no cumplida"
         ) : !hasAcceptedTerms ? (
           "Debes aceptar términos y tratamiento de datos"
         ) : solicitudActiva ? (

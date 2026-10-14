@@ -86,5 +86,11 @@ export function useAdelantoConfig() {
     montoMaximoSolicitable: situacionQuery.data?.monto_maximo_solicitable,
     primeraCuotaGratisDisponible:
       situacionQuery.data?.primera_cuota_gratis_disponible === true,
+    cumpleAntiguedadMinima:
+      situacionQuery.data?.cumple_antiguedad_minima ?? true,
+    antiguedadMinimaDias: situacionQuery.data?.antiguedad_minima_dias ?? 0,
+    diasAntiguedadActual: situacionQuery.data?.dias_antiguedad_actual,
+    diasFaltantesAntiguedad: situacionQuery.data?.dias_faltantes_antiguedad,
+    mensajeAntiguedad: situacionQuery.data?.mensaje_antiguedad,
   };
 }

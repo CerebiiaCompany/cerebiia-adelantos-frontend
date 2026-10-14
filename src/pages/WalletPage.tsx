@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowUpRight,
   ArrowDownRight,
+  CheckCircle2,
+  Clock,
   Heart,
   Utensils,
   Eye,
@@ -9,6 +12,7 @@ import {
   ChevronRight,
   ShoppingBag,
   Wallet,
+  XCircle,
 } from "lucide-react";
 import { AnimatedCurrency } from "@/components/ui/animated-number";
 import { PrimaryActionButton } from "@/components/ui/primary-action-button";
@@ -57,11 +61,17 @@ export default function WalletPage() {
     desc: string;
     amount: number;
     date: string;
+    status?: "solicitado" | "aprobado" | "rechazado";
+    statusLabel?: string;
+    rejectionReason?: string | null;
   }> = (dashboard.recentActivity || []).map((item) => ({
     type: item.type === "ingreso" ? "in" : "out",
     desc: item.desc,
     amount: item.amount,
     date: item.date,
+    status: item.status,
+    statusLabel: item.statusLabel,
+    rejectionReason: item.rejectionReason,
   }));
 
   return (
@@ -191,34 +201,73 @@ export default function WalletPage() {
             {movements.map((m, i) => (
               <div
                 key={m.desc + m.date + i}
-                className="group/wallet-movement flex items-center gap-3 rounded-lg px-1 py-3 transition-colors hover:bg-secondary/30 last:border-0"
+                className="group/wallet-movement flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-secondary/30 last:border-0"
               >
                 <span
                   className={cn(
-                    "inline-flex shrink-0 items-center justify-center",
+                    "inline-flex shrink-0 items-center justify-center rounded-lg p-2",
                     m.type === "in"
-                      ? "text-primary activity-icon-motion-ingreso"
-                      : "text-[hsl(260_70%_50%)] activity-icon-motion-adelanto",
+                      ? "text-primary bg-primary/10 activity-icon-motion-ingreso"
+                      : m.status === "solicitado"
+                        ? "text-purple-600 bg-purple-500/10 dark:text-purple-400 dark:bg-purple-500/15 activity-icon-motion-adelanto"
+                        : m.status === "rechazado"
+                          ? "text-red-600 bg-red-500/10 dark:text-red-400 dark:bg-red-500/15"
+                          : "text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/15 activity-icon-motion-adelanto",
                   )}
                 >
                   {m.type === "in" ? (
-                    <ArrowUpRight className="h-5 w-5" strokeWidth={2.25} />
+                    <ArrowUpRight className="h-4 w-4" strokeWidth={2.25} />
+                  ) : m.status === "rechazado" ? (
+                    <XCircle className="h-4 w-4" strokeWidth={2.25} />
+                  ) : m.status === "solicitado" ? (
+                    <Clock className="h-4 w-4" strokeWidth={2.25} />
                   ) : (
-                    <ArrowDownRight className="h-5 w-5" strokeWidth={2.25} />
+                    <CheckCircle2 className="h-4 w-4" strokeWidth={2.25} />
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {m.desc}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {m.desc}
+                    </p>
+                    {m.status ? (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide border",
+                          m.status === "solicitado" &&
+                            "border-purple-300 bg-purple-100 text-purple-700 dark:border-purple-500/30 dark:bg-purple-950/50 dark:text-purple-300",
+                          m.status === "rechazado" &&
+                            "border-red-300 bg-red-100 text-red-700 dark:border-red-500/30 dark:bg-red-950/50 dark:text-red-300",
+                          m.status === "aprobado" &&
+                            "border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/50 dark:text-emerald-300",
+                        )}
+                      >
+                        {m.statusLabel || (
+                          m.status === "solicitado"
+                            ? "Solicitado"
+                            : m.status === "rechazado"
+                              ? "Rechazado"
+                              : "Aprobado"
+                        )}
+                      </Badge>
+                    ) : null}
+                  </div>
                   <p className="text-xs text-muted-foreground">{m.date}</p>
                 </div>
                 <AnimatedCurrency
                   value={Math.abs(m.amount)}
                   sign={m.amount > 0 ? "+" : "-"}
-                  className={`text-sm font-semibold ${
-                    m.amount > 0 ? "text-primary" : "text-foreground"
-                  }`}
+                  className={cn(
+                    "text-sm font-semibold",
+                    m.status === "rechazado"
+                      ? "text-red-500 line-through opacity-80 dark:text-red-400"
+                      : m.status === "solicitado"
+                        ? "text-purple-600 dark:text-purple-400"
+                        : m.amount > 0
+                          ? "text-primary"
+                          : "text-foreground",
+                  )}
                   duration={650}
                   delay={i * 90 + 80}
                 />

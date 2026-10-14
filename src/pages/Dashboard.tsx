@@ -16,12 +16,16 @@ import {
   getNextPaymentDate,
 } from "@/shared/config/payrollCalendar";
 import { ROUTES } from "@/shared/config/routes";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowUpRight,
   ArrowDownRight,
   Calendar,
-  Zap,
+  CheckCircle2,
+  Clock,
   TrendingUp,
+  XCircle,
+  Zap,
 } from "lucide-react";
 import {
   AreaChart,
@@ -35,6 +39,7 @@ import {
   AnimatedCurrency,
   AnimatedNumber,
 } from "@/components/ui/animated-number";
+import { formatChartAxisMoney } from "@/shared/lib/currency";
 
 const CHART_COLORS = {
   ingresos: "hsl(220, 90%, 55%)",
@@ -263,7 +268,9 @@ export default function Dashboard() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v) => `$${(v / 1000000).toFixed(1)}M`}
+                  domain={[0, "auto"]}
+                  allowDecimals={false}
+                  tickFormatter={formatChartAxisMoney}
                 />
                 <Tooltip
                   contentStyle={{
@@ -313,36 +320,75 @@ export default function Dashboard() {
             ) : (
               recentActivity.map((item, i) => (
               <div
-                key={item.desc + item.date}
-                className="group/activity-item animate-activity-item-enter flex items-center gap-3 rounded-lg px-1 py-0.5 transition-colors hover:bg-secondary/30"
+                key={(item.id || item.desc) + item.date + i}
+                className="group/activity-item animate-activity-item-enter flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-secondary/30"
                 style={{ animationDelay: `${i * ACTIVITY_STAGGER_MS}ms` }}
               >
                 <span
                   className={cn(
-                    "inline-flex shrink-0 items-center justify-center",
+                    "inline-flex shrink-0 items-center justify-center rounded-lg p-2",
                     item.type === "ingreso"
-                      ? "text-primary activity-icon-motion-ingreso"
-                      : "text-[hsl(260_70%_50%)] activity-icon-motion-adelanto",
+                      ? "text-primary bg-primary/10 activity-icon-motion-ingreso"
+                      : item.status === "solicitado"
+                        ? "text-purple-600 bg-purple-500/10 dark:text-purple-400 dark:bg-purple-500/15 activity-icon-motion-adelanto"
+                        : item.status === "rechazado"
+                          ? "text-red-600 bg-red-500/10 dark:text-red-400 dark:bg-red-500/15"
+                          : "text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 dark:bg-emerald-500/15 activity-icon-motion-adelanto",
                   )}
                 >
                   {item.type === "ingreso" ? (
-                    <ArrowUpRight className="h-5 w-5" strokeWidth={2.25} />
+                    <ArrowUpRight className="h-4 w-4" strokeWidth={2.25} />
+                  ) : item.status === "rechazado" ? (
+                    <XCircle className="h-4 w-4" strokeWidth={2.25} />
+                  ) : item.status === "solicitado" ? (
+                    <Clock className="h-4 w-4" strokeWidth={2.25} />
                   ) : (
-                    <ArrowDownRight className="h-5 w-5" strokeWidth={2.25} />
+                    <CheckCircle2 className="h-4 w-4" strokeWidth={2.25} />
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {item.desc}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {item.desc}
+                    </p>
+                    {item.status ? (
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide border",
+                          item.status === "solicitado" &&
+                            "border-purple-300 bg-purple-100 text-purple-700 dark:border-purple-500/30 dark:bg-purple-950/50 dark:text-purple-300",
+                          item.status === "rechazado" &&
+                            "border-red-300 bg-red-100 text-red-700 dark:border-red-500/30 dark:bg-red-950/50 dark:text-red-300",
+                          item.status === "aprobado" &&
+                            "border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/50 dark:text-emerald-300",
+                        )}
+                      >
+                        {item.statusLabel || (
+                          item.status === "solicitado"
+                            ? "Solicitado"
+                            : item.status === "rechazado"
+                              ? "Rechazado"
+                              : "Aprobado"
+                        )}
+                      </Badge>
+                    ) : null}
+                  </div>
                   <p className="text-xs text-muted-foreground">{item.date}</p>
                 </div>
                 <AnimatedCurrency
                   value={Math.abs(item.amount)}
                   sign={item.amount > 0 ? "+" : "-"}
-                  className={`text-sm font-semibold ${
-                    item.amount > 0 ? "text-primary" : "text-foreground"
-                  }`}
+                  className={cn(
+                    "text-sm font-semibold",
+                    item.status === "rechazado"
+                      ? "text-red-500 line-through opacity-80 dark:text-red-400"
+                      : item.status === "solicitado"
+                        ? "text-purple-600 dark:text-purple-400"
+                        : item.amount > 0
+                          ? "text-primary"
+                          : "text-foreground",
+                  )}
                   duration={ACTIVITY_COUNT_DURATION_MS}
                   delay={i * ACTIVITY_STAGGER_MS + ACTIVITY_COUNT_DELAY_OFFSET_MS}
                 />

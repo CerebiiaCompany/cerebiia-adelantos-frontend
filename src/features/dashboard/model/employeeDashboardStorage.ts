@@ -105,6 +105,8 @@ export function recordEmployeeAdvance(
         date: formatActivityDate(now),
         desc: "Adelanto rápido",
         createdAt: now.toISOString(),
+        status: "solicitado",
+        statusLabel: "Solicitado",
       },
       ...current.activity,
     ].slice(0, 10),
