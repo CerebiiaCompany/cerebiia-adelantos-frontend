@@ -12,7 +12,6 @@ import {
 import type { ChangePasswordRequest } from "@/shared/api/types";
 import { env } from "@/shared/config/env";
 import { useAuth } from "./AuthProvider";
-import { rememberedCredentialsStorage } from "./rememberedCredentialsStorage";
 
 interface ChangePasswordInput extends ChangePasswordRequest {
   loginType: "empresa" | "empleado";
@@ -63,25 +62,7 @@ export function useChangePassword() {
         }
       }
 
-      await rememberedCredentialsStorage.updatePasswordIfMatches(
-        loginType,
-        identifier,
-        payload.newPassword,
-      );
-
       return { identifier };
     },
   });
-}
-
-/** Sincroniza credenciales recordadas tras restablecer contraseña (p. ej. enlace por correo). */
-export async function syncRememberedCredentialsAfterPasswordReset(
-  email: string,
-  newPassword: string,
-): Promise<void> {
-  await rememberedCredentialsStorage.updatePasswordIfMatches(
-    "empresa",
-    email,
-    newPassword,
-  );
 }

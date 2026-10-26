@@ -8,10 +8,7 @@ export { useCompanies } from "./model/useCompanies";
 export { useRegisterUser } from "./model/useRegisterUser";
 export { useLogout } from "./model/useLogout";
 export { useProfileView } from "./model/useProfileView";
-export {
-  useChangePassword,
-  syncRememberedCredentialsAfterPasswordReset,
-} from "./model/useChangePassword";
+export { useChangePassword } from "./model/useChangePassword";
 export { rememberedCredentialsStorage } from "./model/rememberedCredentialsStorage";
 export { pendingLoginCredentialsStorage } from "./model/pendingLoginCredentialsStorage";
 export { ForgotPasswordForm } from "./ui/ForgotPasswordForm";

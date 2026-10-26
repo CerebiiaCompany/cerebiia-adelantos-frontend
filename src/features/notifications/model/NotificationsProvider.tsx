@@ -22,6 +22,7 @@ import {
   markSoporteResponseSeen,
   SOPORTE_SEEN_CHANGED_EVENT,
 } from "@/shared/lib/soporteSeenStorage";
+import { formatCOP } from "@/shared/lib/currency";
 import { formatRelative } from "@/shared/lib/dates";
 import { CheckCircle2, MessageSquare, Wallet, XCircle, Zap } from "lucide-react";
 import { toast } from "sonner";

@@ -82,7 +82,6 @@ export function useLogin() {
         await rememberedCredentialsStorage.save(
           variables.loginType,
           getRememberedIdentifier(variables),
-          variables.password,
         );
       } else {
         rememberedCredentialsStorage.clear();

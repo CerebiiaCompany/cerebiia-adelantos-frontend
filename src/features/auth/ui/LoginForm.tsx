@@ -35,6 +35,7 @@ import { EMAIL_MAX_LENGTH } from "@/shared/validations/register.schema";
 import { ROUTES } from "@/shared/config/routes";
 import { ApiError } from "@/shared/api";
 import type { RememberedCredentials } from "../model/rememberedCredentialsStorage";
+import type { PendingLoginCredentials } from "../model/pendingLoginCredentialsStorage";
 
 const LOGIN_BOOTSTRAP_MS = 450;
 
@@ -77,7 +78,8 @@ function getDefaultValues(loginType: LoginType): LoginFormValues {
 
 function buildFormValuesForLoginType(
   loginType: LoginType,
-  savedCredentials: RememberedCredentials | null,
+  /** Las recordadas solo traen usuario; las pendientes (tras activar cuenta) también contraseña. */
+  savedCredentials: RememberedCredentials | PendingLoginCredentials | null,
   options?: { rememberMe?: boolean },
 ): LoginFormValues {
   const rememberMe = options?.rememberMe ?? true;
@@ -90,7 +92,7 @@ function buildFormValuesForLoginType(
       return {
         loginType: "empresa",
         email: savedCredentials.identifier,
-        password: savedCredentials.password,
+        password: "password" in savedCredentials ? savedCredentials.password : "",
         rememberMe,
       };
     }
@@ -98,7 +100,7 @@ function buildFormValuesForLoginType(
     return {
       loginType: "empleado",
       documento: savedCredentials.identifier,
-      password: savedCredentials.password,
+      password: "password" in savedCredentials ? savedCredentials.password : "",
       rememberMe,
     };
   }
@@ -113,7 +115,7 @@ export function LoginForm() {
   const [savedCredentials, setSavedCredentials] =
     useState<RememberedCredentials | null>(null);
   const [pendingCredentials, setPendingCredentials] =
-    useState<RememberedCredentials | null>(null);
+    useState<PendingLoginCredentials | null>(null);
   const { mutate: login, isPending, error } = useLogin();
 
   const form = useForm<LoginFormValues>({
