@@ -2,7 +2,7 @@
 
 import { authStorage } from "./authStorage";
 import { isSystemUserSession } from "./authMappers";
-import { ApiError } from "./errors";
+import { ApiError, parseRetryAfter } from "./errors";
 import { resolveApiUrl } from "@/shared/config/env";
 import type { RefreshTokenResponse } from "./types/auth";
 
@@ -139,7 +139,7 @@ async function request<T>(
   const body = await parseResponseBody(res);
 
   if (!res.ok) {
-    throw new ApiError(res.status, path, body);
+    throw new ApiError(res.status, path, body, parseRetryAfter(res.headers.get("Retry-After")));
   }
 
   if (res.status === 204 || body === null) {

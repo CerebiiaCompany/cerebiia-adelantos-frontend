@@ -102,4 +102,13 @@ describe("createEmpleadoSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rechaza salarios fuera del rango permitido por el backend", () => {
+    for (const salario of ["99999.99", "100000000.01", "0"]) {
+      expect(createEmpleadoSchema.safeParse({ ...validPayload, salario }).success).toBe(false);
+    }
+    for (const salario of ["100000", "100000000"]) {
+      expect(createEmpleadoSchema.safeParse({ ...validPayload, salario }).success).toBe(true);
+    }
+  });
 });

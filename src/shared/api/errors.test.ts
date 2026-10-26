@@ -46,4 +46,22 @@ describe("ApiError", () => {
     expect(error.message).toMatch(/endpoint/i);
     expect(error.message).toMatch(/404/);
   });
+
+  it("muestra un mensaje en español con el tiempo de espera ante HTTP 429", () => {
+    const error = new ApiError(
+      429,
+      "/auth/login/",
+      { detail: "Request was throttled. Expected available in 840 seconds." },
+      840,
+    );
+
+    expect(error.message).toBe("Demasiados intentos. Intenta de nuevo en 14 minutos.");
+    expect(error.retryAfterSeconds).toBe(840);
+  });
+
+  it("usa un mensaje genérico ante HTTP 429 sin Retry-After", () => {
+    expect(new ApiError(429, "/empleados/login/", null).message).toBe(
+      "Demasiados intentos. Espera unos minutos e intenta de nuevo.",
+    );
+  });
 });

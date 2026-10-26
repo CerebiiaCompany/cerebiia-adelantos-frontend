@@ -4,14 +4,39 @@ export class ApiError extends Error {
   readonly status: number;
   readonly path: string;
   readonly body: unknown;
+  /** Segundos indicados por la cabecera Retry-After (respuestas 429). */
+  readonly retryAfterSeconds: number | null;
 
-  constructor(status: number, path: string, body: unknown) {
-    super(parseApiErrorMessage(body, status));
+  constructor(status: number, path: string, body: unknown, retryAfterSeconds: number | null = null) {
+    super(
+      status === 429
+        ? buildTooManyRequestsMessage(retryAfterSeconds)
+        : parseApiErrorMessage(body, status),
+    );
     this.name = "ApiError";
     this.status = status;
     this.path = path;
     this.body = body;
+    this.retryAfterSeconds = retryAfterSeconds;
   }
+}
+
+/** Login bloqueado o límite de peticiones alcanzado (hallazgo ADL-002). */
+export function buildTooManyRequestsMessage(retryAfterSeconds: number | null): string {
+  if (!retryAfterSeconds || retryAfterSeconds <= 0) {
+    return "Demasiados intentos. Espera unos minutos e intenta de nuevo.";
+  }
+  if (retryAfterSeconds < 60) {
+    return `Demasiados intentos. Intenta de nuevo en ${Math.ceil(retryAfterSeconds)} segundos.`;
+  }
+  const minutes = Math.ceil(retryAfterSeconds / 60);
+  return `Demasiados intentos. Intenta de nuevo en ${minutes} ${minutes === 1 ? "minuto" : "minutos"}.`;
+}
+
+export function parseRetryAfter(value: string | null): number | null {
+  if (!value) return null;
+  const seconds = Number(value);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
 }
 
 function localizeApiDetail(detail: string): string {

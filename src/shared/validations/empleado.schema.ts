@@ -18,6 +18,13 @@ import { isValidEmpleadoDocumentNumber } from "./empleadoDocumentValidation";
 
 const SALARIO_REGEX = /^\d{1,12}(\.\d{1,2})?$/;
 
+/** Rango mensual aceptado por el backend (COP). Debe coincidir con
+ * `apps/empleados/domain/value_objects/salario.py` (hallazgo ADL-004). */
+export const SALARIO_MINIMO = 100_000;
+export const SALARIO_MAXIMO = 100_000_000;
+
+const formatCop = (value: number) => value.toLocaleString("es-CO");
+
 export const TIPO_CONTRATO_VALUES = [
   "indefinido",
   "fijo",
@@ -103,6 +110,13 @@ export const createEmpleadoSchema = z
       .refine(
         (value) => SALARIO_REGEX.test(value),
         "Salario inválido (máx. 12 dígitos y 2 decimales)",
+      )
+      .refine(
+        (value) => {
+          const amount = Number(value);
+          return amount >= SALARIO_MINIMO && amount <= SALARIO_MAXIMO;
+        },
+        `El salario debe estar entre $${formatCop(SALARIO_MINIMO)} y $${formatCop(SALARIO_MAXIMO)}`,
       ),
     tipo_contrato: z
       .string()
